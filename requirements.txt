@@ -1,0 +1,5 @@
+numpy >= 1.15
+rasterio >= 1.0.0
+scikit-image
+scikit-learn
+scipy >= 1.0.0
