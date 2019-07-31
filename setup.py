@@ -31,18 +31,15 @@ dependency_links = [
 ]
 
 setup(
-    name='detectree',
-    version=__version__,
+    name='detectree', version=__version__,
     description='Tree detection from aerial imagery',
     long_description=long_description,
-    long_description_content_type='text/markdown',
-    classifiers=classifiers,
-    url='https://github.com/martibosch/detectree',
-    author='Martí Bosch',
-    author_email='marti.bosch@epfl.ch',
-    license='GPL-3.0',
+    long_description_content_type='text/markdown', classifiers=classifiers,
+    url='https://github.com/martibosch/detectree', author='Martí Bosch',
+    author_email='marti.bosch@epfl.ch', license='GPL-3.0',
     packages=find_packages(exclude=['docs', 'tests*']),
-    include_package_data=True,
-    install_requires=install_requires,
-    dependency_links=dependency_links,
-)
+    include_package_data=True, install_requires=install_requires,
+    dependency_links=dependency_links, entry_points='''
+    [console_scripts]
+    detectree=detectree.cli.main:cli
+    ''')

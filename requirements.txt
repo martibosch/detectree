@@ -1,0 +1,10 @@
+dask[delayed,distributed]
+joblib
+pymaxflow >= 1.0.0
+numpy >= 1.15
+pandas >= 0.23
+rasterio >= 1.0.0
+scikit-image
+scikit-learn
+scipy >= 1.0.0
+tqdm

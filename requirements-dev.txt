@@ -3,6 +3,7 @@ coverage
 coveralls
 isort
 flake8
+m2r
 pytest
 tox-travis
 yapf
