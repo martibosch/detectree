@@ -1,0 +1,8 @@
+bumpversion
+coverage
+coveralls
+isort
+flake8
+pytest
+tox-travis
+yapf

@@ -1,0 +1,43 @@
+# Config file for automatic testing at travis-ci.org
+
+language: python
+python:
+  - 3.6
+
+before_install:
+  - pip install --upgrade pip
+  - pip install --upgrade wheel
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set show_channel_urls true
+  - conda update conda
+  - conda config --add channels conda-forge --force
+  - conda create --quiet --name TESTENV python=$TRAVIS_PYTHON_VERSION
+  - source activate TESTENV
+  - conda install -c conda-forge geopandas
+  - conda info --all
+  - conda list
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - pip install .
+  - pip install -r requirements-dev.txt
+  - pip show detectree
+
+# command to run tests, e.g. python setup.py test
+script:
+  - coverage run --source detectree -m py.test
+
+after_success:
+  - coverage report -m
+  - coveralls
+
+# deploy new versions to PyPI
+deploy:
+  provider: pypi
+  on:
+    tags: true
+    python: 3.6
+  user: martibosch
