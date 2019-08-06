@@ -5,6 +5,8 @@ import numpy as np
 import rasterio as rio
 from rasterio import windows
 
+from . import settings
+
 try:
     from tqdm import tqdm
 except ImportError:
@@ -28,9 +30,18 @@ def _get_window_transform(ds, width, height):
         yield window, transform
 
 
-def split_into_tiles(input_filepath, output_dir, tile_width=512,
-                     tile_height=512, output_filename='tile_{}-{}.tif',
-                     custom_meta=None):
+def split_into_tiles(input_filepath, output_dir, tile_width=None,
+                     tile_height=None, output_filename=None,
+                     only_full_tiles=False, custom_meta=None):
+
+    if tile_width is None:
+        tile_width = settings.TILE_DEFAULT_WIDTH
+    if tile_height is None:
+        tile_height = settings.TILE_DEFAULT_HEIGHT
+    if output_filename is None:
+        output_filename = settings.TILE_DEFAULT_OUTPUT_FILENAME
+
+    tile_count = 0
     with rio.open(input_filepath) as src:
         meta = src.meta.copy()
         if custom_meta is not None:
@@ -40,15 +51,20 @@ def split_into_tiles(input_filepath, output_dir, tile_width=512,
         if tqdm is not None:
             iterator = tqdm(iterator)
         for window, transform in iterator:
-            meta['transform'] = transform
-            meta['width'], meta['height'] = window.width, window.height
-            with rio.open(
-                    path.join(
-                        output_dir,
-                        output_filename.format(int(window.col_off),
-                                               int(window.row_off))), 'w',
-                    **meta) as dst:
-                dst.write(src.read(window=window))
+            if not only_full_tiles or (window.width == tile_width
+                                       and window.height == tile_height):
+                meta['transform'] = transform
+                meta['width'], meta['height'] = window.width, window.height
+                with rio.open(
+                        path.join(
+                            output_dir,
+                            output_filename.format(int(window.col_off),
+                                                   int(window.row_off))), 'w',
+                        **meta) as dst:
+                    dst.write(src.read(window=window))
+                tile_count += 1
+
+    return tile_count
 
 
 def img_rgb_from_filepath(input_filepath):

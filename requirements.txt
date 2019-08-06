@@ -1,3 +1,4 @@
+dask
 numpy >= 1.15
 pandas >= 0.23
 rasterio >= 1.0.0
