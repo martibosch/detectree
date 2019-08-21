@@ -11,7 +11,7 @@ from skimage.filters import rank
 
 from . import filters, settings
 
-__all__ = ['TilePixelFeatures', 'pixel_features_from_tiling']
+__all__ = ['TilePixelFeatures', 'pixel_features_from_tiling', 'build_features']
 
 # to convert to illumination-invariant color space
 # https://www.cs.harvard.edu/~sjg/papers/cspace.pdf
@@ -111,12 +111,14 @@ class TilePixelFeatures(object):
 
 
 def pixel_features_from_tiling(tile_filepaths=None, tile_dir=None,
-                               tile_filename_pattern='*.tif', sigmas=None,
+                               tile_filename_pattern=None, sigmas=None,
                                num_orientations=None, neighborhoods=None,
                                min_neighborhood_range=None,
                                num_neighborhoods=None):
 
     if tile_filepaths is None:
+        if tile_filename_pattern is None:
+            tile_filename_pattern = settings.TILE_DEFAULT_FILENAME_PATTERN
         tile_filepaths = glob.glob(path.join(tile_dir, tile_filename_pattern))
 
     # preprocess technical keyword arguments
@@ -181,3 +183,33 @@ def pixel_features_from_tiling(tile_filepaths=None, tile_dir=None,
         X_tiles = dask.compute(*values)
 
     return np.vstack(X_tiles)
+
+
+def build_features(split_df, method=None, output_filepath=None,
+                   output_dir=None):
+    # def dump_train_test_feature_arrays(df, output_train_filepath,
+    #                                    output_test_filepath):
+    #     X_train = pixel_features_from_tiling(
+    #         df[df['train']]['tile_filepath'])
+    #     np.save(output_train_filepath, X_train, allow_pickle=False)
+
+    #     X_test = pixel_features_from_tiling(
+    #         df[~df['train']]['tile_filepath'])
+    #     np.save(output_test_filepath, X_test, allow_pickle=False)
+    def dump_train_feature_arrays(df, output_filepath):
+        np.save(output_filepath,
+                pixel_features_from_tiling(df[df['train']]['tile_filepath']),
+                allow_pickle=False)
+
+    if method is None:
+        if 'tile_cluster' in split_df:
+            method = 'II'
+        else:
+            method = 'I'
+
+    if method == 'I':
+        dump_train_feature_arrays(split_df, output_filepath)
+    else:
+        for cluster_label, cluster_df in split_df.groupby('tile_cluster'):
+            dump_train_feature_arrays(
+                cluster_df, path.join(output_dir, f"X{cluster_label}.npy"))

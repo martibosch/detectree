@@ -72,3 +72,8 @@ def img_rgb_from_filepath(input_filepath):
         arr = src.read()
 
     return np.rollaxis(arr[:3], 0, 3)
+
+
+## non-image utils
+def get_response_tile_filepath(tile_filepath, response_train_tiles_dir):
+    return path.join(response_train_tiles_dir, path.basename(tile_filepath))

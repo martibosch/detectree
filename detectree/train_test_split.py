@@ -14,7 +14,7 @@ __all__ = ['TrainingSelector']
 
 class TrainingSelector(object):
     def __init__(self, tile_filepaths=None, tile_dir=None,
-                 tile_filename_pattern='*.tif', gabor_frequencies=None,
+                 tile_filename_pattern=None, gabor_frequencies=None,
                  gabor_num_orientations=None, response_bins_per_axis=4,
                  num_color_bins=8):
         """
@@ -36,6 +36,8 @@ class TrainingSelector(object):
         super(TrainingSelector, self).__init__()
 
         if tile_filepaths is None:
+            if tile_filename_pattern is None:
+                tile_filename_pattern = settings.TILE_DEFAULT_FILENAME_PATTERN
             tile_filepaths = glob.glob(
                 path.join(tile_dir, tile_filename_pattern))
 

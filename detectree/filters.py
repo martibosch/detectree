@@ -2,8 +2,6 @@ import numpy as np
 from scipy.ndimage.filters import _gaussian_kernel1d
 from skimage.filters import gabor_kernel
 
-from . import settings
-
 __all__ = ['get_texture_kernel', 'get_gabor_filter_bank']
 
 
