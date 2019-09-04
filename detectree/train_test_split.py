@@ -7,22 +7,23 @@ import pandas as pd
 from dask import diagnostics
 from sklearn import cluster, decomposition, metrics
 
-from . import filters, image_descriptor, settings
+from . import filters, image_descriptor
 
 __all__ = ['TrainingSelector']
 
 
 class TrainingSelector(object):
     def __init__(self, tile_filepaths=None, tile_dir=None,
-                 tile_filename_pattern=None, gabor_frequencies=None,
-                 gabor_num_orientations=None, response_bins_per_axis=4,
+                 tile_filename_pattern='*.tif',
+                 gabor_frequencies=(.1, .25, .4),
+                 gabor_num_orientations=(4, 8, 8), response_bins_per_axis=4,
                  num_color_bins=8):
         """
         Parameters
         ----------
-        gabor_frequencies : list-like
+        gabor_frequencies : tuple
 
-        gabor_num_orientations : int or list-like
+        gabor_num_orientations : int or tuple
 
         response_bins_per_axis : int
 
@@ -36,8 +37,6 @@ class TrainingSelector(object):
         super(TrainingSelector, self).__init__()
 
         if tile_filepaths is None:
-            if tile_filename_pattern is None:
-                tile_filename_pattern = settings.TILE_DEFAULT_FILENAME_PATTERN
             tile_filepaths = glob.glob(
                 path.join(tile_dir, tile_filename_pattern))
 
@@ -45,15 +44,12 @@ class TrainingSelector(object):
 
         # TODO: boolean arg for equal tile size (and pass `block_shape` to
         # `get_gist_descriptor`)?
+        self.gabor_frequencies = gabor_frequencies
 
-        # preprocess technical keyword arguments
-        if gabor_frequencies is None:
-            self.gabor_frequencies = settings.GIST_DEFAULT_GABOR_FREQUENCIES
-
-        if gabor_num_orientations is None:
-            self.gabor_num_orientations = \
-                settings.GIST_DEFAULT_GABOR_NUM_ORIENTATIONS
-        elif not isinstance(gabor_num_orientations, (list, tuple)):
+        if isinstance(gabor_num_orientations, tuple):
+            self.gabor_num_orientations = gabor_num_orientations
+        else:
+            # `gabor_num_orientations` is an int
             self.gabor_num_orientations = tuple(gabor_num_orientations
                                                 for _ in gabor_frequencies)
 
@@ -102,12 +98,10 @@ class TrainingSelector(object):
             return self._descr_feature_matrix
 
     def train_test_split(self, method='II', num_components=12,
-                         num_tile_clusters=4, train_prop=.01):
+                         num_tile_clusters=4, train_prop=.01,
+                         return_evr=False):
         X = self.descr_feature_matrix
         pca = decomposition.PCA(n_components=num_components).fit(X)
-        # TODO: how to log this so that it is outputted in a Jupyter notebook,
-        # Python interpreter and CLI (click) interface?
-        print(pca.explained_variance_ratio_.sum())
 
         X_pca = pca.transform(X)
         X_cols = range(num_components)
@@ -144,4 +138,9 @@ class TrainingSelector(object):
             df['train'] = df.groupby('tile_cluster')['tile_cluster'].transform(
                 cluster_train_test_split)
 
-        return df.drop(X_cols, axis=1)
+        split_df = df.drop(X_cols, axis=1)
+
+        if return_evr:
+            return split_df, pca.explained_variance_ratio_.sum()
+        else:
+            return split_df
