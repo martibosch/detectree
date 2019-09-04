@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 from scipy import ndimage as ndi
 from skimage import color
 from skimage.util import shape
@@ -12,10 +13,9 @@ __all__ = ['ImageDescriptor']
 class ImageDescriptor(object):
     def __init__(self, img_filepath):
         """
- 
         Parameters
         ----------
-        img_filepath : 
+        img_filepath :
         """
         super(ImageDescriptor, self).__init__()
 
@@ -27,6 +27,20 @@ class ImageDescriptor(object):
         gist_row = np.zeros(len(kernels) * num_blocks)
         block_shape = tuple(size // response_bins_per_axis
                             for size in img_gray.shape)
+        divides_evenly = True
+        for size in img_gray.shape:
+            if size % response_bins_per_axis != 0:
+                divides_evenly = False
+                break
+
+        if not divides_evenly:
+            # TODO: warn?
+            target_height, target_width = (size * response_bins_per_axis
+                                           for size in block_shape)
+            img_gray = np.array(
+                Image.fromarray(img_gray).resize(
+                    (target_width, target_height)))
+
         for i, kernel in enumerate(kernels):
             filter_response = ndi.convolve(img_gray, kernel)
             response_bins = shape.view_as_blocks(filter_response, block_shape)
@@ -36,14 +50,14 @@ class ImageDescriptor(object):
         return gist_row
 
     def get_color_descriptor(self, num_color_bins):
-        """     
+        """
         Parameters
         ----------
         num_color_bins : int
 
         Returns
         -------
-        color_row : 
+        color_row :
         """
 
         img_lab = color.rgb2lab(self.img_rgb)
