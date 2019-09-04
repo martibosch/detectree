@@ -1,13 +1,17 @@
 import glob
 from os import path
 
-import dask
 import numpy as np
 import pandas as pd
-from dask import diagnostics
 from sklearn import cluster, decomposition, metrics
 
 from . import filters, image_descriptor
+
+try:
+    import dask
+    from dask import diagnostics
+except ImportError:
+    dask = None
 
 __all__ = ['TrainingSelector']
 
@@ -75,15 +79,23 @@ class TrainingSelector(object):
 
             num_blocks = self.response_bins_per_axis**2
 
-            values = [
-                dask.delayed(TrainingSelector._get_image_descr)(
-                    tile_filepath, kernels, self.response_bins_per_axis,
-                    num_blocks, self.num_color_bins)
-                for tile_filepath in self.tile_filepaths
-            ]
+            if dask is not None:
+                values = [
+                    dask.delayed(TrainingSelector._get_image_descr)(
+                        tile_filepath, kernels, self.response_bins_per_axis,
+                        num_blocks, self.num_color_bins)
+                    for tile_filepath in self.tile_filepaths
+                ]
 
-            with diagnostics.ProgressBar():
-                feature_rows = dask.compute(*values)
+                with diagnostics.ProgressBar():
+                    feature_rows = dask.compute(*values)
+            else:
+                feature_rows = [
+                    TrainingSelector._get_image_descr(
+                        tile_filepath, kernels, self.response_bins_per_axis,
+                        num_blocks, self.num_color_bins)
+                    for tile_filepath in self.tile_filepaths
+                ]
 
             self._descr_feature_matrix = np.vstack(feature_rows)
 
