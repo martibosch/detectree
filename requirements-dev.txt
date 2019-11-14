@@ -5,5 +5,8 @@ isort
 flake8
 m2r
 pytest
+sphinx
+sphinx-click
+sphinxcontrib-bibtex
 tox-travis
 yapf

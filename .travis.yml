@@ -29,6 +29,7 @@ install:
 # command to run tests, e.g. python setup.py test
 script:
   - coverage run --source detectree -m py.test
+  - flake8
 
 after_success:
   - coverage report -m
