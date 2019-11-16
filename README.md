@@ -18,7 +18,7 @@ from rasterio import plot
 
 # select the training tiles from the tiled aerial imagery dataset
 ts = dtr.TrainingSelector(img_dir='data/tiles')
-split_df, evr = ts.train_test_split(method='cluster-I')
+split_df = ts.train_test_split(method='cluster-I')
 
 # train a tree/non-tree pixel classfier
 clf = dtr.ClassifierTrainer().train_classifier(

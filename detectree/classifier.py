@@ -19,7 +19,7 @@ class ClassifierTrainer(object):
     def __init__(self, num_estimators=None, pixel_features_builder_kws={},
                  pixel_response_builder_kws={}, adaboost_kws={}):
         """
-        Class to train a binary tree/non-tree classifier(s) of the image
+        Class to train a binary tree/non-tree classifier(s) of the pixel
         features. See the `background <https://bit.ly/2KlCICO>`_ example
         notebook for more details.
 

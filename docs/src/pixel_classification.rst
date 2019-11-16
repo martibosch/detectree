@@ -1,6 +1,6 @@
-==============
-Classification
-==============
+====================
+Pixel Classification
+====================
 
 .. autoclass:: detectree.ClassifierTrainer
    :members:  __init__, train_classifier, train_classifiers
