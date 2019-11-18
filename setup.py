@@ -25,7 +25,9 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
     all_reqs = f.read().split('\n')
 
-install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
+# NOTE: click is already installed implicity because of rasterio, but better
+# to have it here listed explicitly
+install_requires = [x.strip() for x in all_reqs if 'git+' not in x] + ['click']
 dependency_links = [
     x.strip().replace('git+', '') for x in all_reqs if x.startswith('git+')
 ]
