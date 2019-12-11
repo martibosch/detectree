@@ -507,7 +507,7 @@ class TestUtils(unittest.TestCase):
                                           only_full_tiles=True)
         maybe_empty_tiles = dtr.split_into_tiles(self.img_filepath,
                                                  self.tmp_tiles_dir,
-                                                 keep_emtpy_tiles=True)
+                                                 keep_empty_tiles=True)
         self.assertTrue(len(full_tiles) <= len(tiles))
         self.assertTrue(len(tiles) <= len(maybe_empty_tiles))
 

@@ -22,7 +22,7 @@ __all__ = [
 # See https://bit.ly/2KkELpI
 def split_into_tiles(input_filepath, output_dir, tile_width=None,
                      tile_height=None, output_filename=None,
-                     only_full_tiles=False, keep_emtpy_tiles=False,
+                     only_full_tiles=False, keep_empty_tiles=False,
                      custom_meta=None):
     """
     Split the image of `input_filepath` into tiles, and dump them to
@@ -49,7 +49,7 @@ def split_into_tiles(input_filepath, output_dir, tile_width=None,
     only_full_tiles : bool, optional (default False)
         Whether only full tiles (of size `tile_width`x`tile_height`) should be
         dumped.
-    keep_emtpy_tiles : bool, optional (default False)
+    keep_empty_tiles : bool, optional (default False)
         Whether tiles containing only no-data pixels should be dumped
     custom_meta : dict, optional
         Custom meta data for the output tiles
@@ -105,7 +105,7 @@ def split_into_tiles(input_filepath, output_dir, tile_width=None,
 
             tests.append(test_full_tile)
 
-        if not keep_emtpy_tiles:
+        if not keep_empty_tiles:
 
             def test_empty_tile(window):
                 return np.any(src.dataset_mask(window=window))
