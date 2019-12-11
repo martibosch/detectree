@@ -5,7 +5,7 @@ from os import path
 
 from setuptools import find_packages, setup
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 classifiers = [
     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
