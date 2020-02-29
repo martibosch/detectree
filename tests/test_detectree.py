@@ -214,7 +214,8 @@ class TestPixelResponse(unittest.TestCase):
     def setUp(self):
         self.data_dir = 'tests/data'
         self.img_dir = path.join(self.data_dir, 'img')
-        with rio.open(path.join(self.img_dir, '1091-322_00.tif')) as src:
+        example_img_filename = '1091-322_00.tif'
+        with rio.open(path.join(self.img_dir, example_img_filename)) as src:
             self.pixels_per_img = src.shape[0] * src.shape[1]
         self.split_i_df = pd.read_csv(
             path.join(self.data_dir, 'split_cluster-I.csv'), index_col=0)
@@ -223,6 +224,9 @@ class TestPixelResponse(unittest.TestCase):
         self.response_img_dir = path.join(self.data_dir, 'response_img')
         self.prb = pixel_response.PixelResponseBuilder()
         # TODO: test arguments of `PixelResponseBuilder`
+        self.bad_response_img_filepath = path.join(self.data_dir,
+                                                   'bad_response_img',
+                                                   example_img_filename)
 
     def test_build_response(self):
         img_cluster = 0
@@ -281,10 +285,9 @@ class TestPixelResponse(unittest.TestCase):
                           self.response_img_dir, method='cluster-II')
 
         # test providing `img_filepaths`
-        img_filepaths = self.split_i_df[
-            self.split_i_df['train']]['img_filepath'].apply(
-                lambda filepath: path.join(self.response_img_dir,
-                                           path.basename(filepath)))
+        img_filepaths = self.split_i_df[self.split_i_df['train']][
+            'img_filepath'].apply(lambda filepath: path.join(
+                self.response_img_dir, path.basename(filepath)))
 
         # the shape of the feature matrix below is the same as `shape_i`
         self.assertEqual(
@@ -295,6 +298,12 @@ class TestPixelResponse(unittest.TestCase):
         # test that if none of `split_df`, `img_filepaths` or `img_dir` are
         # provided, a `ValueError` is raised
         self.assertRaises(ValueError, self.prb.build_response)
+
+        # test that providing a response whose pixel values are not
+        # exclusively the `tree_val` and `nontree_val` attributes of the
+        # `PixelResponseBuilder` instance raises a `ValueError`
+        self.assertRaises(ValueError, self.prb.build_response_from_filepath,
+                          self.bad_response_img_filepath)
 
 
 class TestTrainClassifier(unittest.TestCase):

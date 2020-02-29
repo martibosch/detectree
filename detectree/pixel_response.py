@@ -9,6 +9,10 @@ from . import settings, utils
 __all__ = ['PixelResponseBuilder']
 
 
+class NonBinaryResponseError(Exception):
+    pass
+
+
 class PixelResponseBuilder(object):
     # It is really not necessary to use a class for this, but we do so for the
     # sake of API consistency with the `pixel_features` module
@@ -26,13 +30,24 @@ class PixelResponseBuilder(object):
         response_arr[response_arr == self.tree_val] = 1
         response_arr[response_arr == self.nontree_val] = 0
 
+        # check that the provided `img_binary` is actually binary, i.e.,
+        # consists only of `tree_val` and `nontree_val` values
+        if ((response_arr != 0) & (response_arr != 1)).any():
+            raise NonBinaryResponseError
+
         return response_arr.flatten()
 
     def build_response_from_filepath(self, img_filepath):
         with rio.open(img_filepath) as src:
             img_binary = src.read(1)
 
-        return self.build_response_from_arr(img_binary)
+        try:
+            return self.build_response_from_arr(img_binary)
+        except NonBinaryResponseError:
+            raise ValueError(
+                f"The response mask {img_filepath} must consist of only "
+                f"{self.tree_val} (tree) and {self.nontree_val} (non-tree) "
+                "pixel values")
 
     def build_response(self, split_df=None, response_img_dir=None,
                        response_img_filepaths=None, img_filename_pattern=None,
