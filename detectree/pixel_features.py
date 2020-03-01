@@ -44,6 +44,7 @@ class PixelFeaturesBuilder(object):
 
         # entropy features
         # TODO: compute entropy features with `neighborhoods` kwarg
+        # TODO: scales NOT used when `neighborhoods` kwarg is provided
         # if neighborhoods is None:
         #     if min_neighborhood_range is None:
         #         min_neighborhood_range = \
@@ -60,12 +61,10 @@ class PixelFeaturesBuilder(object):
             if min_neighborhood_range is None:
                 min_neighborhood_range = \
                     settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE
-            if num_neighborhoods is None:
-                num_neighborhoods = settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS
             neighborhood = morphology.square(2 * min_neighborhood_range + 1)
         self.neighborhood = neighborhood
-        # TODO: scales NOT used when `neighborhoods` kwarg is provided (see
-        # the commented code above)
+        if num_neighborhoods is None:
+            num_neighborhoods = settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS
         self.scales = np.geomspace(1, 2**(num_neighborhoods - 1),
                                    num_neighborhoods).astype(int)
 

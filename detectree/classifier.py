@@ -16,8 +16,10 @@ MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer(object):
-    def __init__(self, num_estimators=None, pixel_features_builder_kws={},
-                 pixel_response_builder_kws={}, adaboost_kws={}):
+    def __init__(self, num_estimators=None, sigmas=None, num_orientations=None,
+                 neighborhood=None, min_neighborhood_range=None,
+                 num_neighborhoods=None, tree_val=None, nontree_val=None,
+                 **adaboost_kws):
         """
         Class to train a binary tree/non-tree classifier(s) of the pixel
         features. See the `background <https://bit.ly/2KlCICO>`_ example
@@ -31,15 +33,53 @@ class ClassifierTrainer(object):
             `sklearn.ensemble.AdaBoostClassifier`. If no value is provided,
             the default value set in `settings.CLF_DEFAULT_NUM_ESTIMATORS`
             will be taken.
-        pixel_features_builder_kws : dict, optional
-            Keyword arguments that will be passed to
-            `detectree.PixelFeaturesBuilder`, which customize how the pixel
-            features are built.
-        pixel_response_builder_kws : dict, optional
-            Keyword arguments that will be passed to
-            `detectree.PixelResponseBuilder`, which customize how the pixel
-            tree/non-tree responses are built.
-        adaboost_kws : dict, optional
+        sigmas : list-like, optional
+            The list of scale parameters (sigmas) to build the Gaussian filter
+            bank that will be used to compute the pixel-level features. The
+            provided argument will be passed to the initialization method of
+            the `PixelFeaturesBuilder` class. If no value is provided, the
+            default value set in `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
+        num_orientations : int, optional
+            The number of equally-distributed orientations to build the
+            Gaussian filter bank that will be used to compute the pixel-level
+            features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no
+            value is provided, the default value set in
+            `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
+        neighborhood : array-like, optional
+            The base neighborhood structure that will be used to compute the
+            entropy features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no
+            value is provided, a square with a side size of
+            `2 * min_neighborhood_range + 1` will be used.
+        min_neighborhood_range : int, optional
+            The range (i.e., the square radius) of the smallest neigbhorhood
+            window that will be used to compute the entropy features. The
+            provided argument will be passed to the initialization method of
+            the `PixelFeaturesBuilder` class. If no value is provided, the
+            default value set in
+            `settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE` will be taken.
+        num_neighborhoods : int, optional
+            The number of neigbhorhood windows (whose size follows a geometric
+            progression starting at `min_neighborhood_range`) that will be
+            used to compute the entropy features. The provided argument will
+            be passed to the initialization method of the
+            `PixelFeaturesBuilder` class. If no value is provided, the default
+            value set in `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be
+            taken.
+        tree_val : int, optional
+            The value that designates tree pixels in the response images. The
+            provided argument will be passed to the initialization method of
+            the `PixelResponseBuilder` class. If no value is provided, the
+            default value set in `settings.RESPONSE_DEFAULT_TREE_VAL` will be
+            taken.
+        nontree_val : int, optional
+            The value that designates non-tree pixels in the response images.
+            The provided argument will be passed to the initialization method
+            of the `PixelResponseBuilder` class. If no value is provided, the
+            default value set in `settings.RESPONSE_DEFAULT_NONTREE_VAL` will
+            be taken.
+        adaboost_kws : key-value pairings, optional
             Keyword arguments that will be passed to
             `sklearn.ensemble.AdaBoostClassifier`.
         """
@@ -50,8 +90,13 @@ class ClassifierTrainer(object):
             num_estimators = settings.CLF_DEFAULT_NUM_ESTIMATORS
         self.num_estimators = num_estimators
 
-        self.pixel_features_builder_kws = pixel_features_builder_kws
-        self.pixel_response_builder_kws = pixel_response_builder_kws
+        self.pixel_features_builder_kws = dict(
+            sigmas=sigmas, num_orientations=num_orientations,
+            neighborhood=neighborhood,
+            min_neighborhood_range=min_neighborhood_range,
+            num_neighborhoods=num_neighborhoods)
+        self.pixel_response_builder_kws = dict(tree_val=tree_val,
+                                               nontree_val=nontree_val)
         self.adaboost_kws = adaboost_kws
 
     def train_classifier(self, split_df=None, response_img_dir=None,

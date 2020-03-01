@@ -65,18 +65,19 @@ def _dict_from_kws(kws):
     return kws
 
 
-def _init_classifier_trainer(pixel_features_builder_kws,
-                             pixel_response_builder_kws, adaboost_kws,
-                             num_estimators):
-    pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
-    pixel_response_builder_kws = _dict_from_kws(pixel_response_builder_kws)
+def _init_classifier_trainer(num_estimators, sigmas, num_orientations,
+                             min_neighborhood_range, num_neighborhoods,
+                             tree_val, nontree_val, adaboost_kws):
+    # pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
+    # pixel_response_builder_kws = _dict_from_kws(pixel_response_builder_kws)
     adaboost_kws = _dict_from_kws(adaboost_kws)
 
-    return dtr.ClassifierTrainer(
-        num_estimators=num_estimators,
-        pixel_features_builder_kws=pixel_features_builder_kws,
-        pixel_response_builder_kws=pixel_response_builder_kws,
-        adaboost_kws=adaboost_kws)
+    return dtr.ClassifierTrainer(num_estimators=num_estimators, sigmas=sigmas,
+                                 num_orientations=num_orientations,
+                                 min_neighborhood_range=min_neighborhood_range,
+                                 num_neighborhoods=num_neighborhoods,
+                                 tree_val=tree_val, nontree_val=nontree_val,
+                                 **adaboost_kws)
 
 
 def _dump_clf(clf, output_filepath, logger):
@@ -159,15 +160,20 @@ def train_test_split(ctx, img_filepaths, img_dir, img_filename_pattern,
 @click.option('--method')
 @click.option('--img-cluster', type=int)
 @click.option('--num-estimators', type=int)
-@click.option('--pixel-features-builder-kws', cls=OptionEatAll)
-@click.option('--pixel-response-builder-kws', cls=OptionEatAll)
+@click.option('--sigmas', cls=OptionEatAll)
+@click.option('--num-orientations', type=int)
+@click.option('--min-neighborhood-range', type=int)
+@click.option('--num-neighborhoods', type=int)
+@click.option('--tree-val', type=int)
+@click.option('--nontree-val', type=int)
 @click.option('--adaboost-kws', cls=OptionEatAll)
 @click.option('--output-filepath', type=click.Path())
 def train_classifier(ctx, split_filepath, response_img_dir, img_filepaths,
                      response_img_filepaths, img_dir, img_filename_pattern,
-                     method, img_cluster, num_estimators,
-                     pixel_features_builder_kws, pixel_response_builder_kws,
-                     adaboost_kws, output_filepath):
+                     method, img_cluster, num_estimators, sigmas,
+                     num_orientations, min_neighborhood_range,
+                     num_neighborhoods, tree_val, nontree_val, adaboost_kws,
+                     output_filepath):
     logger = ctx.obj['LOGGER']
 
     logger.info("Training classifier")
@@ -176,10 +182,12 @@ def train_classifier(ctx, split_filepath, response_img_dir, img_filepaths,
     else:
         split_df = None
 
-    ct = _init_classifier_trainer(pixel_features_builder_kws,
-                                  pixel_response_builder_kws, adaboost_kws,
-                                  num_estimators)
-
+    ct = _init_classifier_trainer(
+        num_estimators=num_estimators, sigmas=sigmas,
+        num_orientations=num_orientations,
+        min_neighborhood_range=min_neighborhood_range,
+        num_neighborhoods=num_neighborhoods, tree_val=tree_val,
+        nontree_val=nontree_val, adaboost_kws=adaboost_kws)
     clf = ct.train_classifier(split_df=split_df,
                               response_img_dir=response_img_dir,
                               img_filepaths=img_filepaths,
@@ -199,13 +207,18 @@ def train_classifier(ctx, split_filepath, response_img_dir, img_filepaths,
 @click.argument('split_filepath', type=click.Path(exists=True))
 @click.argument('response_img_dir', type=click.Path(exists=True))
 @click.option('--num-estimators', type=int)
-@click.option('--pixel-features-builder-kws', cls=OptionEatAll)
-@click.option('--pixel-response-builder-kws', cls=OptionEatAll)
+@click.option('--sigmas', cls=OptionEatAll)
+@click.option('--num-orientations', type=int)
+@click.option('--min-neighborhood-range', type=int)
+@click.option('--num-neighborhoods', type=int)
+@click.option('--tree-val', type=int)
+@click.option('--nontree-val', type=int)
 @click.option('--adaboost-kws', cls=OptionEatAll)
 @click.option('--output-dir', type=click.Path(exists=True))
 def train_classifiers(ctx, split_filepath, response_img_dir, num_estimators,
-                      pixel_features_builder_kws, pixel_response_builder_kws,
-                      adaboost_kws, output_dir):
+                      sigmas, num_orientations, min_neighborhood_range,
+                      num_neighborhoods, tree_val, nontree_val, adaboost_kws,
+                      output_dir):
     logger = ctx.obj['LOGGER']
 
     logger.info("Training classifiers")
@@ -214,10 +227,12 @@ def train_classifiers(ctx, split_filepath, response_img_dir, num_estimators,
     else:
         split_df = None
 
-    ct = _init_classifier_trainer(pixel_features_builder_kws,
-                                  pixel_response_builder_kws, adaboost_kws,
-                                  num_estimators)
-
+    ct = _init_classifier_trainer(
+        num_estimators=num_estimators, sigmas=sigmas,
+        num_orientations=num_orientations,
+        min_neighborhood_range=min_neighborhood_range,
+        num_neighborhoods=num_neighborhoods, tree_val=tree_val,
+        nontree_val=nontree_val, adaboost_kws=adaboost_kws)
     clfs_dict = ct.train_classifiers(split_df, response_img_dir)
 
     if output_dir is None:
