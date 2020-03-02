@@ -1,5 +1,11 @@
 # Change log
 
+## 0.3.0 (02/03/2020)
+
+* set default post-classification refinement parameter `refine_beta` to 50 (instead of 100)
+* keyword arguments to `PixelFeaturesBuilder` and `PixelResponseBuilder` can be explicitly provided to the initialization of `ClassifierTrainer`, and are documented there
+* raise a `ValueError` when a provided response is not a binary tree/non-tree image
+
 ## 0.2.0 (11/12/2019)
 
 * correction (typo) `keep_emtpy_tiles` -> `keep_empty_tiles` in `split_into_tiles`
