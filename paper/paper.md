@@ -2,14 +2,18 @@
 title: 'DetecTree: Tree detection from aerial imagery in Python'
 tags:
   - Python
-  - image classification 
+  - tree detection
+  - image segmentation  
+  - remote sensing images
   - GIS
 authors:
  - name: Martí Bosch
    orcid: 0000-0001-8735-9144
+   affiliation: 1
 affiliations:
  - name: Urban and Regional Planning Community, École Polytechnique Fédérale de Lausanne, Switzerland
-date: 
+   index: 1
+date: 4 March 2020
 bibliography: paper.bib
 ---
 
