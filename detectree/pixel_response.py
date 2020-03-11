@@ -17,6 +17,18 @@ class PixelResponseBuilder(object):
     # It is really not necessary to use a class for this, but we do so for the
     # sake of API consistency with the `pixel_features` module
     def __init__(self, tree_val=None, nontree_val=None):
+        """
+        Class that customizes how the pixel response (i.e., the tree/non-tree
+        labels of each pixel) is computed. See the `background
+        <https://bit.ly/2KlCICO>`_ example notebook for more details.
+
+        Parameters
+        ----------
+        tree_val : int, optional
+            The value that designates tree pixels in the response images.
+        nontree_val : int, optional
+            The value that designates non-tree pixels in the response images.
+        """
         if tree_val is None:
             tree_val = settings.RESPONSE_DEFAULT_TREE_VAL
         self.tree_val = tree_val
@@ -53,7 +65,8 @@ class PixelResponseBuilder(object):
                        response_img_filepaths=None, img_filename_pattern=None,
                        method=None, img_cluster=None):
         """
-        TODO
+        Build the pixel response (i.e., the tree/non-tree labels of each pixel)
+        for a list of images
 
         Parameters
         -------

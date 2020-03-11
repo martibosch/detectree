@@ -38,11 +38,11 @@ class TrainingSelector(object):
             `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if
             `img_filepaths` is provided.
         gabor_frequencies : tuple, optional
-            Set of frequencies used to build the Gabor filter. If no value is
-            provided (default), the value will be taken from
+            Set of frequencies used to build the Gabor filter bank. If no value
+            is provided (default), the value will be taken from
             `settings.GIST_DEFAULT_GABOR_FREQUENCIES`.
         gabor_num_orientations : int or tuple, optional
-            Number of orientations used to build the Gabor filter. If an
+            Number of orientations used to build the Gabor filter bank. If an
             integer is provided, the corresponding number of orientations will
             be used for each scale (determined by `gabor_frequencies`). If a
             tuple is provided, each element will determine the number of
@@ -109,7 +109,7 @@ class TrainingSelector(object):
                 frequencies=self.gabor_frequencies,
                 num_orientations=self.gabor_num_orientations)
 
-            num_blocks = self.response_bins_per_axis**2
+            # num_blocks = self.response_bins_per_axis**2
 
             # feature_rows = [
             #      TrainingSelector._get_image_descr(
@@ -121,7 +121,7 @@ class TrainingSelector(object):
                 dask.delayed(
                     image_descriptor.compute_image_descriptor_from_filepath)(
                         img_filepath, kernels, self.response_bins_per_axis,
-                        num_blocks, self.num_color_bins)
+                        self.num_color_bins)
                 for img_filepath in self.img_filepaths
             ]
 

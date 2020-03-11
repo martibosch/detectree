@@ -32,6 +32,48 @@ NUM_ILL_CHANNELS = 3
 class PixelFeaturesBuilder(object):
     def __init__(self, sigmas=None, num_orientations=None, neighborhood=None,
                  min_neighborhood_range=None, num_neighborhoods=None):
+        """
+        Class that customizes how the pixel features are computed. See the
+        `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
+
+        Parameters
+        ----------
+        sigmas : list-like, optional
+            The list of scale parameters (sigmas) to build the Gaussian filter
+            bank that will be used to compute the pixel-level features. The
+            provided argument will be passed to the initialization method of
+            the `PixelFeaturesBuilder` class. If no value is provided, the
+            default value set in `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
+        num_orientations : int, optional
+            The number of equally-distributed orientations to build the
+            Gaussian filter bank that will be used to compute the pixel-level
+            features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no
+            value is provided, the default value set in
+            `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
+        neighborhood : array-like, optional
+            The base neighborhood structure that will be used to compute the
+            entropy features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no
+            value is provided, a square with a side size of
+            `2 * min_neighborhood_range + 1` will be used.
+        min_neighborhood_range : int, optional
+            The range (i.e., the square radius) of the smallest neigbhorhood
+            window that will be used to compute the entropy features. The
+            provided argument will be passed to the initialization method of
+            the `PixelFeaturesBuilder` class. If no value is provided, the
+            default value set in
+            `settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE` will be taken.
+        num_neighborhoods : int, optional
+            The number of neigbhorhood windows (whose size follows a geometric
+            progression starting at `min_neighborhood_range`) that will be
+            used to compute the entropy features. The provided argument will
+            be passed to the initialization method of the
+            `PixelFeaturesBuilder` class. If no value is provided, the default
+            value set in `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be
+            taken.
+        """
         # preprocess technical keyword arguments
         # texture features
         if sigmas is None:
@@ -93,8 +135,8 @@ class PixelFeaturesBuilder(object):
         img_ill_vec = np.dot(A, np.log(np.dot(B, img_xyz_vec.transpose()) +
                                        1)).transpose()
         X[:, :NUM_LAB_CHANNELS] = img_lab_vec
-        X[:, NUM_LAB_CHANNELS:NUM_LAB_CHANNELS +
-          NUM_ILL_CHANNELS] = img_ill_vec
+        X[:,
+          NUM_LAB_CHANNELS:NUM_LAB_CHANNELS + NUM_ILL_CHANNELS] = img_ill_vec
 
         # texture features
         # tpf.compute_texture_features(X_img[:, self.texture_slice],
@@ -122,8 +164,9 @@ class PixelFeaturesBuilder(object):
             img = transform.resize(
                 transform.downscale_local_mean(img_lab_l, (factor, factor)),
                 img_lab_l.shape).astype(np.uint16)
-            X[:, entropy_start + i] = rank.entropy(
-                img, self.neighborhood).flatten()
+            X[:,
+              entropy_start + i] = rank.entropy(img,
+                                                self.neighborhood).flatten()
 
         return X
 

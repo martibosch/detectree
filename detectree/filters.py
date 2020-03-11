@@ -24,10 +24,12 @@ def get_texture_kernel(sigma):
     Parameters
     ----------
     sigma : numeric
+        Scale parameter to build a texture kernel, based on a Gaussian on the
+        X dimension and a second-derivative Gaussian in the Y dimension
 
     Returns
     -------
-    texture_kernel :
+    texture_kernel : array-like
     """
     g0_kernel_arr = _get_gaussian_kernel1d(sigma, 0)
     g2_kernel_arr = _get_gaussian_kernel1d(sigma, 2)
@@ -40,13 +42,19 @@ def get_gabor_filter_bank(frequencies, num_orientations):
     Parameters
     ----------
     frequencies : list-like
-
+        Set of frequencies used to build the Gabor filter bank.
     num_orientations : int or list-like
-
+        Number of orientations used to build the Gabor filter bank. If an
+        integer is provided, the corresponding number of orientations will be
+        used for each scale (determined by `gabor_frequencies`). If a tuple is
+        provided, each element will determine the number of orientations that
+        must be used at its matching scale (determined by `gabor_frequencies`)
+        - thus the tuple must match the length of `frequencies`.
 
     Returns
     -------
-    kernels :
+    kernels : list-like
+        List of kernel 2-D arrays that correspond to the filter bank
     """
     kernels = []
 

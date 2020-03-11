@@ -115,13 +115,13 @@ class TestImageDescriptor(unittest.TestCase):
             frequencies=gabor_frequencies,
             num_orientations=gabor_num_orientations)
         response_bins_per_axis = 4
-        num_blocks = response_bins_per_axis**2
+        # num_blocks = response_bins_per_axis**2
         num_color_bins = 8
         img_descr = image_descriptor.compute_image_descriptor_from_filepath(
-            self.img_filepath, kernels, response_bins_per_axis, num_blocks,
-            num_color_bins)
-        self.assertEqual(len(img_descr),
-                         len(kernels) * num_blocks + num_color_bins**3)
+            self.img_filepath, kernels, response_bins_per_axis, num_color_bins)
+        self.assertEqual(
+            len(img_descr),
+            len(kernels) * response_bins_per_axis**2 + num_color_bins**3)
 
         # TODO: more technical test, e.g., passing an all-zero filter bank
         # should return an all-zero gist descriptor
