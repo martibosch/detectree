@@ -1,5 +1,9 @@
 # Change log
 
+## 0.3.1 (11/03/2020)
+
+* drop `num_blocks` argument of `compute_image_descriptor` and `compute_image_descriptor_from_filepath`
+
 ## 0.3.0 (02/03/2020)
 
 * set default post-classification refinement parameter `refine_beta` to 50 (instead of 100)
