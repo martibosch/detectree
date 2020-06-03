@@ -8,7 +8,7 @@
 
 ## Overview
 
-DetecTree is a Pythonic library to classify tree/non-tree pixels from aerial imagery, following the methods of Yang et al. [1].
+DetecTree is a Pythonic library to classify tree/non-tree pixels from aerial imagery, following the methods of Yang et al. [1]. The target audience is researchers and practitioners in GIS that are interested in two-dimensional aspects of trees, such as their proportional abundance and spatial distribution throughout a region of study and thereafter assess important aspects of urban planning such as the provision of urban ecosystem services. The approach is of special relevance when LIDAR data is not available or it is too costly in monetary or computational terms.
 
 ```python
 import detectree as dtr
@@ -40,6 +40,14 @@ axes[1].imshow(y_pred)
 ![Example](figures/example.png)
 
 See [the API documentation](https://detectree.readthedocs.io/en/latest/?badge=latest) and the [example repository](https://github.com/martibosch/detectree-example) to get started.
+
+## Citation
+
+*Bosch M. 2020. "DetecTree: Tree detection from aerial imagery in Python". Under review in The Journal of Open Source Software.*
+
+Note that DetecTree is based on the methods of Yang et al. [1], therefore it seems fair to reference their work too. An example citation in an academic paper might read as follows:
+
+> The classification of tree pixels has been performed with the Python library DetecTree (Bosch, 2020), which is based on the approach of Yang et al. (2009).
 
 ## Installation
 
