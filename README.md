@@ -39,7 +39,7 @@ axes[1].imshow(y_pred)
 
 ![Example](figures/example.png)
 
-See [the API documentation](https://detectree.readthedocs.io/en/latest/?badge=latest) and the [example repository](https://github.com/martibosch/detectree-example) to get started.
+A full example application of DetecTree to predict a tree canopy map for the Aussersihl district in Zurich [is available as a Jupyter notebook](https://github.com/martibosch/detectree-example/blob/master/notebooks/aussersihl-canopy.ipynb). See also [the API reference documentation](https://detectree.readthedocs.io/en/latest/?badge=latest) and the [example repository](https://github.com/martibosch/detectree-example) for more information on the background and some example notebooks.
 
 ## Citation
 

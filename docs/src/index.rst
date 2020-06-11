@@ -26,7 +26,7 @@ DetecTree is a Pythonic library to classify tree/non-tree pixels from aerial ima
    changelog
    contributing
 
-This documentation is intended as an API reference. See the `detectree-example <https://github.com/martibosch/detectree-example>`_ repository for more information on the background and some example notebooks.
+This documentation is intended as an API reference. A full example application of DetecTree to predict a tree canopy map for the Aussersihl district in Zurich `is available as a Jupyter notebook <https://github.com/martibosch/detectree-example/blob/master/notebooks/aussersihl-canopy.ipynb>`_. See the `detectree-example <https://github.com/martibosch/detectree-example>`_ repository for more information on the background and some example notebooks.
 
 Usage
 -----
