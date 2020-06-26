@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/martibosch/detectree.svg?branch=master)](https://travis-ci.org/martibosch/detectree)
 [![Coverage Status](https://coveralls.io/repos/github/martibosch/detectree/badge.svg?branch=master)](https://coveralls.io/github/martibosch/detectree?branch=master)
 [![GitHub license](https://img.shields.io/github/license/martibosch/detectree.svg)](https://github.com/martibosch/detectree/blob/master/LICENSE)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02172/status.svg)](https://doi.org/10.21105/joss.02172)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3908338.svg)](https://doi.org/10.5281/zenodo.3908338)
 
 # DetecTree
 
@@ -43,7 +45,7 @@ A full example application of DetecTree to predict a tree canopy map for the Aus
 
 ## Citation
 
-*Bosch M. 2020. "DetecTree: Tree detection from aerial imagery in Python". Under review in The Journal of Open Source Software.*
+Bosch M. 2020. “DetecTree: Tree detection from aerial imagery in Python”. *Journal of Open Source Software, 5(50), 2172.* [doi.org/10.21105/joss.02172](https://doi.org/10.21105/joss.02172)
 
 Note that DetecTree is based on the methods of Yang et al. [1], therefore it seems fair to reference their work too. An example citation in an academic paper might read as follows:
 
