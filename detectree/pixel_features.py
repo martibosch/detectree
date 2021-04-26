@@ -30,8 +30,9 @@ NUM_ILL_CHANNELS = 3
 
 
 class PixelFeaturesBuilder(object):
-    def __init__(self, sigmas=None, num_orientations=None, neighborhood=None,
-                 min_neighborhood_range=None, num_neighborhoods=None):
+    def __init__(self, *, sigmas=None, num_orientations=None,
+                 neighborhood=None, min_neighborhood_range=None,
+                 num_neighborhoods=None):
         """
         Class that customizes how the pixel features are computed. See the
         `background <https://bit.ly/2KlCICO>`_ example notebook for more
@@ -174,8 +175,8 @@ class PixelFeaturesBuilder(object):
         img_rgb = utils.img_rgb_from_filepath(img_filepath)
         return self.build_features_from_arr(img_rgb)
 
-    def build_features(self, split_df=None, img_filepaths=None, img_dir=None,
-                       img_filename_pattern=None, method=None,
+    def build_features(self, *, split_df=None, img_filepaths=None,
+                       img_dir=None, img_filename_pattern=None, method=None,
                        img_cluster=None):
         """
         Build the pixel features for a list of images

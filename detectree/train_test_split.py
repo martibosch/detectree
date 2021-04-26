@@ -13,7 +13,7 @@ __all__ = ['TrainingSelector']
 
 
 class TrainingSelector(object):
-    def __init__(self, img_filepaths=None, img_dir=None,
+    def __init__(self, *, img_filepaths=None, img_dir=None,
                  img_filename_pattern=None, gabor_frequencies=None,
                  gabor_num_orientations=None, response_bins_per_axis=None,
                  num_color_bins=None):
@@ -140,7 +140,7 @@ class TrainingSelector(object):
             # TODO: return copy?
             return self._descr_feature_matrix
 
-    def train_test_split(self, method='cluster-II', num_components=12,
+    def train_test_split(self, *, method='cluster-II', num_components=12,
                          num_img_clusters=4, train_prop=.01, return_evr=False):
         """
         Select the image/tiles to be used for traning. See the `background

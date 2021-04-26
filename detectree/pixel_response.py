@@ -16,7 +16,7 @@ class NonBinaryResponseError(Exception):
 class PixelResponseBuilder(object):
     # It is really not necessary to use a class for this, but we do so for the
     # sake of API consistency with the `pixel_features` module
-    def __init__(self, tree_val=None, nontree_val=None):
+    def __init__(self, *, tree_val=None, nontree_val=None):
         """
         Class that customizes how the pixel response (i.e., the tree/non-tree
         labels of each pixel) is computed. See the `background
@@ -61,7 +61,7 @@ class PixelResponseBuilder(object):
                 f"{self.tree_val} (tree) and {self.nontree_val} (non-tree) "
                 "pixel values")
 
-    def build_response(self, split_df=None, response_img_dir=None,
+    def build_response(self, *, split_df=None, response_img_dir=None,
                        response_img_filepaths=None, img_filename_pattern=None,
                        method=None, img_cluster=None):
         """

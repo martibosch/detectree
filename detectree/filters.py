@@ -5,11 +5,10 @@ from skimage.filters import gabor_kernel
 __all__ = ['get_texture_kernel', 'get_gabor_filter_bank']
 
 
-def _get_gaussian_kernel1d(sigma, order=0, truncate=4.0):
+def _get_gaussian_kernel1d(sigma, *, order=0, truncate=4.0):
     """
     Based on scipy.ndimage.filters.gaussian_filter1d
     """
-    truncate = 4
     sd = float(sigma)
     # make the radius of the filter equal to truncate standard deviations
     lw = int(truncate * sd + 0.5)
@@ -31,8 +30,8 @@ def get_texture_kernel(sigma):
     -------
     texture_kernel : array-like
     """
-    g0_kernel_arr = _get_gaussian_kernel1d(sigma, 0)
-    g2_kernel_arr = _get_gaussian_kernel1d(sigma, 2)
+    g0_kernel_arr = _get_gaussian_kernel1d(sigma, order=0)
+    g2_kernel_arr = _get_gaussian_kernel1d(sigma, order=2)
 
     return np.dot(g2_kernel_arr.reshape(1, -1).T, g0_kernel_arr.reshape(1, -1))
 

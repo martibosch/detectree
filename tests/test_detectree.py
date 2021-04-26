@@ -34,8 +34,8 @@ class TestImports(unittest.TestCase):
         from skimage import color, measure, morphology
         from skimage.filters import gabor_kernel, rank
         from skimage.util import shape
-        from sklearn import cluster, decomposition, ensemble, metrics, \
-            preprocessing
+        from sklearn import (cluster, decomposition, ensemble, metrics,
+                             preprocessing)
 
 
 class TestTrainTestSplit(unittest.TestCase):
@@ -80,7 +80,7 @@ class TestTrainTestSplit(unittest.TestCase):
         # is executed
         self.assertIsInstance(
             dtr.TrainingSelector(
-                self.img_filepaths,
+                img_filepaths=self.img_filepaths,
                 gabor_num_orientations=8).gabor_num_orientations, tuple)
 
     def test_train_test_split(self):
@@ -158,37 +158,38 @@ class TestPixelFeatures(unittest.TestCase):
 
         # test providing `method` implicitly (and `split_df`)
         self.assertEqual(
-            self.pfb.build_features(self.split_i_df).shape, shape_i)
+            self.pfb.build_features(split_df=self.split_i_df).shape, shape_i)
         self.assertEqual(
-            self.pfb.build_features(self.split_ii_df,
+            self.pfb.build_features(split_df=self.split_ii_df,
                                     img_cluster=img_cluster).shape, shape_ii)
 
         # test providing `method` explicitly (and `split_df`)
         self.assertEqual(
-            self.pfb.build_features(self.split_i_df, method='cluster-I').shape,
-            shape_i)
+            self.pfb.build_features(split_df=self.split_i_df,
+                                    method='cluster-I').shape, shape_i)
         self.assertEqual(
-            self.pfb.build_features(self.split_ii_df, method='cluster-II',
+            self.pfb.build_features(split_df=self.split_ii_df,
+                                    method='cluster-II',
                                     img_cluster=img_cluster).shape, shape_ii)
 
         # test that `method='cluster-I'` will ignore the 'img_cluster' column
         # of the split data frame
         self.assertEqual(
-            self.pfb.build_features(self.split_ii_df,
+            self.pfb.build_features(split_df=self.split_ii_df,
                                     method='cluster-I').shape,
             (len(self.split_ii_df[self.split_ii_df['train']]) *
              self.pixels_per_img, num_pixel_features))
 
         # test that `method='cluster-II'` and non-None `img_cluster` raises a
         # ValueError
-        self.assertRaises(ValueError, self.pfb.build_features, self.split_i_df,
-                          method='cluster-II')
+        self.assertRaises(ValueError, self.pfb.build_features,
+                          split_df=self.split_i_df, method='cluster-II')
 
         # test that `method='cluster-II'` raises a `ValueError` if `split_df`
         # does not have a `img_cluster` column (when using the method
         # 'cluster-I')
-        self.assertRaises(ValueError, self.pfb.build_features, self.split_i_df,
-                          method='cluster-II')
+        self.assertRaises(ValueError, self.pfb.build_features,
+                          split_df=self.split_i_df, method='cluster-II')
 
         # test providing `img_filepaths`
         img_filepaths = self.split_i_df[
@@ -231,11 +232,11 @@ class TestPixelResponse(unittest.TestCase):
     def test_build_response(self):
         img_cluster = 0
 
-        response_i = self.prb.build_response(self.split_i_df,
-                                             self.response_img_dir)
-        response_ii = self.prb.build_response(self.split_ii_df,
-                                              self.response_img_dir,
-                                              img_cluster=img_cluster)
+        response_i = self.prb.build_response(
+            split_df=self.split_i_df, response_img_dir=self.response_img_dir)
+        response_ii = self.prb.build_response(
+            split_df=self.split_ii_df, response_img_dir=self.response_img_dir,
+            img_cluster=img_cluster)
 
         # test that all responses are ones and zeros
         for unique_response in (np.unique(response_i), np.unique(response_ii)):
@@ -254,35 +255,42 @@ class TestPixelResponse(unittest.TestCase):
 
         # test providing `method` implicitly (and `split_df`)
         self.assertEqual(
-            self.prb.build_response(self.split_i_df, self.response_img_dir,
+            self.prb.build_response(split_df=self.split_i_df,
+                                    response_img_dir=self.response_img_dir,
                                     method='cluster-I').shape, shape_i)
         self.assertEqual(
-            self.prb.build_response(self.split_ii_df, self.response_img_dir,
+            self.prb.build_response(split_df=self.split_ii_df,
+                                    response_img_dir=self.response_img_dir,
                                     method='cluster-II',
                                     img_cluster=img_cluster).shape, shape_ii)
 
         # test that `method='cluster-I'` will ignore the 'img_cluster' column
         # of the split data frame
         self.assertEqual(
-            self.prb.build_response(self.split_ii_df, self.response_img_dir,
+            self.prb.build_response(split_df=self.split_ii_df,
+                                    response_img_dir=self.response_img_dir,
                                     method='cluster-I').shape,
             (len(self.split_ii_df[self.split_ii_df['train']]) *
              self.pixels_per_img, ))
 
         # test that when providing `split_df`, `response_img_dir` is required
-        self.assertRaises(ValueError, self.prb.build_response, self.split_i_df,
-                          method='cluster-II')
+        self.assertRaises(ValueError, self.prb.build_response,
+                          split_df=self.split_i_df, method='cluster-II')
 
         # test that `method='cluster-II'` and non-None `img_cluster` raises a
         # ValueError
-        self.assertRaises(ValueError, self.prb.build_response, self.split_i_df,
-                          self.response_img_dir, method='cluster-II')
+        self.assertRaises(ValueError, self.prb.build_response,
+                          split_df=self.split_i_df,
+                          response_img_dir=self.response_img_dir,
+                          method='cluster-II')
 
         # test that `method='cluster-II'` raises a `ValueError` if `split_df`
         # does not have a `img_cluster` column (when using the method
         # 'cluster-I')
-        self.assertRaises(ValueError, self.prb.build_response, self.split_i_df,
-                          self.response_img_dir, method='cluster-II')
+        self.assertRaises(ValueError, self.prb.build_response,
+                          split_df=self.split_i_df,
+                          response_img_dir=self.response_img_dir,
+                          method='cluster-II')
 
         # test providing `img_filepaths`
         img_filepaths = self.split_i_df[self.split_i_df['train']][
@@ -331,8 +339,8 @@ class TestTrainClassifier(unittest.TestCase):
         num_estimators = 2  # to speed-up the tests
         self.ct = dtr.ClassifierTrainer(num_estimators=num_estimators)
         # cache this first trained classifier to reuse it below
-        self.clf = self.ct.train_classifier(self.split_i_df,
-                                            self.response_img_dir)
+        self.clf = self.ct.train_classifier(
+            split_df=self.split_i_df, response_img_dir=self.response_img_dir)
         # cache the classifier dict to reuse it below
         self.clf_dict = self.ct.train_classifiers(self.split_ii_df,
                                                   self.response_img_dir)
@@ -349,16 +357,19 @@ class TestTrainClassifier(unittest.TestCase):
         # (note that we are using `self.clf` obtained in `setUp`)
         self.assertIsInstance(self.clf, ensemble.AdaBoostClassifier)
         self.assertIsInstance(
-            self.ct.train_classifier(self.split_ii_df, self.response_img_dir,
+            self.ct.train_classifier(split_df=self.split_ii_df,
+                                     response_img_dir=self.response_img_dir,
                                      img_cluster=self.img_cluster),
             ensemble.AdaBoostClassifier)
         # option 1b: `split_df` and `response_img_dir` with explicit method
         self.assertIsInstance(
-            self.ct.train_classifier(self.split_i_df, self.response_img_dir,
+            self.ct.train_classifier(split_df=self.split_i_df,
+                                     response_img_dir=self.response_img_dir,
                                      method='cluster-I'),
             ensemble.AdaBoostClassifier)
         self.assertIsInstance(
-            self.ct.train_classifier(self.split_ii_df, self.response_img_dir,
+            self.ct.train_classifier(split_df=self.split_ii_df,
+                                     response_img_dir=self.response_img_dir,
                                      method='cluster-II',
                                      img_cluster=self.img_cluster),
             ensemble.AdaBoostClassifier)
@@ -417,7 +428,8 @@ class TestTrainClassifier(unittest.TestCase):
         # test that `train_classifiers` raises a `ValueError` if `split_df`
         # doesn't have a 'img_cluster' column
         self.assertRaises(ValueError, self.ct.train_classifiers,
-                          self.split_i_df, self.response_img_dir)
+                          split_df=self.split_i_df,
+                          response_img_dir=self.response_img_dir)
         # test that `train_classifiers` returns a dict otherwise
         # (note that we are using `self.clf_dict` obtained in `setUp`)
         self.assertIsInstance(self.clf_dict, dict)
@@ -448,14 +460,14 @@ class TestTrainClassifier(unittest.TestCase):
         # test that `classify_imgs` with implicit `cluster-I` method returns a
         # list and that the images have been dumped
         pred_imgs = c.classify_imgs(self.split_i_df, self.tmp_output_dir,
-                                    self.clf)
+                                    clf=self.clf)
         self.assertIsInstance(pred_imgs, list)
         self._test_imgs_exist_and_rm(pred_imgs)
 
         # test that `classify_imgs` with implicit `cluster-II` method, `clf`
         # and `img_label` returns a list and that the images have been dumped
         pred_imgs = c.classify_imgs(self.split_ii_df, self.tmp_output_dir,
-                                    self.clf, img_cluster=self.img_cluster)
+                                    clf=self.clf, img_cluster=self.img_cluster)
         self.assertIsInstance(pred_imgs, list)
         self._test_imgs_exist_and_rm(pred_imgs)
         # test that this works equally when providing `clf_dict`

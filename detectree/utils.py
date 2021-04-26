@@ -20,7 +20,7 @@ __all__ = [
 
 
 # See https://bit.ly/2KkELpI
-def split_into_tiles(input_filepath, output_dir, tile_width=None,
+def split_into_tiles(input_filepath, output_dir, *, tile_width=None,
                      tile_height=None, output_filename=None,
                      only_full_tiles=False, keep_empty_tiles=False,
                      custom_meta=None):
@@ -157,7 +157,7 @@ def get_img_filepaths(split_df, img_cluster, train):
 
 
 # logging (from https://github.com/gboeing/osmnx/blob/master/osmnx/utils.py)
-def log(message, level=None, name=None, filename=None):
+def log(message, *, level=None, name=None, filename=None):
     """
     Write a message to the log file and/or print to the the console.
     Parameters
@@ -213,7 +213,7 @@ def log(message, level=None, name=None, filename=None):
         sys.stdout = standard_out
 
 
-def get_logger(level=None, name=None, filename=None):
+def get_logger(*, level=None, name=None, filename=None):
     """
     Create a logger or return the current one if already instantiated.
 

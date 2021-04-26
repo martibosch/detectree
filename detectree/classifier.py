@@ -16,10 +16,10 @@ MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer(object):
-    def __init__(self, num_estimators=None, sigmas=None, num_orientations=None,
-                 neighborhood=None, min_neighborhood_range=None,
-                 num_neighborhoods=None, tree_val=None, nontree_val=None,
-                 **adaboost_kws):
+    def __init__(self, *, num_estimators=None, sigmas=None,
+                 num_orientations=None, neighborhood=None,
+                 min_neighborhood_range=None, num_neighborhoods=None,
+                 tree_val=None, nontree_val=None, **adaboost_kws):
         """
         Class to train a binary tree/non-tree classifier(s) of the pixel
         features. See the `background <https://bit.ly/2KlCICO>`_ example
@@ -99,7 +99,7 @@ class ClassifierTrainer(object):
                                                nontree_val=nontree_val)
         self.adaboost_kws = adaboost_kws
 
-    def train_classifier(self, split_df=None, response_img_dir=None,
+    def train_classifier(self, *, split_df=None, response_img_dir=None,
                          img_filepaths=None, response_img_filepaths=None,
                          img_dir=None, img_filename_pattern=None, method=None,
                          img_cluster=None):
@@ -225,7 +225,7 @@ class ClassifierTrainer(object):
 
 
 class Classifier(object):
-    def __init__(self, tree_val=None, nontree_val=None, refine=None,
+    def __init__(self, *, tree_val=None, nontree_val=None, refine=None,
                  refine_beta=None, refine_int_rescale=None,
                  **pixel_features_builder_kws):
         """
@@ -308,7 +308,9 @@ class Classifier(object):
         y_pred : np.ndarray
             Array with the pixel responses
         """
-
+        # ACHTUNG: Note that we do not use keyword-only arguments in this
+        # method because `output_filepath` works as the only "optional"
+        # argument
         src = rio.open(img_filepath)
         img_shape = src.shape
 
@@ -383,13 +385,14 @@ class Classifier(object):
         return pred_img_filepaths
 
     def classify_imgs(
-            self,
-            split_df,
-            output_dir,
-            clf=None,
-            clf_dict=None,
-            method=None,
-            img_cluster=None,
+        self,
+        split_df,
+        output_dir,
+        *,
+        clf=None,
+        clf_dict=None,
+        method=None,
+        img_cluster=None,
     ):
         """
         Classify thes image in `img_filepaths` with the classifier(s) `clf` or
