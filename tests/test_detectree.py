@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import rasterio as rio
 from click import testing
+from scipy import ndimage as ndi
 from sklearn import ensemble
 
 import detectree as dtr
@@ -506,6 +507,42 @@ class TestTrainClassifier(unittest.TestCase):
         # test that `classify_img` returns a ndarray
         self.assertIsInstance(c.classify_img(img_filepath, self.clf),
                               np.ndarray)
+
+
+class TestLidarToCanopy(unittest.TestCase):
+    def setUp(self):
+        self.lidar_data_dir = 'tests/data/lidar'
+        self.lidar_filepath = path.join(self.lidar_data_dir, 'lidar.laz')
+        self.ref_img_filepath = path.join(self.lidar_data_dir, 'ref-img.tif')
+        self.lidar_tree_values = [4, 5]
+        self.tmp_dir = path.join(self.lidar_data_dir, 'tmp')
+        os.mkdir(self.tmp_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_lidar_to_canopy(self):
+        ltc = dtr.LidarToCanopy()
+
+        # test that `to_canopy_mask` returns a ndarray
+        self.assertIsInstance(
+            ltc.to_canopy_mask(self.lidar_filepath, self.lidar_tree_values,
+                               self.ref_img_filepath), np.ndarray)
+
+        # test that we can pass a `postprocess_func` to `to_canopy_mask`
+        y_pred = ltc.to_canopy_mask(self.lidar_filepath,
+                                    self.lidar_tree_values,
+                                    self.ref_img_filepath,
+                                    postprocess_func=ndi.binary_dilation)
+        # test that `to_canopy_mask` with `output_filepath` returns a ndarray
+        # and dumps it
+        output_filepath = path.join(self.tmp_dir, 'foo.tif')
+        y_pred = ltc.to_canopy_mask(self.lidar_filepath,
+                                    self.lidar_tree_values,
+                                    self.ref_img_filepath,
+                                    output_filepath=output_filepath)
+        self.assertIsInstance(y_pred, np.ndarray)
+        self.assertTrue(os.path.exists(output_filepath))
 
 
 class TestUtils(unittest.TestCase):
