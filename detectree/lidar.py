@@ -7,7 +7,7 @@ from shapely import geometry
 
 from . import settings
 
-__all__ = ['rasterize_lidar', 'LidarToCanopy']
+__all__ = ["rasterize_lidar", "LidarToCanopy"]
 
 
 def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
@@ -33,26 +33,40 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
     lidar_arr : np.ndarray
         Array with the rasterized lidar
     """
-    with lp_file.File(lidar_filepath, mode='r') as src:
+    with lp_file.File(lidar_filepath, mode="r") as src:
         c = src.get_classification()
         x = src.x
         y = src.y
 
     cond = np.isin(c, lidar_tree_values)
-    lidar_df = pd.DataFrame({'class_val': c[cond], 'x': x[cond], 'y': y[cond]})
+    lidar_df = pd.DataFrame({"class_val": c[cond], "x": x[cond], "y": y[cond]})
 
     with rio.open(ref_img_filepath) as src:
         return features.rasterize(
-            shapes=[(geom, 1) for geom, _ in zip([
-                geometry.Point(x, y)
-                for x, y in zip(lidar_df['x'], lidar_df['y'])
-            ], lidar_df['class_val'])], out_shape=src.shape,
-            transform=src.transform, merge_alg=enums.MergeAlg('ADD'))
+            shapes=[
+                (geom, 1)
+                for geom, _ in zip(
+                    [
+                        geometry.Point(x, y)
+                        for x, y in zip(lidar_df["x"], lidar_df["y"])
+                    ],
+                    lidar_df["class_val"],
+                )
+            ],
+            out_shape=src.shape,
+            transform=src.transform,
+            merge_alg=enums.MergeAlg("ADD"),
+        )
 
 
 class LidarToCanopy:
-    def __init__(self, tree_threshold=None, output_dtype=None,
-                 output_tree_val=None, output_nodata=None):
+    def __init__(
+        self,
+        tree_threshold=None,
+        output_dtype=None,
+        output_tree_val=None,
+        output_nodata=None,
+    ):
         """
         Class to extract raster canopy masks from LiDAR data.
 
@@ -86,9 +100,15 @@ class LidarToCanopy:
         self.output_tree_val = output_tree_val
         self.output_nodata = output_nodata
 
-    def to_canopy_mask(self, lidar_filepath, lidar_tree_values,
-                       ref_img_filepath, *, postprocess_func=None,
-                       output_filepath=None):
+    def to_canopy_mask(
+        self,
+        lidar_filepath,
+        lidar_tree_values,
+        ref_img_filepath,
+        *,
+        postprocess_func=None,
+        output_filepath=None
+    ):
         """
         Transforms a LiDAR file into a canopy mask, i.e., an array of
         tree/non-tree pixels.
@@ -126,20 +146,23 @@ class LidarToCanopy:
         #                        iterations=self.num_opening_iterations),
         #     iterations=self.num_dilation_iterations).astype(
         #         self.output_dtype) * self.output_tree_val
-        lidar_arr = rasterize_lidar(lidar_filepath, lidar_tree_values,
-                                    ref_img_filepath)
+        lidar_arr = rasterize_lidar(
+            lidar_filepath, lidar_tree_values, ref_img_filepath
+        )
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:
             canopy_arr = postprocess_func(canopy_arr)
-        canopy_arr = np.where(canopy_arr, self.output_tree_val,
-                              self.output_nodata).astype(self.output_dtype)
+        canopy_arr = np.where(
+            canopy_arr, self.output_tree_val, self.output_nodata
+        ).astype(self.output_dtype)
 
         if output_filepath is not None:
             with rio.open(ref_img_filepath) as src:
                 meta = src.meta.copy()
-            meta.update(dtype=self.output_dtype, count=1,
-                        nodata=self.output_nodata)
-            with rio.open(output_filepath, 'w', **meta) as dst:
+            meta.update(
+                dtype=self.output_dtype, count=1, nodata=self.output_nodata
+            )
+            with rio.open(output_filepath, "w", **meta) as dst:
                 dst.write(canopy_arr, 1)
 
         return canopy_arr

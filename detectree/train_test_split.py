@@ -9,14 +9,21 @@ from sklearn import cluster, decomposition, metrics
 
 from . import filters, image_descriptor, settings
 
-__all__ = ['TrainingSelector']
+__all__ = ["TrainingSelector"]
 
 
 class TrainingSelector(object):
-    def __init__(self, *, img_filepaths=None, img_dir=None,
-                 img_filename_pattern=None, gabor_frequencies=None,
-                 gabor_num_orientations=None, response_bins_per_axis=None,
-                 num_color_bins=None):
+    def __init__(
+        self,
+        *,
+        img_filepaths=None,
+        img_dir=None,
+        img_filename_pattern=None,
+        gabor_frequencies=None,
+        gabor_num_orientations=None,
+        response_bins_per_axis=None,
+        num_color_bins=None
+    ):
         """
         Class to select the images/tiles to be used to train the classifier(s).
         The arguments provided to the initialization method will determine how
@@ -72,11 +79,13 @@ class TrainingSelector(object):
         if gabor_frequencies is None:
             gabor_frequencies = settings.GIST_DEFAULT_GABOR_FREQUENCIES
         if gabor_num_orientations is None:
-            gabor_num_orientations = \
+            gabor_num_orientations = (
                 settings.GIST_DEFAULT_GABOR_NUM_ORIENTATIONS
+            )
         if response_bins_per_axis is None:
-            response_bins_per_axis = \
+            response_bins_per_axis = (
                 settings.GIST_DEFAULT_RESPONSE_BINS_PER_AXIS
+            )
         if num_color_bins is None:
             num_color_bins = settings.GIST_DEFAULT_NUM_COLOR_BINS
 
@@ -94,8 +103,9 @@ class TrainingSelector(object):
             self.gabor_num_orientations = gabor_num_orientations
         else:
             # `gabor_num_orientations` is an int
-            self.gabor_num_orientations = tuple(gabor_num_orientations
-                                                for _ in gabor_frequencies)
+            self.gabor_num_orientations = tuple(
+                gabor_num_orientations for _ in gabor_frequencies
+            )
 
         self.response_bins_per_axis = response_bins_per_axis
         self.num_color_bins = num_color_bins
@@ -107,7 +117,8 @@ class TrainingSelector(object):
         except AttributeError:
             kernels = filters.get_gabor_filter_bank(
                 frequencies=self.gabor_frequencies,
-                num_orientations=self.gabor_num_orientations)
+                num_orientations=self.gabor_num_orientations,
+            )
 
             # num_blocks = self.response_bins_per_axis**2
 
@@ -119,9 +130,13 @@ class TrainingSelector(object):
             #  ]
             values = [
                 dask.delayed(
-                    image_descriptor.compute_image_descriptor_from_filepath)(
-                        img_filepath, kernels, self.response_bins_per_axis,
-                        self.num_color_bins)
+                    image_descriptor.compute_image_descriptor_from_filepath
+                )(
+                    img_filepath,
+                    kernels,
+                    self.response_bins_per_axis,
+                    self.num_color_bins,
+                )
                 for img_filepath in self.img_filepaths
             ]
 
@@ -140,8 +155,15 @@ class TrainingSelector(object):
             # TODO: return copy?
             return self._descr_feature_matrix
 
-    def train_test_split(self, *, method='cluster-II', num_components=12,
-                         num_img_clusters=4, train_prop=.01, return_evr=False):
+    def train_test_split(
+        self,
+        *,
+        method="cluster-II",
+        num_components=12,
+        num_img_clusters=4,
+        train_prop=0.01,
+        return_evr=False
+    ):
         """
         Select the image/tiles to be used for traning. See the `background
         <https://bit.ly/2KlCICO>`_ example notebook for more details.
@@ -176,17 +198,24 @@ class TrainingSelector(object):
 
         X_pca = pca.transform(X)
         X_cols = range(num_components)
-        df = pd.concat((pd.Series(self.img_filepaths, name='img_filepath'),
-                        pd.DataFrame(X_pca, columns=X_cols)), axis=1)
+        df = pd.concat(
+            (
+                pd.Series(self.img_filepaths, name="img_filepath"),
+                pd.DataFrame(X_pca, columns=X_cols),
+            ),
+            axis=1,
+        )
 
-        if method == 'cluster-I':
-            km = cluster.KMeans(n_clusters=int(np.ceil(train_prop *
-                                                       len(df)))).fit(X_pca)
+        if method == "cluster-I":
+            km = cluster.KMeans(
+                n_clusters=int(np.ceil(train_prop * len(df)))
+            ).fit(X_pca)
             closest, _ = metrics.pairwise_distances_argmin_min(
-                km.cluster_centers_, df[X_cols])
+                km.cluster_centers_, df[X_cols]
+            )
             train_idx = df.iloc[closest].index
 
-            df['train'] = [True if i in train_idx else False for i in df.index]
+            df["train"] = [True if i in train_idx else False for i in df.index]
         else:
 
             def cluster_train_test_split(img_cluster_ser):
@@ -194,20 +223,24 @@ class TrainingSelector(object):
                 # use `ceil` to avoid zeros, which might completely ignore a
                 # significant image cluster
                 num_train = int(np.ceil(train_prop * len(X_cluster_df)))
-                cluster_km = cluster.KMeans(
-                    n_clusters=num_train).fit(X_cluster_df)
+                cluster_km = cluster.KMeans(n_clusters=num_train).fit(
+                    X_cluster_df
+                )
                 closest, _ = metrics.pairwise_distances_argmin_min(
-                    cluster_km.cluster_centers_, X_cluster_df)
+                    cluster_km.cluster_centers_, X_cluster_df
+                )
                 train_idx = X_cluster_df.iloc[closest].index
                 return [
                     True if i in train_idx else False
                     for i in X_cluster_df.index
                 ]
 
-            df['img_cluster'] = cluster.KMeans(
-                n_clusters=num_img_clusters).fit_predict(X_pca)
-            df['train'] = df.groupby('img_cluster')['img_cluster'].transform(
-                cluster_train_test_split)
+            df["img_cluster"] = cluster.KMeans(
+                n_clusters=num_img_clusters
+            ).fit_predict(X_pca)
+            df["train"] = df.groupby("img_cluster")["img_cluster"].transform(
+                cluster_train_test_split
+            )
 
         split_df = df.drop(X_cols, axis=1)
 

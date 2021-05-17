@@ -10,17 +10,25 @@ from skimage.filters import rank
 
 from . import filters, settings, utils
 
-__all__ = ['PixelFeaturesBuilder']
+__all__ = ["PixelFeaturesBuilder"]
 
 # to convert to illumination-invariant color space
 # https://www.cs.harvard.edu/~sjg/papers/cspace.pdf
-B = np.array([[0.9465229, 0.2946927, -0.1313419],
-              [-0.1179179, 0.9929960, 0.007371554],
-              [0.09230461, -0.04645794, 0.9946464]])
+B = np.array(
+    [
+        [0.9465229, 0.2946927, -0.1313419],
+        [-0.1179179, 0.9929960, 0.007371554],
+        [0.09230461, -0.04645794, 0.9946464],
+    ]
+)
 
-A = np.array([[27.07439, -22.80783, -1.806681],
-              [-5.646736, -7.722125, 12.86503],
-              [-4.163133, -4.579428, -4.576049]])
+A = np.array(
+    [
+        [27.07439, -22.80783, -1.806681],
+        [-5.646736, -7.722125, 12.86503],
+        [-4.163133, -4.579428, -4.576049],
+    ]
+)
 
 # TODO: only one `NUM_CHANNELS` constant?
 NUM_RGB_CHANNELS = 3
@@ -30,9 +38,15 @@ NUM_ILL_CHANNELS = 3
 
 
 class PixelFeaturesBuilder(object):
-    def __init__(self, *, sigmas=None, num_orientations=None,
-                 neighborhood=None, min_neighborhood_range=None,
-                 num_neighborhoods=None):
+    def __init__(
+        self,
+        *,
+        sigmas=None,
+        num_orientations=None,
+        neighborhood=None,
+        min_neighborhood_range=None,
+        num_neighborhoods=None
+    ):
         """
         Class that customizes how the pixel features are computed. See the
         `background <https://bit.ly/2KlCICO>`_ example notebook for more
@@ -102,20 +116,25 @@ class PixelFeaturesBuilder(object):
         #     num_neighborhoods = len(neighborhoods)
         if neighborhood is None:
             if min_neighborhood_range is None:
-                min_neighborhood_range = \
+                min_neighborhood_range = (
                     settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE
+                )
             neighborhood = morphology.square(2 * min_neighborhood_range + 1)
         self.neighborhood = neighborhood
         if num_neighborhoods is None:
             num_neighborhoods = settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS
-        self.scales = np.geomspace(1, 2**(num_neighborhoods - 1),
-                                   num_neighborhoods).astype(int)
+        self.scales = np.geomspace(
+            1, 2 ** (num_neighborhoods - 1), num_neighborhoods
+        ).astype(int)
 
         self.num_color_features = NUM_LAB_CHANNELS + NUM_ILL_CHANNELS
         self.num_texture_features = num_orientations * len(sigmas)
         self.num_entropy_features = num_neighborhoods
-        self.num_pixel_features = self.num_color_features + \
-            self.num_texture_features + self.num_entropy_features
+        self.num_pixel_features = (
+            self.num_color_features
+            + self.num_texture_features
+            + self.num_entropy_features
+        )
         # self.X = np.zeros((num_tiling_pixels, num_img_features))
 
     def build_features_from_arr(self, img_rgb):
@@ -131,13 +150,16 @@ class PixelFeaturesBuilder(object):
         # color features
         # tpf.compute_color_features(X_img[:, self.color_slice])
         img_lab_vec = img_lab.reshape(num_rows * num_cols, NUM_LAB_CHANNELS)
-        img_xyz_vec = color.rgb2xyz(img_rgb).reshape(num_rows * num_cols,
-                                                     NUM_XYZ_CHANNELS)
-        img_ill_vec = np.dot(A, np.log(np.dot(B, img_xyz_vec.transpose()) +
-                                       1)).transpose()
+        img_xyz_vec = color.rgb2xyz(img_rgb).reshape(
+            num_rows * num_cols, NUM_XYZ_CHANNELS
+        )
+        img_ill_vec = np.dot(
+            A, np.log(np.dot(B, img_xyz_vec.transpose()) + 1)
+        ).transpose()
         X[:, :NUM_LAB_CHANNELS] = img_lab_vec
-        X[:,
-          NUM_LAB_CHANNELS:NUM_LAB_CHANNELS + NUM_ILL_CHANNELS] = img_ill_vec
+        X[
+            :, NUM_LAB_CHANNELS : NUM_LAB_CHANNELS + NUM_ILL_CHANNELS
+        ] = img_ill_vec
 
         # texture features
         # tpf.compute_texture_features(X_img[:, self.texture_slice],
@@ -148,26 +170,30 @@ class PixelFeaturesBuilder(object):
                 # theta = orientation / num_orientations * np.pi
                 theta = orientation * 180 / self.num_orientations
                 oriented_kernel_arr = ndi.interpolation.rotate(
-                    base_kernel_arr, theta)
+                    base_kernel_arr, theta
+                )
                 img_filtered = ndi.convolve(img_lab_l, oriented_kernel_arr)
                 img_filtered_vec = img_filtered.flatten()
-                X[:, self.num_color_features + i * self.num_orientations +
-                  j] = img_filtered_vec
+                X[
+                    :, self.num_color_features + i * self.num_orientations + j
+                ] = img_filtered_vec
 
         # entropy features
         # tpf.compute_entropy_features(X_img[:, self.entropy_slice],
         #                              self.neighborhood, self.scales)
         entropy_start = self.num_color_features + self.num_texture_features
-        X[:, entropy_start] = rank.entropy(img_lab_l.astype(np.uint16),
-                                           self.neighborhood).flatten()
+        X[:, entropy_start] = rank.entropy(
+            img_lab_l.astype(np.uint16), self.neighborhood
+        ).flatten()
 
         for i, factor in enumerate(self.scales[1:], start=1):
             img = transform.resize(
                 transform.downscale_local_mean(img_lab_l, (factor, factor)),
-                img_lab_l.shape).astype(np.uint16)
-            X[:,
-              entropy_start + i] = rank.entropy(img,
-                                                self.neighborhood).flatten()
+                img_lab_l.shape,
+            ).astype(np.uint16)
+            X[:, entropy_start + i] = rank.entropy(
+                img, self.neighborhood
+            ).flatten()
 
         return X
 
@@ -175,9 +201,16 @@ class PixelFeaturesBuilder(object):
         img_rgb = utils.img_rgb_from_filepath(img_filepath)
         return self.build_features_from_arr(img_rgb)
 
-    def build_features(self, *, split_df=None, img_filepaths=None,
-                       img_dir=None, img_filename_pattern=None, method=None,
-                       img_cluster=None):
+    def build_features(
+        self,
+        *,
+        split_df=None,
+        img_filepaths=None,
+        img_dir=None,
+        img_filename_pattern=None,
+        method=None,
+        img_cluster=None
+    ):
         """
         Build the pixel features for a list of images
 
@@ -212,34 +245,39 @@ class PixelFeaturesBuilder(object):
         # TODO: accept `neighborhoods` kwarg
         if split_df is not None:
             if method is None:
-                if 'img_cluster' in split_df:
-                    method = 'cluster-II'
+                if "img_cluster" in split_df:
+                    method = "cluster-II"
                 else:
-                    method = 'cluster-I'
+                    method = "cluster-I"
 
-            if method == 'cluster-I':
+            if method == "cluster-I":
                 # dump_train_feature_arrays(split_df, output_filepath)
-                img_filepaths = split_df[split_df['train']]['img_filepath']
+                img_filepaths = split_df[split_df["train"]]["img_filepath"]
             else:
                 if img_cluster is None:
                     raise ValueError(
                         "If `method` is 'cluster-II', `img_cluster` must be "
-                        "provided")
+                        "provided"
+                    )
                 img_filepaths = utils.get_img_filepaths(
-                    split_df, img_cluster, True)
+                    split_df, img_cluster, True
+                )
 
         else:
             if img_filepaths is None:
                 if img_filename_pattern is None:
-                    img_filename_pattern = \
+                    img_filename_pattern = (
                         settings.IMG_DEFAULT_FILENAME_PATTERN
+                    )
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must "
-                        "be provided")
+                        "be provided"
+                    )
 
                 img_filepaths = glob.glob(
-                    path.join(img_dir, img_filename_pattern))
+                    path.join(img_dir, img_filename_pattern)
+                )
 
         values = [
             dask.delayed(self.build_features_from_filepath)(img_filepath)

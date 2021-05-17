@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage.filters import _gaussian_kernel1d
 from skimage.filters import gabor_kernel
 
-__all__ = ['get_texture_kernel', 'get_gabor_filter_bank']
+__all__ = ["get_texture_kernel", "get_gabor_filter_bank"]
 
 
 def _get_gaussian_kernel1d(sigma, *, order=0, truncate=4.0):

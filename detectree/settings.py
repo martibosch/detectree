@@ -3,7 +3,7 @@ import logging as lg
 import numpy as np
 
 # train/test split
-GIST_DEFAULT_GABOR_FREQUENCIES = (.1, .25, .4)
+GIST_DEFAULT_GABOR_FREQUENCIES = (0.1, 0.25, 0.4)
 GIST_DEFAULT_GABOR_NUM_ORIENTATIONS = (4, 8, 8)
 GIST_DEFAULT_RESPONSE_BINS_PER_AXIS = 4
 GIST_DEFAULT_NUM_COLOR_BINS = 8
@@ -28,21 +28,21 @@ CLF_DEFAULT_REFINE_INT_RESCALE = 10000
 
 # LIDAR
 LIDAR_TREE_THRESHOLD = 15
-LIDAR_OUTPUT_DTYPE = 'uint8'
+LIDAR_OUTPUT_DTYPE = "uint8"
 LIDAR_OUTPUT_TREE_VAL = 255
 LIDAR_OUTPUT_NODATA = 0
 
 # utils
 TILE_DEFAULT_WIDTH = 512
 TILE_DEFAULT_HEIGHT = 512
-TILE_DEFAULT_OUTPUT_FILENAME = 'tile_{}-{}.tif'
-IMG_DEFAULT_FILENAME_PATTERN = '*.tif'
+TILE_DEFAULT_OUTPUT_FILENAME = "tile_{}-{}.tif"
+IMG_DEFAULT_FILENAME_PATTERN = "*.tif"
 
 # logging (from https://github.com/gboeing/osmnx/blob/master/osmnx/settings.py)
-logs_folder = 'logs'
+logs_folder = "logs"
 # write log to file and/or to console
 log_file = False
 log_console = True
 log_level = lg.INFO
-log_name = 'detectree'
-log_filename = 'detectree'
+log_name = "detectree"
+log_filename = "detectree"

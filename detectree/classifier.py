@@ -10,16 +10,25 @@ from sklearn import ensemble
 
 from . import pixel_features, pixel_response, settings, utils
 
-__all__ = ['ClassifierTrainer', 'Classifier']
+__all__ = ["ClassifierTrainer", "Classifier"]
 
 MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer(object):
-    def __init__(self, *, num_estimators=None, sigmas=None,
-                 num_orientations=None, neighborhood=None,
-                 min_neighborhood_range=None, num_neighborhoods=None,
-                 tree_val=None, nontree_val=None, **adaboost_kws):
+    def __init__(
+        self,
+        *,
+        num_estimators=None,
+        sigmas=None,
+        num_orientations=None,
+        neighborhood=None,
+        min_neighborhood_range=None,
+        num_neighborhoods=None,
+        tree_val=None,
+        nontree_val=None,
+        **adaboost_kws,
+    ):
         """
         Class to train a binary tree/non-tree classifier(s) of the pixel
         features. See the `background <https://bit.ly/2KlCICO>`_ example
@@ -91,18 +100,29 @@ class ClassifierTrainer(object):
         self.num_estimators = num_estimators
 
         self.pixel_features_builder_kws = dict(
-            sigmas=sigmas, num_orientations=num_orientations,
+            sigmas=sigmas,
+            num_orientations=num_orientations,
             neighborhood=neighborhood,
             min_neighborhood_range=min_neighborhood_range,
-            num_neighborhoods=num_neighborhoods)
-        self.pixel_response_builder_kws = dict(tree_val=tree_val,
-                                               nontree_val=nontree_val)
+            num_neighborhoods=num_neighborhoods,
+        )
+        self.pixel_response_builder_kws = dict(
+            tree_val=tree_val, nontree_val=nontree_val
+        )
         self.adaboost_kws = adaboost_kws
 
-    def train_classifier(self, *, split_df=None, response_img_dir=None,
-                         img_filepaths=None, response_img_filepaths=None,
-                         img_dir=None, img_filename_pattern=None, method=None,
-                         img_cluster=None):
+    def train_classifier(
+        self,
+        *,
+        split_df=None,
+        response_img_dir=None,
+        img_filepaths=None,
+        response_img_filepaths=None,
+        img_dir=None,
+        img_filename_pattern=None,
+        method=None,
+        img_cluster=None,
+    ):
         """
         Train a classifier. See the `background <https://bit.ly/2KlCICO>`_
         example notebook for more details.
@@ -154,14 +174,17 @@ class ClassifierTrainer(object):
                 # TODO: this is copied from `build_features` - ideally, we
                 # should DRY it
                 if img_filename_pattern is None:
-                    img_filename_pattern = \
+                    img_filename_pattern = (
                         settings.IMG_DEFAULT_FILENAME_PATTERN
+                    )
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must "
-                        "be provided")
+                        "be provided"
+                    )
                 img_filepaths = glob.glob(
-                    path.join(img_dir, img_filename_pattern))
+                    path.join(img_dir, img_filename_pattern)
+                )
 
             response_img_filepaths = [
                 path.join(response_img_dir, path.basename(img_filepath))
@@ -169,20 +192,30 @@ class ClassifierTrainer(object):
             ]
 
         X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kws).build_features(
-                split_df=split_df, img_filepaths=img_filepaths,
-                img_dir=img_dir, img_filename_pattern=img_filename_pattern,
-                method=method, img_cluster=img_cluster)
+            **self.pixel_features_builder_kws
+        ).build_features(
+            split_df=split_df,
+            img_filepaths=img_filepaths,
+            img_dir=img_dir,
+            img_filename_pattern=img_filename_pattern,
+            method=method,
+            img_cluster=img_cluster,
+        )
 
         y = pixel_response.PixelResponseBuilder(
-            **self.pixel_response_builder_kws).build_response(
-                split_df=split_df, response_img_dir=response_img_dir,
-                response_img_filepaths=response_img_filepaths,
-                img_filename_pattern=img_filename_pattern, method=method,
-                img_cluster=img_cluster)
+            **self.pixel_response_builder_kws
+        ).build_response(
+            split_df=split_df,
+            response_img_dir=response_img_dir,
+            response_img_filepaths=response_img_filepaths,
+            img_filename_pattern=img_filename_pattern,
+            method=method,
+            img_cluster=img_cluster,
+        )
 
-        clf = ensemble.AdaBoostClassifier(n_estimators=self.num_estimators,
-                                          **self.adaboost_kws)
+        clf = ensemble.AdaBoostClassifier(
+            n_estimators=self.num_estimators, **self.adaboost_kws
+        )
         clf.fit(X, y)
 
         return clf
@@ -207,16 +240,20 @@ class ClassifierTrainer(object):
             Dictionary mapping a scikit-learn AdaBoostClassifier to each
             first-level cluster label
         """
-        if 'img_cluster' not in split_df:
+        if "img_cluster" not in split_df:
             raise ValueError(
                 "`split_df` must have an 'img_cluster' column ('cluster-II'). "
-                "For 'cluster-I', use `train_classifier`.")
+                "For 'cluster-I', use `train_classifier`."
+            )
 
         clfs_lazy = {}
-        for img_cluster, _ in split_df.groupby('img_cluster'):
+        for img_cluster, _ in split_df.groupby("img_cluster"):
             clfs_lazy[img_cluster] = dask.delayed(self.train_classifier)(
-                split_df=split_df, response_img_dir=response_img_dir,
-                method='cluster-II', img_cluster=img_cluster)
+                split_df=split_df,
+                response_img_dir=response_img_dir,
+                method="cluster-II",
+                img_cluster=img_cluster,
+            )
 
         with diagnostics.ProgressBar():
             clfs_dict = dask.compute(clfs_lazy)[0]
@@ -225,9 +262,16 @@ class ClassifierTrainer(object):
 
 
 class Classifier(object):
-    def __init__(self, *, tree_val=None, nontree_val=None, refine=None,
-                 refine_beta=None, refine_int_rescale=None,
-                 **pixel_features_builder_kws):
+    def __init__(
+        self,
+        *,
+        tree_val=None,
+        nontree_val=None,
+        refine=None,
+        refine_beta=None,
+        refine_int_rescale=None,
+        **pixel_features_builder_kws,
+    ):
         """
         Class use the trained classifier(s) to classify tree/non-tree pixels.
         See the `background <https://bit.ly/2KlCICO>`_ example notebook for
@@ -315,8 +359,8 @@ class Classifier(object):
         img_shape = src.shape
 
         X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kws).build_features_from_filepath(
-                img_filepath)
+            **self.pixel_features_builder_kws
+        ).build_features_from_filepath(img_filepath)
 
         if not self.refine:
             y_pred = clf.predict(X).reshape(img_shape)
@@ -341,8 +385,9 @@ class Classifier(object):
             D_tree = (self.refine_int_rescale * np.log(P_nontree)).astype(int)
             D_nontree = (self.refine_int_rescale * np.log(P_tree)).astype(int)
             # TODO: option to choose Moore/Von Neumann neighborhood?
-            g.add_grid_edges(node_ids, self.refine_beta,
-                             structure=MOORE_NEIGHBORHOOD_ARR)
+            g.add_grid_edges(
+                node_ids, self.refine_beta, structure=MOORE_NEIGHBORHOOD_ARR
+            )
             g.add_grid_tedges(node_ids, D_tree, D_nontree)
             g.maxflow()
             # y_pred = g.get_grid_segments(node_ids)
@@ -356,10 +401,18 @@ class Classifier(object):
         # output_filepath = path.join(output_dir,
         #                             f"tile_{tile_start}-{tile_end}.tif")
         if output_filepath is not None:
-            with rio.open(output_filepath, 'w', driver='GTiff',
-                          width=y_pred.shape[1], height=y_pred.shape[0],
-                          count=1, dtype=np.uint8, nodata=self.nontree_val,
-                          crs=src.crs, transform=src.transform) as dst:
+            with rio.open(
+                output_filepath,
+                "w",
+                driver="GTiff",
+                width=y_pred.shape[1],
+                height=y_pred.shape[0],
+                count=1,
+                dtype=np.uint8,
+                nodata=self.nontree_val,
+                crs=src.crs,
+                transform=src.transform,
+            ) as dst:
                 dst.write(y_pred.astype(np.uint8), 1)
 
         src.close()
@@ -372,11 +425,14 @@ class Classifier(object):
             # filename, ext = path.splitext(path.basename(img_filepath))
             # pred_img_filepath = path.join(
             #     output_dir, f"{filename}-pred{ext}")
-            pred_img_filepath = path.join(output_dir,
-                                          path.basename(img_filepath))
+            pred_img_filepath = path.join(
+                output_dir, path.basename(img_filepath)
+            )
             pred_imgs_lazy.append(
-                dask.delayed(self.classify_img)(img_filepath, clf,
-                                                pred_img_filepath))
+                dask.delayed(self.classify_img)(
+                    img_filepath, clf, pred_img_filepath
+                )
+            )
             pred_img_filepaths.append(pred_img_filepath)
 
         with diagnostics.ProgressBar():
@@ -425,17 +481,19 @@ class Classifier(object):
         """
 
         if method is None:
-            if 'img_cluster' in split_df:
-                method = 'cluster-II'
+            if "img_cluster" in split_df:
+                method = "cluster-II"
             else:
-                method = 'cluster-I'
+                method = "cluster-I"
 
-        if method == 'cluster-I':
+        if method == "cluster-I":
             if clf is None:
                 raise ValueError(
-                    "If using 'cluster-I' method, `clf` must be provided")
+                    "If using 'cluster-I' method, `clf` must be provided"
+                )
             return self._classify_imgs(
-                split_df[~split_df['train']]['img_filepath'], clf, output_dir)
+                split_df[~split_df["train"]]["img_filepath"], clf, output_dir
+            )
         else:
             if img_cluster is not None:
                 if clf is None:
@@ -443,20 +501,26 @@ class Classifier(object):
                         clf = clf_dict[img_cluster]
                     else:
                         raise ValueError(
-                            "Either `clf` or `clf_dict` must be provided")
+                            "Either `clf` or `clf_dict` must be provided"
+                        )
 
                 return self._classify_imgs(
-                    utils.get_img_filepaths(split_df, img_cluster, False), clf,
-                    output_dir)
+                    utils.get_img_filepaths(split_df, img_cluster, False),
+                    clf,
+                    output_dir,
+                )
 
             if clf_dict is None:
                 raise ValueError(
                     "If using 'cluster-II' method and not providing "
-                    "`img_cluster`, `clf_dict` must be provided")
+                    "`img_cluster`, `clf_dict` must be provided"
+                )
             pred_imgs = {}
-            for img_cluster, img_cluster_df in split_df.groupby('img_cluster'):
+            for img_cluster, img_cluster_df in split_df.groupby("img_cluster"):
                 pred_imgs[img_cluster] = self._classify_imgs(
                     utils.get_img_filepaths(split_df, img_cluster, False),
-                    clf_dict[img_cluster], output_dir)
+                    clf_dict[img_cluster],
+                    output_dir,
+                )
 
             return pred_imgs

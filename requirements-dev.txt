@@ -1,3 +1,4 @@
+black
 bumpversion
 coverage
 coveralls
@@ -9,4 +10,3 @@ sphinx
 sphinx-click
 sphinxcontrib-bibtex
 tox-travis
-yapf
