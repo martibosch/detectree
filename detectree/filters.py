@@ -1,3 +1,5 @@
+"""Utilities to produce filters."""
+
 import numpy as np
 from scipy.ndimage.filters import _gaussian_kernel1d
 from skimage.filters import gabor_kernel
@@ -6,9 +8,7 @@ __all__ = ["get_texture_kernel", "get_gabor_filter_bank"]
 
 
 def _get_gaussian_kernel1d(sigma, *, order=0, truncate=4.0):
-    """
-    Based on scipy.ndimage.filters.gaussian_filter1d
-    """
+    """Based on scipy.ndimage.filters.gaussian_filter1d."""
     sd = float(sigma)
     # make the radius of the filter equal to truncate standard deviations
     lw = int(truncate * sd + 0.5)
@@ -20,6 +20,8 @@ def _get_gaussian_kernel1d(sigma, *, order=0, truncate=4.0):
 
 def get_texture_kernel(sigma):
     """
+    Get a texture kernel based on Yang et al. (2009).
+
     Parameters
     ----------
     sigma : numeric
@@ -38,6 +40,8 @@ def get_texture_kernel(sigma):
 
 def get_gabor_filter_bank(frequencies, num_orientations):
     """
+    Get a Gabor filter bank with different frequencies and orientations.
+
     Parameters
     ----------
     frequencies : list-like

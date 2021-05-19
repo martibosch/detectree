@@ -1,3 +1,5 @@
+"""Split the set of images into training and testing sets."""
+
 import glob
 from os import path
 
@@ -13,6 +15,8 @@ __all__ = ["TrainingSelector"]
 
 
 class TrainingSelector(object):
+    """Select the images/tiles to be used to train the classifier(s)."""
+
     def __init__(
         self,
         *,
@@ -25,7 +29,8 @@ class TrainingSelector(object):
         num_color_bins=None
     ):
         """
-        Class to select the images/tiles to be used to train the classifier(s).
+        Initialize the training selector.
+
         The arguments provided to the initialization method will determine how
         the image descriptors are computed. See the `background
         <https://bit.ly/2KlCICO>`_ example notebook for more details.
@@ -70,7 +75,6 @@ class TrainingSelector(object):
             (default), the value will be taken from
             `seettings.GIST_DEFAULT_NUM_COLOR_BINS`.
         """
-
         super(TrainingSelector, self).__init__()
 
         # get `None` keyword-arguments from settings
@@ -112,6 +116,7 @@ class TrainingSelector(object):
 
     @property
     def descr_feature_matrix(self):
+        """Compute matrix of descriptors (feature rows)."""
         try:
             return self._descr_feature_matrix
         except AttributeError:
@@ -165,8 +170,10 @@ class TrainingSelector(object):
         return_evr=False
     ):
         """
-        Select the image/tiles to be used for traning. See the `background
-        <https://bit.ly/2KlCICO>`_ example notebook for more details.
+        Select the image/tiles to be used for traning.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook
+        for more details.
 
         Parameters
         ----------
@@ -192,7 +199,6 @@ class TrainingSelector(object):
         evr : numeric, optional
             Expected variance ratio of the principal component analysis
         """
-
         X = self.descr_feature_matrix
         pca = decomposition.PCA(n_components=num_components).fit(X)
 

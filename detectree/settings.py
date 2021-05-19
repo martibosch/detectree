@@ -1,3 +1,4 @@
+"""detectree general settings."""
 import logging as lg
 
 import numpy as np

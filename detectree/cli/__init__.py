@@ -1,0 +1,1 @@
+"""detectree CLI init."""

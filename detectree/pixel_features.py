@@ -1,3 +1,5 @@
+"""Build pixel features."""
+
 import glob
 from os import path
 
@@ -38,6 +40,8 @@ NUM_ILL_CHANNELS = 3
 
 
 class PixelFeaturesBuilder(object):
+    """Customize how pixel features are computed."""
+
     def __init__(
         self,
         *,
@@ -48,9 +52,10 @@ class PixelFeaturesBuilder(object):
         num_neighborhoods=None
     ):
         """
-        Class that customizes how the pixel features are computed. See the
-        `background <https://bit.ly/2KlCICO>`_ example notebook for more
-        details.
+        Initialize the pixel feature builder.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
+        more details.
 
         Parameters
         ----------
@@ -138,6 +143,19 @@ class PixelFeaturesBuilder(object):
         # self.X = np.zeros((num_tiling_pixels, num_img_features))
 
     def build_features_from_arr(self, img_rgb):
+        """
+        Build feature array from an RGB image array.
+
+        Parameters
+        ----------
+        img_rgb : numpy ndarray
+            The image in RGB format, i.e., in a 3-D array
+
+        Returns
+        -------
+        responses : numpy ndarray
+            Array with the pixel responses
+        """
         # the third component `_` is actually the number of channels in RGB,
         # which is already defined in the constant `NUM_RGB_CHANNELS`
         num_rows, num_cols, _ = img_rgb.shape
@@ -198,6 +216,21 @@ class PixelFeaturesBuilder(object):
         return X
 
     def build_features_from_filepath(self, img_filepath):
+        """
+        Build feature array from an RGB image file.
+
+        Parameters
+        ----------
+        img_filepath : str, file object or pathlib.Path object
+            Path to a file, URI, file object opened in binary ('rb') mode, or
+            a Path object to the RGB image for which the features will be
+            computed. The value will be passed to `rasterio.open`.
+
+        Returns
+        -------
+        responses : numpy ndarray
+            Array with the pixel responses
+        """
         img_rgb = utils.img_rgb_from_filepath(img_filepath)
         return self.build_features_from_arr(img_rgb)
 
@@ -212,10 +245,10 @@ class PixelFeaturesBuilder(object):
         img_cluster=None
     ):
         """
-        Build the pixel features for a list of images
+        Build the pixel feature array for a list of images.
 
         Parameters
-        -------
+        ----------
         split_df : pd.DataFrame
             Data frame
         img_filepaths : list of image file paths, optional
@@ -239,7 +272,7 @@ class PixelFeaturesBuilder(object):
             'cluster-II'
         Returns
         -------
-        X : np.ndarray
+        X : numpy ndarray
             Array with the pixel features
         """
         # TODO: accept `neighborhoods` kwarg

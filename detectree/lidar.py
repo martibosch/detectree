@@ -1,3 +1,5 @@
+"""Utilities to get canopy information from LiDAR data."""
+
 import numpy as np
 import pandas as pd
 import rasterio as rio
@@ -11,7 +13,8 @@ __all__ = ["rasterize_lidar", "LidarToCanopy"]
 
 
 def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
-    """
+    """Rasterize a LiDAR file.
+
     Transforms a LiDAR file into a raster aligned to `ref_img_filepath`, where
     each pixel of the target raster represents the number of LiDAR points of
     the classes set in `lidar_tree_values` that occur in the pixel's geographic
@@ -30,7 +33,7 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
 
     Returns
     -------
-    lidar_arr : np.ndarray
+    lidar_arr : numpy ndarray
         Array with the rasterized lidar
     """
     with lp_file.File(lidar_filepath, mode="r") as src:
@@ -60,6 +63,8 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
 
 
 class LidarToCanopy:
+    """Extract raster canopy masks from LiDAR data."""
+
     def __init__(
         self,
         tree_threshold=None,
@@ -68,7 +73,7 @@ class LidarToCanopy:
         output_nodata=None,
     ):
         """
-        Class to extract raster canopy masks from LiDAR data.
+        Extract raster canopy masks from LiDAR data.
 
         Parameters
         ----------
@@ -110,8 +115,7 @@ class LidarToCanopy:
         output_filepath=None
     ):
         """
-        Transforms a LiDAR file into a canopy mask, i.e., an array of
-        tree/non-tree pixels.
+        Transform a LiDAR file into a canopy mask.
 
         Parameters
         ----------
@@ -134,13 +138,11 @@ class LidarToCanopy:
             dumped. The value will be passed to `rasterio.open` in 'write'
             mode.
 
-
         Returns
         -------
-        canopy_arr : np.ndarray
-            Array with the canopy mask (only tree/non-tree values)
+        canopy_arr : numpy ndarray
+            Array with the canopy mask (only tree/non-tree values).
         """
-
         # canopy_arr = ndi.binary_dilation(
         #     ndi.binary_opening(arr >= self.tree_val,
         #                        iterations=self.num_opening_iterations),

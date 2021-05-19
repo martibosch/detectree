@@ -1,3 +1,4 @@
+"""detectree CLI."""
 import logging
 from os import path
 
@@ -9,7 +10,7 @@ import detectree as dtr
 
 
 # utils for the CLI
-class OptionEatAll(click.Option):
+class _OptionEatAll(click.Option):
     # Option that can take an unlimided number of arguments
     # Copied from Stephen Rauch's answer in stack overflow.
     # https://bit.ly/2kstLhe
@@ -17,7 +18,7 @@ class OptionEatAll(click.Option):
         self.save_other_options = kwargs.pop("save_other_options", True)
         nargs = kwargs.pop("nargs", -1)
         assert nargs == -1, "nargs, if set, must be -1 not {}".format(nargs)
-        super(OptionEatAll, self).__init__(*args, **kwargs)
+        super(_OptionEatAll, self).__init__(*args, **kwargs)
         self._previous_parser_process = None
         self._eat_all_parser = None
 
@@ -43,7 +44,7 @@ class OptionEatAll(click.Option):
             # call the actual process
             self._previous_parser_process(value, state)
 
-        retval = super(OptionEatAll, self).add_to_parser(parser, ctx)
+        retval = super(_OptionEatAll, self).add_to_parser(parser, ctx)
         for name in self.opts:
             our_parser = parser._long_opt.get(name) or parser._short_opt.get(
                 name
@@ -102,6 +103,7 @@ def _dump_clf(clf, output_filepath, logger):
 @click.version_option(version=dtr.__version__, message="%(version)s")
 @click.pass_context
 def cli(ctx):
+    """Detectree CLI."""
     log_fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.INFO, format=log_fmt)
     logger = logging.getLogger(__name__)
@@ -111,11 +113,11 @@ def cli(ctx):
 
 @cli.command()
 @click.pass_context
-@click.option("--img-filepaths", cls=OptionEatAll)
+@click.option("--img-filepaths", cls=_OptionEatAll)
 @click.option("--img-dir", type=click.Path(exists=True))
 @click.option("--img-filename-pattern")
-@click.option("--gabor-frequencies", cls=OptionEatAll)
-@click.option("--gabor-num-orientations", cls=OptionEatAll)
+@click.option("--gabor-frequencies", cls=_OptionEatAll)
+@click.option("--gabor-num-orientations", cls=_OptionEatAll)
 @click.option("--response-bins-per-axis", type=int)
 @click.option("--num-color-bins", type=int)
 @click.option("--method")
@@ -138,6 +140,7 @@ def train_test_split(
     train_prop,
     output_filepath,
 ):
+    """Split the set of images into training and testing sets."""
     logger = ctx.obj["LOGGER"]
 
     ts = dtr.TrainingSelector(
@@ -178,20 +181,20 @@ def train_test_split(
 @click.pass_context
 @click.option("--split-filepath", type=click.Path(exists=True))
 @click.option("--response-img-dir", type=click.Path(exists=True))
-@click.option("--img-filepaths", cls=OptionEatAll)
-@click.option("--response-img-filepaths", cls=OptionEatAll)
+@click.option("--img-filepaths", cls=_OptionEatAll)
+@click.option("--response-img-filepaths", cls=_OptionEatAll)
 @click.option("--img-dir", type=click.Path(exists=True))
 @click.option("--img-filename-pattern")
 @click.option("--method")
 @click.option("--img-cluster", type=int)
 @click.option("--num-estimators", type=int)
-@click.option("--sigmas", cls=OptionEatAll)
+@click.option("--sigmas", cls=_OptionEatAll)
 @click.option("--num-orientations", type=int)
 @click.option("--min-neighborhood-range", type=int)
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--adaboost-kws", cls=OptionEatAll)
+@click.option("--adaboost-kws", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
 def train_classifier(
     ctx,
@@ -213,6 +216,7 @@ def train_classifier(
     adaboost_kws,
     output_filepath,
 ):
+    """Train a tree/non-tree pixel classifier."""
     logger = ctx.obj["LOGGER"]
 
     logger.info("Training classifier")
@@ -253,13 +257,13 @@ def train_classifier(
 @click.argument("split_filepath", type=click.Path(exists=True))
 @click.argument("response_img_dir", type=click.Path(exists=True))
 @click.option("--num-estimators", type=int)
-@click.option("--sigmas", cls=OptionEatAll)
+@click.option("--sigmas", cls=_OptionEatAll)
 @click.option("--num-orientations", type=int)
 @click.option("--min-neighborhood-range", type=int)
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--adaboost-kws", cls=OptionEatAll)
+@click.option("--adaboost-kws", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
 def train_classifiers(
     ctx,
@@ -275,6 +279,7 @@ def train_classifiers(
     adaboost_kws,
     output_dir,
 ):
+    """Train tree/non-tree pixel classifier(s) for a given train/test split."""
     logger = ctx.obj["LOGGER"]
 
     logger.info("Training classifiers")
@@ -315,7 +320,7 @@ def train_classifiers(
 @click.option("--refine", is_flag=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kws", cls=OptionEatAll)
+@click.option("--pixel-features-builder-kws", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
 def classify_img(
     ctx,
@@ -329,6 +334,7 @@ def classify_img(
     pixel_features_builder_kws,
     output_filepath,
 ):
+    """Use a trained classifier to predict tree pixels in an image."""
     logger = ctx.obj["LOGGER"]
 
     logger.info(
@@ -365,7 +371,7 @@ def classify_img(
 @click.option("--refine", is_flag=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kws", cls=OptionEatAll)
+@click.option("--pixel-features-builder-kws", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
 def classify_imgs(
     ctx,
@@ -382,6 +388,7 @@ def classify_imgs(
     pixel_features_builder_kws,
     output_dir,
 ):
+    """Use trained classifier(s) to predict tree pixels in multiple images."""
     logger = ctx.obj["LOGGER"]
 
     split_df = pd.read_csv(split_filepath)

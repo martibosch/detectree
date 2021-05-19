@@ -1,3 +1,4 @@
+"""Compute image descriptors."""
 import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
@@ -17,8 +18,10 @@ def compute_image_descriptor(
     img_rgb, kernels, response_bins_per_axis, num_color_bins
 ):
     """
-    Compute a GIST descriptor for `img_rgb`. See the `background
-    <https://bit.ly/2KlCICO>`_ example notebook for more details.
+    Compute a GIST descriptor for an RGB image array.
+
+    See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+    details.
 
     Parameters
     ----------
@@ -40,7 +43,6 @@ def compute_image_descriptor(
     img_descr : array-like
         Vector representing GIST descriptor of `img_rgb`
     """
-
     # gist descriptor
     num_blocks = response_bins_per_axis ** 2
     gist_descr = np.zeros(len(kernels) * num_blocks)
@@ -93,8 +95,10 @@ def compute_image_descriptor_from_filepath(
     img_filepath, kernels, response_bins_per_axis, num_color_bins
 ):
     """
-    Compute a GIST descriptor for `img_filepath`. See the `background
-    <https://bit.ly/2KlCICO>`_ example notebook for more details.
+    Compute a GIST descriptor for RGB image file.
+
+    See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+    details.
 
     Parameters
     ----------

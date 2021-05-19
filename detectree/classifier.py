@@ -1,3 +1,4 @@
+"""Binary tree/non-tree classifier(s)."""
 import glob
 from os import path
 
@@ -16,6 +17,8 @@ MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer(object):
+    """Train binary tree/non-tree classifier(s) of the pixel features."""
+
     def __init__(
         self,
         *,
@@ -30,9 +33,10 @@ class ClassifierTrainer(object):
         **adaboost_kws,
     ):
         """
-        Class to train a binary tree/non-tree classifier(s) of the pixel
-        features. See the `background <https://bit.ly/2KlCICO>`_ example
-        notebook for more details.
+        Initialize the classifier.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
+        more details.
 
         Parameters
         ----------
@@ -92,7 +96,6 @@ class ClassifierTrainer(object):
             Keyword arguments that will be passed to
             `sklearn.ensemble.AdaBoostClassifier`.
         """
-
         super(ClassifierTrainer, self).__init__()
 
         if num_estimators is None:
@@ -124,8 +127,10 @@ class ClassifierTrainer(object):
         img_cluster=None,
     ):
         """
-        Train a classifier. See the `background <https://bit.ly/2KlCICO>`_
-        example notebook for more details.
+        Train a classifier.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
+        more details.
 
         Parameters
         ----------
@@ -222,9 +227,10 @@ class ClassifierTrainer(object):
 
     def train_classifiers(self, split_df, response_img_dir):
         """
-        Train a classifier for each first-level cluster in `split_df`. See the
-        `background <https://bit.ly/2KlCICO>`_ example notebook for more
-        details.
+        Train a classifier for each first-level cluster in `split_df`.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
+        more details.
 
         Parameters
         ----------
@@ -262,6 +268,8 @@ class ClassifierTrainer(object):
 
 
 class Classifier(object):
+    """Use trained classifier(s) to predict tree pixels."""
+
     def __init__(
         self,
         *,
@@ -273,7 +281,8 @@ class Classifier(object):
         **pixel_features_builder_kws,
     ):
         """
-        Class use the trained classifier(s) to classify tree/non-tree pixels.
+        Initialize the classifier instance.
+
         See the `background <https://bit.ly/2KlCICO>`_ example notebook for
         more details.
 
@@ -331,8 +340,9 @@ class Classifier(object):
 
     def classify_img(self, img_filepath, clf, output_filepath=None):
         """
-        Classify the image in `img_filepath` with the classifier `clf`, and
-        optionally dump it to `output_filepath`.
+        Use a trained classifier to predict tree pixels in an image.
+
+        Optionally dump the predicted tree/non-tree image to `output_filepath`.
 
         Parameters
         ----------
@@ -349,7 +359,7 @@ class Classifier(object):
 
         Returns
         -------
-        y_pred : np.ndarray
+        y_pred : numpy ndarray
             Array with the pixel responses
         """
         # ACHTUNG: Note that we do not use keyword-only arguments in this
@@ -451,14 +461,16 @@ class Classifier(object):
         img_cluster=None,
     ):
         """
-        Classify thes image in `img_filepaths` with the classifier(s) `clf` or
-        `clf_dict` (depending on the train/test split method) dump them to
+        Use trained classifier(s) to predict tree pixels in multiple images.
+
+        Use `clf` or `clf_dict` for the classifier(s) depending on the train/
+        test split method, and dump the predicted tree/non-tree images to
         `output_dir`. See the `background <https://bit.ly/2KlCICO>`_ example
         notebook for more details.
 
 
         Parameters
-        -------
+        ----------
         split_df : pandas DataFrame, optional
             Data frame with the train/test split.
         output_dir : str or pathlib.Path object
@@ -479,7 +491,6 @@ class Classifier(object):
         pred_imgs : list or dict
             File paths of the dumped tiles.
         """
-
         if method is None:
             if "img_cluster" in split_df:
                 method = "cluster-II"

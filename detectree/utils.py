@@ -1,3 +1,4 @@
+"""detectree general utility functions."""
 import datetime as dt
 import itertools
 import logging as lg
@@ -35,8 +36,7 @@ def split_into_tiles(
     custom_meta=None,
 ):
     """
-    Split the image of `input_filepath` into tiles, and dump them to
-    `output_dir`.
+    Split the image of `input_filepath` into tiles.
 
     Parameters
     ----------
@@ -153,8 +153,21 @@ def split_into_tiles(
     return output_filepaths
 
 
-def img_rgb_from_filepath(input_filepath):
-    with rio.open(input_filepath) as src:
+def img_rgb_from_filepath(img_filepath):
+    """
+    Read an RGB image file into a 3-D array.
+
+    See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+    details.
+
+    Parameters
+    ----------
+    img_filepath : str, file object or pathlib.Path object
+        Path to a file, URI, file object opened in binary ('rb') mode, or a
+        Path object representing the image for which a GIST descriptor will be
+        computed. The value will be passed to `rasterio.open`.
+    """
+    with rio.open(img_filepath) as src:
         arr = src.read()
 
     return np.rollaxis(arr[:3], 0, 3)
@@ -162,6 +175,24 @@ def img_rgb_from_filepath(input_filepath):
 
 # non-image utils
 def get_img_filepaths(split_df, img_cluster, train):
+    """
+    Get image filepaths from a train/test split data frame.
+
+    Parameters
+    ----------
+    split_df : pandas DataFrame
+        Data frame with the train/test split
+    img_cluster : int
+        The label of the cluster of tiles
+    train : bool
+        Whether the list of training (True) or testing (False) tiles must be
+        returned
+
+    Returns
+    -------
+    img_filepaths : pandas Series
+        List of paths to image files
+    """
     if train:
         train_cond = split_df["train"]
     else:
@@ -181,6 +212,7 @@ def get_img_filepaths(split_df, img_cluster, train):
 def log(message, *, level=None, name=None, filename=None):
     """
     Write a message to the log file and/or print to the the console.
+
     Parameters
     ----------
     message : string
@@ -191,11 +223,7 @@ def log(message, *, level=None, name=None, filename=None):
         name of the logger
     filename : string
         name of the log file
-    Returns
-    -------
-    None
     """
-
     if level is None:
         level = settings.log_level
     if name is None:
@@ -254,7 +282,6 @@ def get_logger(*, level=None, name=None, filename=None):
     -------
     logger.logger
     """
-
     if level is None:
         level = settings.log_level
     if name is None:

@@ -1,3 +1,4 @@
+"""Build pixel binary (tree/non-tree) responses."""
 import glob
 from os import path
 
@@ -14,13 +15,16 @@ class NonBinaryResponseError(Exception):
 
 
 class PixelResponseBuilder(object):
+    """Customize how pixel responses (tree/non-tree labels) are computed."""
+
     # It is really not necessary to use a class for this, but we do so for the
     # sake of API consistency with the `pixel_features` module
     def __init__(self, *, tree_val=None, nontree_val=None):
         """
-        Class that customizes how the pixel response (i.e., the tree/non-tree
-        labels of each pixel) is computed. See the `background
-        <https://bit.ly/2KlCICO>`_ example notebook for more details.
+        Initialize the pixel response builder.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
+        more details.
 
         Parameters
         ----------
@@ -38,6 +42,19 @@ class PixelResponseBuilder(object):
         self.nontree_val = nontree_val
 
     def build_response_from_arr(self, img_binary):
+        """
+        Build response (flat) array from a binary (tree/non-tree) image array.
+
+        Parameters
+        ----------
+        img_binary : numpy ndarray
+            Two-dimensional binary (tree-non-tree) image array.
+
+        Returns
+        -------
+        responses : numpy ndarray
+            Array with the pixel responses
+        """
         response_arr = img_binary.copy()
         response_arr[response_arr == self.tree_val] = 1
         response_arr[response_arr == self.nontree_val] = 0
@@ -50,6 +67,22 @@ class PixelResponseBuilder(object):
         return response_arr.flatten()
 
     def build_response_from_filepath(self, img_filepath):
+        """
+        Build response (flat) array from a binary (tree/non-tree) image file.
+
+        Parameters
+        ----------
+        img_filepath : str, file object or pathlib.Path object
+            Path to a file, URI, file object opened in binary ('rb') mode, or
+            a Path object representing the binary (tree/non-tree) image to be
+            transformed into the response. The value will be passed to
+            `rasterio.open`.
+
+        Returns
+        -------
+        responses : numpy ndarray
+            Array with the pixel responses
+        """
         with rio.open(img_filepath) as src:
             img_binary = src.read(1)
 
@@ -73,11 +106,10 @@ class PixelResponseBuilder(object):
         img_cluster=None,
     ):
         """
-        Build the pixel response (i.e., the tree/non-tree labels of each pixel)
-        for a list of images
+        Build the pixel response (flat) array for a list of images.
 
         Parameters
-        -------
+        ----------
         split_df : pd.DataFrame
             Data frame
         response_img_dir : str representing path to a directory, optional
@@ -101,9 +133,10 @@ class PixelResponseBuilder(object):
         img_cluster : int, optional
             The label of the cluster of images. Only used if `method` is
             'cluster-II'
+
         Returns
         -------
-        y : np.ndarray
+        responses : numpy ndarray
             Array with the pixel responses
         """
         if split_df is not None:
