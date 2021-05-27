@@ -1,0 +1,34 @@
+name: detectree-dev
+
+channels:
+  - conda-forge
+
+dependencies:
+  - dask
+  - distributed
+  - joblib
+  - laspy
+  - lastools
+  - laszip
+  - numpy>=1.15
+  - pandas>=0.23
+  - pymaxflow>=1.0.0
+  - rasterio>=1.0.0
+  - scikit-image
+  - scikit-learn
+  - scipy>=1.0.0
+  - tqdm
+
+  # linting/testing
+  - black
+  - bumpversion
+  - coverage
+  - coveralls
+  - isort
+  - flake8
+  - m2r
+  - pydocstyle
+  - pytest
+  - sphinx
+  - sphinx-click
+  - sphinxcontrib-bibtex
