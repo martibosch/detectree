@@ -1,0 +1,73 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  build:
+
+    name: Python ${{ matrix.python-version }} ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment-dev.yml') }}
+
+      - name: Setup conda environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          use-only-tar-bz2: true  # required for caching
+          show-channel-urls: true
+          channel-priority: strict
+          activate-environment: detectree-dev
+          environment-file: environment-dev.yml
+
+      - name: Install detectree
+        run: |
+          python setup.py install
+          conda list
+          conda info --all
+
+      - name: Lint code
+        run: |
+          isort detectree --check-only
+          black . --check --diff
+          flake8 .
+          pydocstyle detectree
+
+      - name: Test docs
+        run: make -C ./docs html
+
+      - name: Test code
+        run: |
+          coverage run --source ./detectree --module pytest --verbose
+          coverage xml -i
+          coverage report -m
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v1
