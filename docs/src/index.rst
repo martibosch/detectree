@@ -40,6 +40,6 @@ To install use pip:
 References
 ----------
 
-.. bibliography:: references.bib
+.. bibliography::
     :all:
     :style: plain

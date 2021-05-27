@@ -34,14 +34,14 @@ sys.path.insert(0, os.path.abspath(".."))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "m2r",
+    "m2r2",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_click.ext",
     "sphinxcontrib.bibtex",
 ]
-
+bibtex_bibfiles = ["references.bib"]
 napoleon_numpy_dostring = True
 
 # Add any paths that contain templates here, relative to this directory.

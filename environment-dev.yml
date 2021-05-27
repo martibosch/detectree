@@ -29,7 +29,7 @@ dependencies:
   - coveralls
   - isort
   - flake8
-  - m2r
+  - m2r2
   - pydocstyle
   - pytest
   - sphinx
