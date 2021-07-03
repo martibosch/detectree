@@ -1,9 +1,9 @@
 """Utilities to get canopy information from LiDAR data."""
 
+import laspy
 import numpy as np
 import pandas as pd
 import rasterio as rio
-from laspy import file as lp_file
 from rasterio import enums, features
 from shapely import geometry
 
@@ -36,10 +36,10 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
     lidar_arr : numpy ndarray
         Array with the rasterized lidar
     """
-    with lp_file.File(lidar_filepath, mode="r") as src:
-        c = src.get_classification()
-        x = src.x
-        y = src.y
+    las = laspy.read(lidar_filepath)
+    c = np.array(las.classification)
+    x = np.array(las.x)
+    y = np.array(las.y)
 
     cond = np.isin(c, lidar_tree_values)
     lidar_df = pd.DataFrame({"class_val": c[cond], "x": x[cond], "y": y[cond]})

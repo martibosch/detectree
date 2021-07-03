@@ -49,7 +49,7 @@ jobs:
 
       - name: Install detectree
         run: |
-          python setup.py install
+          pip install .[laszip]
           conda list
           conda info --all
 

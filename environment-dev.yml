@@ -7,7 +7,7 @@ dependencies:
   - dask
   - distributed
   - joblib
-  - laspy
+  - laspy>=2.0.0
   - lastools
   - laszip
   - numpy>=1.15

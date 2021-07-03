@@ -1,5 +1,6 @@
 dask[delayed,distributed]
 joblib
+laspy >= 2.0.0
 pymaxflow >= 1.0.0
 numpy >= 1.15
 pandas >= 0.23

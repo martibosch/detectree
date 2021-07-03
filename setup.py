@@ -48,6 +48,7 @@ setup(
     packages=find_packages(exclude=["docs", "tests*"]),
     include_package_data=True,
     install_requires=install_requires,
+    extras_require={"laszip": ["laspy[laszip] >= 2.0.0"]},
     dependency_links=dependency_links,
     entry_points="""
     [console_scripts]
