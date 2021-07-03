@@ -1,5 +1,17 @@
 # Change log
 
+## 0.4.0 (03/07/2021)
+
+* added pre-commit
+* updated to laspy 2.0.0 (with optional laszip)
+* updated bumpversion to double quotes (Python black)
+* updated docs build
+* tests and release to pypi and github with github actions
+* added github issue templates, pull request template and updated contributing docs
+* using pydocstyle and black
+* added lidar to canopy module
+* using keyword-only arguments
+
 ## 0.3.1 (11/03/2020)
 
 * drop `num_blocks` argument of `compute_image_descriptor` and `compute_image_descriptor_from_filepath`
