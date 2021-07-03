@@ -1,4 +1,5 @@
 [![PyPI version fury.io](https://badge.fury.io/py/detectree.svg)](https://pypi.python.org/pypi/detectree/)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/detectree.svg)](https://anaconda.org/conda-forge/detectree)
 [![Documentation Status](https://readthedocs.org/projects/detectree/badge/?version=latest)](https://detectree.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://github.com/martibosch/detectree/workflows/tests/badge.svg?branch=main)](https://github.com/martibosch/detectree/actions?query=workflow%3A%22tests%22)
 [![codecov](https://codecov.io/gh/martibosch/detectree/branch/main/graph/badge.svg?token=ZTZK2LFR6T)](https://codecov.io/gh/martibosch/detectree)
@@ -25,7 +26,7 @@ split_df = ts.train_test_split(method='cluster-I')
 # train a tree/non-tree pixel classfier
 clf = dtr.ClassifierTrainer().train_classifier(
     split_df=split_df, response_img_dir='data/response_tiles')
-    
+
 # use the trained classifier to predict the tree/non-tree pixels
 test_filepath = split_df[~split_df['train'].sample(1).iloc[0]['img_filepath']
 y_pred = dtr.Classifier().classify_img(test_filepath, clf)
@@ -53,9 +54,50 @@ Note that DetecTree is based on the methods of Yang et al. [1], therefore it see
 
 ## Installation
 
-To install use pip:
+### With conda
 
-    $ pip install detectree
+The easiest way to install `detectree` is with conda as in:
+
+``` bash
+conda install -c conda-forge detectree
+```
+
+### With pip
+
+You can install `detectree` with pip as in:
+
+``` bash
+pip install detectree
+```
+
+If you want to be able to read compressed LAZ files, you will need [the Python bindings for `laszip`](https://github.com/tmontaigu/laszip-python). Note that the latter require [`laszip`], which can be installed using conda (which is automatically handled when installing `detectree` with conda as shown above) or downloaded from [laszip.org](https://laszip.org/). Then, detectree and the Python bindings for `laszip` can be installed with pip as in:
+
+``` bash
+pip install detectree[laszip]
+```
+
+### Development install
+
+To install a development version of detectree, you can first use conda to create an environment with all the dependencies - with the [`environment-dev.yml` file](https://github.com/martibosch/detectree/blob/main/environment-dev.yml) - and activate it as in:
+
+``` bash
+conda env create -f environment-dev.yml
+conda activate detectree-dev
+```
+
+and then clone the repository and use pip to install it in development mode
+
+```bash
+git clone git@github.com:martibosch/detectree.git
+cd detectree/
+pip install -e .
+```
+
+This will also install the dependencies required for running tests, linting the code and building the documentation. Additionally, you can activate [pre-commit](https://pre-commit.com/) so that the latter are run as pre-commit hooks as in:
+
+```bash
+pre-commit install
+```
 
 ## See also
 
@@ -65,7 +107,6 @@ To install use pip:
 ## Acknowledgments
 
 * With the support of the École Polytechnique Fédérale de Lausanne (EPFL)
-
 
 ## References
 
