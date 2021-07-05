@@ -31,4 +31,5 @@ repos:
     rev: 6.1.1
     hooks:
       - id: pydocstyle
-        args: ['detectree', '--config=setup.cfg']
+        files: ^detectree
+        args: ['--config=setup.cfg']
