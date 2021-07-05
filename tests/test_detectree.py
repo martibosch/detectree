@@ -697,12 +697,15 @@ class TestLidarToCanopy(unittest.TestCase):
             np.ndarray,
         )
 
-        # test that we can pass a `postprocess_func` to `to_canopy_mask`
+        # test that we can pass a `postprocess_func` with args/kwargs to
+        # `to_canopy_mask`
         y_pred = ltc.to_canopy_mask(
             self.lidar_filepath,
             self.lidar_tree_values,
             self.ref_img_filepath,
             postprocess_func=ndi.binary_dilation,
+            postprocess_func_args=[ndi.generate_binary_structure(2, 2)],
+            postprocess_func_kws={"border_value": 0},
         )
         # test that `to_canopy_mask` with `output_filepath` returns a ndarray
         # and dumps it

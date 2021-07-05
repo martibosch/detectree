@@ -111,8 +111,10 @@ class LidarToCanopy:
         lidar_tree_values,
         ref_img_filepath,
         *,
+        output_filepath=None,
         postprocess_func=None,
-        output_filepath=None
+        postprocess_func_args=None,
+        postprocess_func_kws=None
     ):
         """
         Transform a LiDAR file into a canopy mask.
@@ -128,15 +130,19 @@ class LidarToCanopy:
             LiDAR point classes that correspond to trees
         ref_img_filepath : str, file object or pathlib.Path object
             Reference raster image to which the LiDAR data will be rasterized
-        postprocess_func : function
-            Post-processing function which takes as input the rasterized lidar
-            as a boolean ndarray and returns a the post-processed lidar also as
-            a boolean ndarray.
         output_filepath : str, file object or pathlib.Path object, optional
             Path to a file, URI, file object opened in binary ('rb') mode, or
             a Path object representing where the predicted image is to be
             dumped. The value will be passed to `rasterio.open` in 'write'
             mode.
+        postprocess_func : function
+            Post-processing function which takes as input the rasterized lidar
+            as a boolean ndarray and returns a the post-processed lidar also as
+            a boolean ndarray.
+        postprocess_func_args : list-like, optional
+            Arguments to be passed to `postprocess_func`.
+        postprocess_func_kws : dict, optional
+            Keyword arguments to be passed to `postprocess_func`.
 
         Returns
         -------
@@ -153,7 +159,9 @@ class LidarToCanopy:
         )
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:
-            canopy_arr = postprocess_func(canopy_arr)
+            canopy_arr = postprocess_func(
+                canopy_arr, *postprocess_func_args, **postprocess_func_kws
+            )
         canopy_arr = np.where(
             canopy_arr, self.output_tree_val, self.output_nodata
         ).astype(self.output_dtype)
