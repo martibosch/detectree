@@ -30,7 +30,6 @@ class TestImports(unittest.TestCase):
         from dask import diagnostics
         from rasterio import windows
         from scipy import ndimage as ndi
-        from scipy.ndimage.filters import _gaussian_kernel1d
         from skimage import color, measure, morphology
         from skimage.filters import gabor_kernel, rank
         from skimage.util import shape
