@@ -41,28 +41,27 @@ def split_into_tiles(
     Parameters
     ----------
     input_filepath : str, file object or pathlib.Path object
-        Path to a file, URI, file object opened in binary ('rb') mode, or a
-        Path object representing the image to be classified. The value will be
-        passed to `rasterio.open`
+        Path to a file, URI, file object opened in binary ('rb') mode, or a Path object
+        representing the image to be classified. The value will be passed to
+        `rasterio.open`
     output_dir : str or pathlib.Path object
-        Path to the directory where the predicted images are to be dumped
+        Path to the directory where the predicted images are to be dumped.
     tile_width : int, optional
-        Tile width in pixels. If no value is provided (default), the value
-        will be taken from `settings.TILE_DEFAULT_WIDTH`.
+        Tile width in pixels. If no value is provided (default), the value will be taken
+        from `settings.TILE_DEFAULT_WIDTH`.
     tile_height : int, optional
-        Tile height in pixels. If no value is provided (default), the value
-        will be taken from `settings.TILE_DEFAULT_HEIGHT`.
+        Tile height in pixels. If no value is provided (default), the value will be
+        taken from `settings.TILE_DEFAULT_HEIGHT`.
     output_filename : str, optional
-        Template to be string-formatted in order to name the output tiles. If
-        no value is provided (default), the value will be taken from
+        Template to be string-formatted in order to name the output tiles. If no value
+        is provided (default), the value will be taken from
         `settings.TILE_DEFAULT_OUTPUT_FILENAME`.
     only_full_tiles : bool, optional (default False)
-        Whether only full tiles (of size `tile_width`x`tile_height`) should be
-        dumped.
+        Whether only full tiles (of size `tile_width`x`tile_height`) should be dumped.
     keep_empty_tiles : bool, optional (default False)
-        Whether tiles containing only no-data pixels should be dumped
+        Whether tiles containing only no-data pixels should be dumped.
     custom_meta : dict, optional
-        Custom meta data for the output tiles
+        Custom meta data for the output tiles.
 
     Returns
     -------
@@ -105,19 +104,16 @@ def split_into_tiles(
         if tqdm is not None:
             iterator = tqdm(iterator)
 
-        # tests whether a given tile should be dumped or not. Since there are
-        # two possible tests that depend on the arguments provided by the user,
-        # we will use a list of tests and then check whether any test must be
-        # applied. This mechanism avoids having to check whether tests must be
-        # applied at each iteration (see the if/else at the end of this
-        # function).
+        # tests whether a given tile should be dumped or not. Since there are two
+        # possible tests that depend on the arguments provided by the user, we will use
+        # a list of tests and then check whether any test must be applied. This
+        # mechanism avoids having to check whether tests must be applied at each
+        # iteration (see the if/else at the end of this function).
         tests = []
         if only_full_tiles:
 
             def test_full_tile(window):
-                return (
-                    window.width == tile_width and window.height == tile_height
-                )
+                return window.width == tile_width and window.height == tile_height
 
             tests.append(test_full_tile)
 
@@ -133,9 +129,7 @@ def split_into_tiles(
             meta["width"], meta["height"] = window.width, window.height
             output_filepath = path.join(
                 output_dir,
-                output_filename.format(
-                    int(window.col_off), int(window.row_off)
-                ),
+                output_filename.format(int(window.col_off), int(window.row_off)),
             )
             with rio.open(output_filepath, "w", **meta) as dst:
                 dst.write(src.read(window=window))
@@ -157,15 +151,14 @@ def img_rgb_from_filepath(img_filepath):
     """
     Read an RGB image file into a 3-D array.
 
-    See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
-    details.
+    See the `background <https://bit.ly/2KlCICO>`_ example notebook for more details.
 
     Parameters
     ----------
     img_filepath : str, file object or pathlib.Path object
-        Path to a file, URI, file object opened in binary ('rb') mode, or a
-        Path object representing the image for which a GIST descriptor will be
-        computed. The value will be passed to `rasterio.open`.
+        Path to a file, URI, file object opened in binary ('rb') mode, or a Path object
+        representing the image for which a GIST descriptor will be computed. The value
+        will be passed to `rasterio.open`.
     """
     with rio.open(img_filepath) as src:
         arr = src.read()
@@ -181,17 +174,17 @@ def get_img_filepaths(split_df, img_cluster, train):
     Parameters
     ----------
     split_df : pandas DataFrame
-        Data frame with the train/test split
+        Data frame with the train/test split.
     img_cluster : int
-        The label of the cluster of tiles
+        The label of the cluster of tiles.
     train : bool
         Whether the list of training (True) or testing (False) tiles must be
-        returned
+        returned.
 
     Returns
     -------
     img_filepaths : pandas Series
-        List of paths to image files
+        List of paths to image files.
     """
     if train:
         train_cond = split_df["train"]
@@ -216,13 +209,13 @@ def log(message, *, level=None, name=None, filename=None):
     Parameters
     ----------
     message : string
-        the content of the message to log
+        the content of the message to log.
     level : int
-        one of the logger.level constants
+        one of the logger.level constants.
     name : string
-        name of the logger
+        name of the logger.
     filename : string
-        name of the log file
+        name of the log file.
     """
     if level is None:
         level = settings.log_level
@@ -233,8 +226,8 @@ def log(message, *, level=None, name=None, filename=None):
 
     # if logging to file is turned on
     if settings.log_file:
-        # get the current logger (or create a new one, if none), then log
-        # message at requested level
+        # get the current logger (or create a new one, if none), then log message at
+        # requested level
         logger = get_logger(level=level, name=name, filename=filename)
         if level == lg.DEBUG:
             logger.debug(message)
@@ -245,17 +238,17 @@ def log(message, *, level=None, name=None, filename=None):
         elif level == lg.ERROR:
             logger.error(message)
 
-    # if logging to console is turned on, convert message to ascii and print to
-    # the console
+    # if logging to console is turned on, convert message to ascii and print to the
+    # console
     if settings.log_console:
-        # capture current stdout, then switch it to the console, print the
-        # message, then switch back to what had been the stdout. this prevents
-        # logging to notebook - instead, it goes to console
+        # capture current stdout, then switch it to the console, print the message, then
+        # switch back to what had been the stdout. this prevents logging to notebook -
+        # instead, it goes to console
         standard_out = sys.stdout
         sys.stdout = sys.__stdout__
 
-        # convert message to ascii for console display so it doesn't break
-        # windows terminals
+        # convert message to ascii for console display so it doesn't break windows
+        # terminals
         message = (
             unicodedata.normalize("NFKD", str(message))
             .encode("ascii", errors="replace")
@@ -272,11 +265,11 @@ def get_logger(*, level=None, name=None, filename=None):
     Parameters
     ----------
     level : int
-        one of the logger.level constants
+        one of the logger.level constants.
     name : string
-        name of the logger
+        name of the logger.
     filename : string
-        name of the log file
+        name of the log file.
 
     Returns
     -------
@@ -306,9 +299,7 @@ def get_logger(*, level=None, name=None, filename=None):
 
         # create file handler and log formatter and set them up
         handler = lg.FileHandler(log_filename, encoding="utf-8")
-        formatter = lg.Formatter(
-            "%(asctime)s %(levelname)s %(name)s %(message)s"
-        )
+        formatter = lg.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(level)

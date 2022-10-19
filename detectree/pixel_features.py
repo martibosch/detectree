@@ -54,45 +54,41 @@ class PixelFeaturesBuilder(object):
         """
         Initialize the pixel feature builder.
 
-        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
-        more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
 
         Parameters
         ----------
         sigmas : list-like, optional
-            The list of scale parameters (sigmas) to build the Gaussian filter
-            bank that will be used to compute the pixel-level features. The
-            provided argument will be passed to the initialization method of
-            the `PixelFeaturesBuilder` class. If no value is provided, the
-            default value set in `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
+            The list of scale parameters (sigmas) to build the Gaussian filter bank that
+            will be used to compute the pixel-level features. The provided argument will
+            be passed to the initialization method of the `PixelFeaturesBuilder`
+            class. If no value is provided, the default value set in
+            `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
         num_orientations : int, optional
-            The number of equally-distributed orientations to build the
-            Gaussian filter bank that will be used to compute the pixel-level
-            features. The provided argument will be passed to the
-            initialization method of the `PixelFeaturesBuilder` class. If no
-            value is provided, the default value set in
-            `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
+            The number of equally-distributed orientations to build the Gaussian filter
+            bank that will be used to compute the pixel-level features. The provided
+            argument will be passed to the initialization method of the
+            `PixelFeaturesBuilder` class. If no value is provided, the default value set
+            in `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
         neighborhood : array-like, optional
-            The base neighborhood structure that will be used to compute the
-            entropy features. The provided argument will be passed to the
-            initialization method of the `PixelFeaturesBuilder` class. If no
-            value is provided, a square with a side size of
-            `2 * min_neighborhood_range + 1` will be used.
+            The base neighborhood structure that will be used to compute the entropy
+            features. The provided argument will be passed to the initialization method
+            of the `PixelFeaturesBuilder` class. If no value is provided, a square with
+            a side size of `2 * min_neighborhood_range + 1` will be used.
         min_neighborhood_range : int, optional
-            The range (i.e., the square radius) of the smallest neigbhorhood
-            window that will be used to compute the entropy features. The
-            provided argument will be passed to the initialization method of
-            the `PixelFeaturesBuilder` class. If no value is provided, the
-            default value set in
+            The range (i.e., the square radius) of the smallest neigbhorhood window that
+            will be used to compute the entropy features. The provided argument will be
+            passed to the initialization method of the `PixelFeaturesBuilder` class. If
+            no value is provided, the default value set in
             `settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE` will be taken.
         num_neighborhoods : int, optional
             The number of neigbhorhood windows (whose size follows a geometric
-            progression starting at `min_neighborhood_range`) that will be
-            used to compute the entropy features. The provided argument will
-            be passed to the initialization method of the
-            `PixelFeaturesBuilder` class. If no value is provided, the default
-            value set in `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be
-            taken.
+            progression starting at `min_neighborhood_range`) that will be used to
+            compute the entropy features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no value is
+            provided, the default value set in
+            `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be taken.
         """
         # preprocess technical keyword arguments
         # texture features
@@ -121,9 +117,7 @@ class PixelFeaturesBuilder(object):
         #     num_neighborhoods = len(neighborhoods)
         if neighborhood is None:
             if min_neighborhood_range is None:
-                min_neighborhood_range = (
-                    settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE
-                )
+                min_neighborhood_range = settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE
             neighborhood = morphology.square(2 * min_neighborhood_range + 1)
         self.neighborhood = neighborhood
         if num_neighborhoods is None:
@@ -156,8 +150,8 @@ class PixelFeaturesBuilder(object):
         responses : numpy ndarray
             Array with the pixel responses
         """
-        # the third component `_` is actually the number of channels in RGB,
-        # which is already defined in the constant `NUM_RGB_CHANNELS`
+        # the third component `_` is actually the number of channels in RGB, which is
+        # already defined in the constant `NUM_RGB_CHANNELS`
         num_rows, num_cols, _ = img_rgb.shape
         num_pixels = num_rows * num_cols
         img_lab = color.rgb2lab(img_rgb)
@@ -175,9 +169,7 @@ class PixelFeaturesBuilder(object):
             A, np.log(np.dot(B, img_xyz_vec.transpose()) + 1)
         ).transpose()
         X[:, :NUM_LAB_CHANNELS] = img_lab_vec
-        X[
-            :, NUM_LAB_CHANNELS : NUM_LAB_CHANNELS + NUM_ILL_CHANNELS
-        ] = img_ill_vec
+        X[:, NUM_LAB_CHANNELS : NUM_LAB_CHANNELS + NUM_ILL_CHANNELS] = img_ill_vec
 
         # texture features
         # tpf.compute_texture_features(X_img[:, self.texture_slice],
@@ -187,9 +179,7 @@ class PixelFeaturesBuilder(object):
             for j, orientation in enumerate(range(self.num_orientations)):
                 # theta = orientation / num_orientations * np.pi
                 theta = orientation * 180 / self.num_orientations
-                oriented_kernel_arr = ndi.interpolation.rotate(
-                    base_kernel_arr, theta
-                )
+                oriented_kernel_arr = ndi.interpolation.rotate(base_kernel_arr, theta)
                 img_filtered = ndi.convolve(img_lab_l, oriented_kernel_arr)
                 img_filtered_vec = img_filtered.flatten()
                 X[
@@ -209,9 +199,7 @@ class PixelFeaturesBuilder(object):
                 transform.downscale_local_mean(img_lab_l, (factor, factor)),
                 img_lab_l.shape,
             ).astype(np.uint16)
-            X[:, entropy_start + i] = rank.entropy(
-                img, self.neighborhood
-            ).flatten()
+            X[:, entropy_start + i] = rank.entropy(img, self.neighborhood).flatten()
 
         return X
 
@@ -222,9 +210,9 @@ class PixelFeaturesBuilder(object):
         Parameters
         ----------
         img_filepath : str, file object or pathlib.Path object
-            Path to a file, URI, file object opened in binary ('rb') mode, or
-            a Path object to the RGB image for which the features will be
-            computed. The value will be passed to `rasterio.open`.
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object to the RGB image for which the features will be computed. The value
+            will be passed to `rasterio.open`.
 
         Returns
         -------
@@ -250,26 +238,24 @@ class PixelFeaturesBuilder(object):
         Parameters
         ----------
         split_df : pd.DataFrame
-            Data frame
+            Data frame with the train/test split.
         img_filepaths : list of image file paths, optional
-            List of images to be transformed into features. Alternatively, the
-            same information can be provided by means of the `img_dir` and
-            `img_filename_pattern` keyword arguments. Ignored if providing
-            `split_df`
+            List of images to be transformed into features. Alternatively, the same
+            information can be provided by means of the `img_dir` and
+            `img_filename_pattern` keyword arguments. Ignored if providing `split_df`.
         img_dir : str representing path to a directory, optional
             Path to the directory where the images whose filename matches
             `img_filename_pattern` are to be located. Ignored if `split_df` or
             `img_filepaths` is provided.
         img_filename_pattern : str representing a file-name pattern, optional
-            Filename pattern to be matched in order to obtain the list of
-            images. If no value is provided, the default value set in
-            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if
-            `split_df` or `img_filepaths` is provided.
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the default value set in
+            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if `split_df`
+            or `img_filepaths` is provided.
         method : {'cluster-I', 'cluster-II'}, optional
             Method used in the train/test split
         img_cluster : int, optional
-            The label of the cluster of images. Only used if `method` is
-            'cluster-II'
+            The label of the cluster of images. Only used if `method` is 'cluster-II'.
         Returns
         -------
         X : numpy ndarray
@@ -289,28 +275,21 @@ class PixelFeaturesBuilder(object):
             else:
                 if img_cluster is None:
                     raise ValueError(
-                        "If `method` is 'cluster-II', `img_cluster` must be "
-                        "provided"
+                        "If `method` is 'cluster-II', `img_cluster` must be " "provided"
                     )
-                img_filepaths = utils.get_img_filepaths(
-                    split_df, img_cluster, True
-                )
+                img_filepaths = utils.get_img_filepaths(split_df, img_cluster, True)
 
         else:
             if img_filepaths is None:
                 if img_filename_pattern is None:
-                    img_filename_pattern = (
-                        settings.IMG_DEFAULT_FILENAME_PATTERN
-                    )
+                    img_filename_pattern = settings.IMG_DEFAULT_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must "
                         "be provided"
                     )
 
-                img_filepaths = glob.glob(
-                    path.join(img_dir, img_filename_pattern)
-                )
+                img_filepaths = glob.glob(path.join(img_dir, img_filename_pattern))
 
         values = [
             dask.delayed(self.build_features_from_filepath)(img_filepath)
