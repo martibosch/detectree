@@ -15,17 +15,16 @@ __all__ = ["rasterize_lidar", "LidarToCanopy"]
 def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
     """Rasterize a LiDAR file.
 
-    Transforms a LiDAR file into a raster aligned to `ref_img_filepath`, where
-    each pixel of the target raster represents the number of LiDAR points of
-    the classes set in `lidar_tree_values` that occur in the pixel's geographic
-    extent.
+    Transforms a LiDAR file into a raster aligned to `ref_img_filepath`, where each
+    pixel of the target raster represents the number of LiDAR points of the classes set
+    in `lidar_tree_values` that occur in the pixel's geographic extent.
 
     Parameters
     ----------
     lidar_filepath : str, file object or pathlib.Path object
-        Path to a file, URI, file object opened in binary ('rb') mode, or a
-        Path object representing the LiDAR file from which a tree canopy mask
-        will be computed. The value will be passed to `laspy.file.File`.
+        Path to a file, URI, file object opened in binary ('rb') mode, or a Path object
+        representing the LiDAR file from which a tree canopy mask will be computed. The
+        value will be passed to `laspy.file.File`.
     lidar_tree_values : int or list-like
         LiDAR point classes that correspond to trees.
     ref_img_filepath : str, file object or pathlib.Path object
@@ -34,7 +33,7 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
     Returns
     -------
     lidar_arr : numpy ndarray
-        Array with the rasterized lidar
+        Array with the rasterized lidar.
     """
     las = laspy.read(lidar_filepath)
     c = np.array(las.classification)
@@ -79,17 +78,15 @@ class LidarToCanopy:
         ----------
         tree_threshold : numeric, optional
             Threshold of lidar points classified as tree by pixel at which
-            point the pixel is considered a tree. As a rule of thumb, the value
-            can be set to result of dividing the point density of the lidar
-            (e.g., pts/m^2) by the pixel area (e.g., m^2).
+            point the pixel is considered a tree. As a rule of thumb, the value can be
+            set to result of dividing the point density of the lidar (e.g., pts/m^2) by
+            the pixel area (e.g., m^2).
         output_dtype : str or numpy dtype, optional
             The desired data type of the output raster canopy masks.
         output_tree_val : int, optional
-            The value that designates tree pixels in the output raster canopy
-            masks.
+            The value that designates tree pixels in the output raster canopy masks.
         output_nodata : int, optional
-            The value that designates non-tree pixels in the output raster
-            canopy masks.
+            The value that designates non-tree pixels in the output raster canopy masks.
         """
         if tree_threshold is None:
             tree_threshold = settings.LIDAR_TREE_THRESHOLD
@@ -122,23 +119,21 @@ class LidarToCanopy:
         Parameters
         ----------
         lidar_filepath : str, file object or pathlib.Path object
-            Path to a file, URI, file object opened in binary ('rb') mode, or a
-            Path object representing the LiDAR file from which a tree canopy
-            mask will be computed. The value will be passed to
-            `laspy.file.File`.
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing the LiDAR file from which a tree canopy mask will be
+            computed. The value will be passed to `laspy.file.File`.
         lidar_tree_values : int or list-like
-            LiDAR point classes that correspond to trees
+            LiDAR point classes that correspond to trees.
         ref_img_filepath : str, file object or pathlib.Path object
-            Reference raster image to which the LiDAR data will be rasterized
+            Reference raster image to which the LiDAR data will be rasterized.
         output_filepath : str, file object or pathlib.Path object, optional
-            Path to a file, URI, file object opened in binary ('rb') mode, or
-            a Path object representing where the predicted image is to be
-            dumped. The value will be passed to `rasterio.open` in 'write'
-            mode.
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing where the predicted image is to be dumped. The value
+            will be passed to `rasterio.open` in 'write' mode.
         postprocess_func : function
-            Post-processing function which takes as input the rasterized lidar
-            as a boolean ndarray and returns a the post-processed lidar also as
-            a boolean ndarray.
+            Post-processing function which takes as input the rasterized lidar as a
+            boolean ndarray and returns a the post-processed lidar also as a boolean
+            ndarray.
         postprocess_func_args : list-like, optional
             Arguments to be passed to `postprocess_func`.
         postprocess_func_kws : dict, optional
@@ -154,9 +149,7 @@ class LidarToCanopy:
         #                        iterations=self.num_opening_iterations),
         #     iterations=self.num_dilation_iterations).astype(
         #         self.output_dtype) * self.output_tree_val
-        lidar_arr = rasterize_lidar(
-            lidar_filepath, lidar_tree_values, ref_img_filepath
-        )
+        lidar_arr = rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath)
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:
             canopy_arr = postprocess_func(
@@ -169,9 +162,7 @@ class LidarToCanopy:
         if output_filepath is not None:
             with rio.open(ref_img_filepath) as src:
                 meta = src.meta.copy()
-            meta.update(
-                dtype=self.output_dtype, count=1, nodata=self.output_nodata
-            )
+            meta.update(dtype=self.output_dtype, count=1, nodata=self.output_nodata)
             with rio.open(output_filepath, "w", **meta) as dst:
                 dst.write(canopy_arr, 1)
 

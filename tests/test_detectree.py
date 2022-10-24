@@ -12,13 +12,7 @@ from scipy import ndimage as ndi
 from sklearn import ensemble
 
 import detectree as dtr
-from detectree import (
-    filters,
-    image_descriptor,
-    pixel_features,
-    pixel_response,
-    utils,
-)
+from detectree import filters, image_descriptor, pixel_features, pixel_response, utils
 from detectree.cli import main
 
 
@@ -36,17 +30,10 @@ class TestImports(unittest.TestCase):
         from dask import diagnostics
         from rasterio import windows
         from scipy import ndimage as ndi
-        from scipy.ndimage.filters import _gaussian_kernel1d
         from skimage import color, measure, morphology
         from skimage.filters import gabor_kernel, rank
         from skimage.util import shape
-        from sklearn import (
-            cluster,
-            decomposition,
-            ensemble,
-            metrics,
-            preprocessing,
-        )
+        from sklearn import cluster, decomposition, ensemble, metrics, preprocessing
 
 
 class TestTrainTestSplit(unittest.TestCase):
@@ -55,8 +42,7 @@ class TestTrainTestSplit(unittest.TestCase):
         self.img_filepaths = glob.glob(path.join(self.img_dir, "*.tif"))
 
     def test_init(self):
-        # if providing `img_filepaths`, `img_dir` and `img_filename_pattern`
-        # are ignored
+        # if providing `img_filepaths`, `img_dir` and `img_filename_pattern` are ignored
         ts = dtr.TrainingSelector(img_filepaths=self.img_filepaths)
         self.assertEqual(
             ts.img_filepaths,
@@ -80,11 +66,8 @@ class TestTrainTestSplit(unittest.TestCase):
         )
 
         # if not providing `img_filepaths`, inexistent `img_dir` or non-tif
-        # `img_filename_pattern` will result in an empty `img_filepaths`
-        # attribute
-        self.assertEqual(
-            len(dtr.TrainingSelector(img_dir="foo").img_filepaths), 0
-        )
+        # `img_filename_pattern` will result in an empty `img_filepaths` attribute
+        self.assertEqual(len(dtr.TrainingSelector(img_dir="foo").img_filepaths), 0)
         self.assertEqual(
             len(
                 dtr.TrainingSelector(
@@ -98,9 +81,8 @@ class TestTrainTestSplit(unittest.TestCase):
             len(dtr.TrainingSelector(img_dir=self.img_dir).img_filepaths), 0
         )
 
-        # even when providing an integer in the `gabor_num_orientations`
-        # argument, the respective attribute will be a tuple after `__init__`
-        # is executed
+        # even when providing an integer in the `gabor_num_orientations` argument, the
+        # respective attribute will be a tuple after `__init__` is executed
         self.assertIsInstance(
             dtr.TrainingSelector(
                 img_filepaths=self.img_filepaths, gabor_num_orientations=8
@@ -148,17 +130,17 @@ class TestImageDescriptor(unittest.TestCase):
         )
         self.assertEqual(
             len(img_descr),
-            len(kernels) * response_bins_per_axis ** 2 + num_color_bins ** 3,
+            len(kernels) * response_bins_per_axis**2 + num_color_bins**3,
         )
 
-        # TODO: more technical test, e.g., passing an all-zero filter bank
-        # should return an all-zero gist descriptor
+        # TODO: more technical test, e.g., passing an all-zero filter bank should return
+        # an all-zero gist descriptor
 
-        # TODO: more technical test, e.g., ensure that a negative number of
-        # bins raises some NumPy error
+        # TODO: more technical test, e.g., ensure that a negative number of bins raises
+        # some numpy error
 
-        # TODO: more technical test, e.g., ensure that all values in
-        # `img_descr_row` are within the unit norm
+        # TODO: more technical test, e.g., ensure that all values in `img_descr_row` are
+        # within the unit norm
 
 
 class TestPixelFeatures(unittest.TestCase):
@@ -181,8 +163,7 @@ class TestPixelFeatures(unittest.TestCase):
         num_pixel_features = self.pfb.num_pixel_features
 
         shape_i = (
-            len(self.split_i_df[self.split_i_df["train"]])
-            * self.pixels_per_img,
+            len(self.split_i_df[self.split_i_df["train"]]) * self.pixels_per_img,
             num_pixel_features,
         )
         shape_ii = (
@@ -209,9 +190,7 @@ class TestPixelFeatures(unittest.TestCase):
 
         # test providing `method` explicitly (and `split_df`)
         self.assertEqual(
-            self.pfb.build_features(
-                split_df=self.split_i_df, method="cluster-I"
-            ).shape,
+            self.pfb.build_features(split_df=self.split_i_df, method="cluster-I").shape,
             shape_i,
         )
         self.assertEqual(
@@ -223,21 +202,19 @@ class TestPixelFeatures(unittest.TestCase):
             shape_ii,
         )
 
-        # test that `method='cluster-I'` will ignore the 'img_cluster' column
-        # of the split data frame
+        # test that `method='cluster-I'` will ignore the 'img_cluster' column of the
+        # split data frame
         self.assertEqual(
             self.pfb.build_features(
                 split_df=self.split_ii_df, method="cluster-I"
             ).shape,
             (
-                len(self.split_ii_df[self.split_ii_df["train"]])
-                * self.pixels_per_img,
+                len(self.split_ii_df[self.split_ii_df["train"]]) * self.pixels_per_img,
                 num_pixel_features,
             ),
         )
 
-        # test that `method='cluster-II'` and non-None `img_cluster` raises a
-        # ValueError
+        # test that `method='cluster-II'` and non-None `img_cluster` raises a ValueError
         self.assertRaises(
             ValueError,
             self.pfb.build_features,
@@ -245,9 +222,8 @@ class TestPixelFeatures(unittest.TestCase):
             method="cluster-II",
         )
 
-        # test that `method='cluster-II'` raises a `ValueError` if `split_df`
-        # does not have a `img_cluster` column (when using the method
-        # 'cluster-I')
+        # test that `method='cluster-II'` raises a `ValueError` if `split_df` does not
+        # have a `img_cluster` column (when using the method 'cluster-I')
         self.assertRaises(
             ValueError,
             self.pfb.build_features,
@@ -256,9 +232,7 @@ class TestPixelFeatures(unittest.TestCase):
         )
 
         # test providing `img_filepaths`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]][
-            "img_filepath"
-        ]
+        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
 
         # the shape of the feature matrix below is the same as `shape_i`
         self.assertEqual(
@@ -266,15 +240,15 @@ class TestPixelFeatures(unittest.TestCase):
             (len(img_filepaths) * self.pixels_per_img, num_pixel_features),
         )
 
-        # test providing `img_dir`. In this case all the images (not only the
-        # ones selected for training) will be transformed into feature vectors
+        # test providing `img_dir`. In this case all the images (not only the ones
+        # selected for training) will be transformed into feature vectors
         self.assertEqual(
             self.pfb.build_features(img_dir=self.img_dir).shape,
             (len(self.split_i_df) * self.pixels_per_img, num_pixel_features),
         )
 
-        # test that if none of `split_df`, `img_filepaths` or `img_dir` are
-        # provided, a `ValueError` is raised
+        # test that if none of `split_df`, `img_filepaths` or `img_dir` are provided, a
+        # `ValueError` is raised
         self.assertRaises(ValueError, self.pfb.build_features)
 
 
@@ -315,8 +289,7 @@ class TestPixelResponse(unittest.TestCase):
             self.assertTrue(np.all(unique_response == np.arange(2)))
         # test shapes
         shape_i = (
-            len(self.split_i_df[self.split_i_df["train"]])
-            * self.pixels_per_img,
+            len(self.split_i_df[self.split_i_df["train"]]) * self.pixels_per_img,
         )
         shape_ii = (
             len(
@@ -328,8 +301,8 @@ class TestPixelResponse(unittest.TestCase):
             * self.pixels_per_img,
         )
 
-        # test for `response_i` and `response_ii`, which have been obtained by
-        # providing `method` implicitly (and `split_df`)
+        # test for `response_i` and `response_ii`, which have been obtained by providing
+        # `method` implicitly (and `split_df`)
         self.assertEqual(response_i.shape, shape_i)
         self.assertEqual(response_ii.shape, shape_ii)
 
@@ -352,18 +325,15 @@ class TestPixelResponse(unittest.TestCase):
             shape_ii,
         )
 
-        # test that `method='cluster-I'` will ignore the 'img_cluster' column
-        # of the split data frame
+        # test that `method='cluster-I'` will ignore the 'img_cluster' column of the
+        # split data frame
         self.assertEqual(
             self.prb.build_response(
                 split_df=self.split_ii_df,
                 response_img_dir=self.response_img_dir,
                 method="cluster-I",
             ).shape,
-            (
-                len(self.split_ii_df[self.split_ii_df["train"]])
-                * self.pixels_per_img,
-            ),
+            (len(self.split_ii_df[self.split_ii_df["train"]]) * self.pixels_per_img,),
         )
 
         # test that when providing `split_df`, `response_img_dir` is required
@@ -374,8 +344,7 @@ class TestPixelResponse(unittest.TestCase):
             method="cluster-II",
         )
 
-        # test that `method='cluster-II'` and non-None `img_cluster` raises a
-        # ValueError
+        # test that `method='cluster-II'` and non-None `img_cluster` raises a ValueError
         self.assertRaises(
             ValueError,
             self.prb.build_response,
@@ -384,9 +353,8 @@ class TestPixelResponse(unittest.TestCase):
             method="cluster-II",
         )
 
-        # test that `method='cluster-II'` raises a `ValueError` if `split_df`
-        # does not have a `img_cluster` column (when using the method
-        # 'cluster-I')
+        # test that `method='cluster-II'` raises a `ValueError` if `split_df` does not
+        # have a `img_cluster` column (when using the method 'cluster-I')
         self.assertRaises(
             ValueError,
             self.prb.build_response,
@@ -396,29 +364,23 @@ class TestPixelResponse(unittest.TestCase):
         )
 
         # test providing `img_filepaths`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]][
-            "img_filepath"
-        ].apply(
-            lambda filepath: path.join(
-                self.response_img_dir, path.basename(filepath)
-            )
+        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"].apply(
+            lambda filepath: path.join(self.response_img_dir, path.basename(filepath))
         )
 
         # the shape of the feature matrix below is the same as `shape_i`
         self.assertEqual(
-            self.prb.build_response(
-                response_img_filepaths=img_filepaths
-            ).shape,
+            self.prb.build_response(response_img_filepaths=img_filepaths).shape,
             (len(img_filepaths) * self.pixels_per_img,),
         )
 
-        # test that if none of `split_df`, `img_filepaths` or `img_dir` are
-        # provided, a `ValueError` is raised
+        # test that if none of `split_df`, `img_filepaths` or `img_dir` are provided, a
+        # `ValueError` is raised
         self.assertRaises(ValueError, self.prb.build_response)
 
-        # test that providing a response whose pixel values are not
-        # exclusively the `tree_val` and `nontree_val` attributes of the
-        # `PixelResponseBuilder` instance raises a `ValueError`
+        # test that providing a response whose pixel values are not exclusively the
+        # `tree_val` and `nontree_val` attributes of the `PixelResponseBuilder` instance
+        # raises a `ValueError`
         self.assertRaises(
             ValueError,
             self.prb.build_response_from_filepath,
@@ -450,8 +412,7 @@ class TestTrainClassifier(unittest.TestCase):
         self.tmp_output_dir = path.join(self.data_dir, "tmp_output")
         os.mkdir(self.tmp_output_dir)
 
-        # TODO: test init arguments of `ClassifierTrainer` other than
-        # `num_estimators`
+        # TODO: test init arguments of `ClassifierTrainer` other than `num_estimators`
         num_estimators = 2  # to speed-up the tests
         self.ct = dtr.ClassifierTrainer(num_estimators=num_estimators)
         # cache this first trained classifier to reuse it below
@@ -469,10 +430,10 @@ class TestTrainClassifier(unittest.TestCase):
 
     def test_classifier_trainer(self):
 
-        # test that all the combinations of arguments of the `train_classifier`
-        # method return an instance of `sklearn.ensemble.AdaBoostClassifier`
-        # option 1a: `split_df` and `response_img_dir` with implicit method
-        # (note that we are using `self.clf` obtained in `setUp`)
+        # test that all the combinations of arguments of the `train_classifier` method
+        # return an instance of `sklearn.ensemble.AdaBoostClassifier` option 1a:
+        # `split_df` and `response_img_dir` with implicit method (note that we are using
+        # `self.clf` obtained in `setUp`)
         self.assertIsInstance(self.clf, ensemble.AdaBoostClassifier)
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -501,9 +462,7 @@ class TestTrainClassifier(unittest.TestCase):
             ensemble.AdaBoostClassifier,
         )
         # option 2: `img_filepaths` and `response_img_dir`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]][
-            "img_filepath"
-        ]
+        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
         self.assertIsInstance(
             self.ct.train_classifier(
                 img_filepaths=img_filepaths,
@@ -513,9 +472,7 @@ class TestTrainClassifier(unittest.TestCase):
         )
         # option 3: `img_filepaths` and `response_img_filepaths`
         response_img_filepaths = img_filepaths.apply(
-            lambda filepath: path.join(
-                self.response_img_dir, path.basename(filepath)
-            )
+            lambda filepath: path.join(self.response_img_dir, path.basename(filepath))
         )
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -524,15 +481,13 @@ class TestTrainClassifier(unittest.TestCase):
             ),
             ensemble.AdaBoostClassifier,
         )
-        # from here below, we use `self.tmp_train_dir`, which is a directory
-        # with only one image, namely `self.train_filename`, so that the
-        # training does not take long
+        # from here below, we use `self.tmp_train_dir`, which is a directory with only
+        # one image, namely `self.train_filename`, so that the training does not take
+        # long
         img_dir = self.tmp_train_dir
         # here we could use `img_dir` or `self.img_dir`
         img_filepaths = [path.join(self.img_dir, self.train_filename)]
-        response_img_filepaths = [
-            path.join(self.response_img_dir, self.train_filename)
-        ]
+        response_img_filepaths = [path.join(self.response_img_dir, self.train_filename)]
         # option 4: `img_dir` and `response_img_dir`
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -564,20 +519,19 @@ class TestTrainClassifier(unittest.TestCase):
             ensemble.AdaBoostClassifier,
         )
 
-        # test that either `split_df`, `img_filepaths` or `img_dir` must be
-        # provided
+        # test that either `split_df`, `img_filepaths` or `img_dir` must be provided
         self.assertRaises(ValueError, self.ct.train_classifier)
 
-        # test that `train_classifiers` raises a `ValueError` if `split_df`
-        # doesn't have a 'img_cluster' column
+        # test that `train_classifiers` raises a `ValueError` if `split_df` doesn't have
+        # a 'img_cluster' column
         self.assertRaises(
             ValueError,
             self.ct.train_classifiers,
             split_df=self.split_i_df,
             response_img_dir=self.response_img_dir,
         )
-        # test that `train_classifiers` returns a dict otherwise
-        # (note that we are using `self.clf_dict` obtained in `setUp`)
+        # test that `train_classifiers` returns a dict otherwise (note that we are using
+        # `self.clf_dict` obtained in `setUp`)
         self.assertIsInstance(self.clf_dict, dict)
 
     def _test_imgs_exist_and_rm(self, pred_imgs):
@@ -592,11 +546,8 @@ class TestTrainClassifier(unittest.TestCase):
 
         img_filepath = self.split_i_df.iloc[0]["img_filepath"]
         # test that `classify_img` returns a ndarray
-        self.assertIsInstance(
-            c.classify_img(img_filepath, self.clf), np.ndarray
-        )
-        # test that `classify_img` with `output_filepath` returns a ndarray
-        # and dumps it
+        self.assertIsInstance(c.classify_img(img_filepath, self.clf), np.ndarray)
+        # test that `classify_img` with `output_filepath` returns a ndarray and dumps it
         output_filepath = path.join(self.tmp_output_dir, "foo.tif")
         y_pred = c.classify_img(img_filepath, self.clf, output_filepath)
         self.assertIsInstance(y_pred, np.ndarray)
@@ -604,16 +555,14 @@ class TestTrainClassifier(unittest.TestCase):
         # remove it so that the output dir is clean in the tests below
         os.remove(output_filepath)
 
-        # test that `classify_imgs` with implicit `cluster-I` method returns a
-        # list and that the images have been dumped
-        pred_imgs = c.classify_imgs(
-            self.split_i_df, self.tmp_output_dir, clf=self.clf
-        )
+        # test that `classify_imgs` with implicit `cluster-I` method returns a list and
+        # that the images have been dumped
+        pred_imgs = c.classify_imgs(self.split_i_df, self.tmp_output_dir, clf=self.clf)
         self.assertIsInstance(pred_imgs, list)
         self._test_imgs_exist_and_rm(pred_imgs)
 
-        # test that `classify_imgs` with implicit `cluster-II` method, `clf`
-        # and `img_label` returns a list and that the images have been dumped
+        # test that `classify_imgs` with implicit `cluster-II` method, `clf` and
+        # `img_label` returns a list and that the images have been dumped
         pred_imgs = c.classify_imgs(
             self.split_ii_df,
             self.tmp_output_dir,
@@ -632,8 +581,8 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertIsInstance(pred_imgs, list)
         self._test_imgs_exist_and_rm(pred_imgs)
 
-        # test that `classify_imgs` with implicit `cluster-II` method and
-        # `clf_dict` returns a dict and that the images have been dumped
+        # test that `classify_imgs` with implicit `cluster-II` method and `clf_dict`
+        # returns a dict and that the images have been dumped
         pred_imgs = c.classify_imgs(
             self.split_ii_df, self.tmp_output_dir, clf_dict=self.clf_dict
         )
@@ -651,8 +600,8 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertRaises(
             ValueError, c.classify_imgs, self.split_ii_df, self.tmp_output_dir
         )
-        # test that `clf_dict=None` with 'cluster-II' and `img_cluster=None`
-        # raises a `ValueError`, even when providing a non-None `clf`
+        # test that `clf_dict=None` with 'cluster-II' and `img_cluster=None` raises a
+        # `ValueError`, even when providing a non-None `clf`
         self.assertRaises(
             ValueError,
             c.classify_imgs,
@@ -667,9 +616,7 @@ class TestTrainClassifier(unittest.TestCase):
         c = dtr.Classifier(refine=False)
         img_filepath = self.split_i_df.iloc[0]["img_filepath"]
         # test that `classify_img` returns a ndarray
-        self.assertIsInstance(
-            c.classify_img(img_filepath, self.clf), np.ndarray
-        )
+        self.assertIsInstance(c.classify_img(img_filepath, self.clf), np.ndarray)
 
 
 class TestLidarToCanopy(unittest.TestCase):
@@ -707,8 +654,8 @@ class TestLidarToCanopy(unittest.TestCase):
             postprocess_func_args=[ndi.generate_binary_structure(2, 2)],
             postprocess_func_kws={"border_value": 0},
         )
-        # test that `to_canopy_mask` with `output_filepath` returns a ndarray
-        # and dumps it
+        # test that `to_canopy_mask` with `output_filepath` returns a ndarray and dumps
+        # it
         output_filepath = path.join(self.tmp_dir, "foo.tif")
         y_pred = ltc.to_canopy_mask(
             self.lidar_filepath,
@@ -746,12 +693,10 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(len(tiles) <= len(maybe_empty_tiles))
 
     def test_get_img_filepaths(self):
-        self.assertRaises(
-            ValueError, utils.get_img_filepaths, self.split_i_df, 0, True
-        )
+        self.assertRaises(ValueError, utils.get_img_filepaths, self.split_i_df, 0, True)
 
     def test_logging(self):
-        # Taken from OSMnx
+        # Taken from osmnx
         # https://github.com/gboeing/osmnx/blob/master/tests/test_osmnx.py
         import logging as lg
 
@@ -768,9 +713,7 @@ class TestCLI(unittest.TestCase):
         self.models_dir = path.join(self.data_dir, "models")
         self.response_img_dir = path.join(self.data_dir, "response_img")
 
-        self.split_ii_filepath = path.join(
-            self.data_dir, "split_cluster-II.csv"
-        )
+        self.split_ii_filepath = path.join(self.data_dir, "split_cluster-II.csv")
 
         self.tmp_dir = path.join(self.data_dir, "tmp")
         os.mkdir(self.tmp_dir)

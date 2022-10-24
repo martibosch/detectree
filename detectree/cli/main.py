@@ -11,9 +11,8 @@ import detectree as dtr
 
 # utils for the CLI
 class _OptionEatAll(click.Option):
-    # Option that can take an unlimided number of arguments
-    # Copied from Stephen Rauch's answer in stack overflow.
-    # https://bit.ly/2kstLhe
+    # Option that can take an unlimided number of arguments Copied from Stephen Rauch's
+    # answer in stack overflow.  https://bit.ly/2kstLhe
     def __init__(self, *args, **kwargs):
         self.save_other_options = kwargs.pop("save_other_options", True)
         nargs = kwargs.pop("nargs", -1)
@@ -46,9 +45,7 @@ class _OptionEatAll(click.Option):
 
         retval = super(_OptionEatAll, self).add_to_parser(parser, ctx)
         for name in self.opts:
-            our_parser = parser._long_opt.get(name) or parser._short_opt.get(
-                name
-            )
+            our_parser = parser._long_opt.get(name) or parser._short_opt.get(name)
             if our_parser:
                 self._eat_all_parser = our_parser
                 self._previous_parser_process = our_parser.process
@@ -337,9 +334,7 @@ def classify_img(
     """Use a trained classifier to predict tree pixels in an image."""
     logger = ctx.obj["LOGGER"]
 
-    logger.info(
-        "Classifying %s with classifier of %s", img_filepath, clf_filepath
-    )
+    logger.info("Classifying %s with classifier of %s", img_filepath, clf_filepath)
 
     pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
     c = dtr.Classifier(

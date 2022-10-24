@@ -3,7 +3,7 @@ title: 'DetecTree: Tree detection from aerial imagery in Python'
 tags:
   - Python
   - tree detection
-  - image segmentation  
+  - image segmentation
   - remote sensing images
   - GIS
 authors:

@@ -35,63 +35,55 @@ class ClassifierTrainer(object):
         """
         Initialize the classifier.
 
-        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
-        more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for details.
 
         Parameters
         ----------
         num_estimators : int, optional
-            The maximum number of estimators at which boosting is terminated.
-            Directly passed to the `n_estimators` keyword argument of
-            `sklearn.ensemble.AdaBoostClassifier`. If no value is provided,
-            the default value set in `settings.CLF_DEFAULT_NUM_ESTIMATORS`
-            will be taken.
+            The maximum number of estimators at which boosting is terminated. Directly
+            passed to the `n_estimators` keyword argument of
+            `sklearn.ensemble.AdaBoostClassifier`. If no value is provided, the default
+            value set in `settings.CLF_DEFAULT_NUM_ESTIMATORS` will be taken.
         sigmas : list-like, optional
-            The list of scale parameters (sigmas) to build the Gaussian filter
-            bank that will be used to compute the pixel-level features. The
-            provided argument will be passed to the initialization method of
-            the `PixelFeaturesBuilder` class. If no value is provided, the
-            default value set in `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
+            The list of scale parameters (sigmas) to build the Gaussian filter bank that
+            will be used to compute the pixel-level features. The provided argument will
+            be passed to the initialization method of the `PixelFeaturesBuilder` class.
+            If no value is provided, the default value set in
+            `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
         num_orientations : int, optional
-            The number of equally-distributed orientations to build the
-            Gaussian filter bank that will be used to compute the pixel-level
-            features. The provided argument will be passed to the
-            initialization method of the `PixelFeaturesBuilder` class. If no
-            value is provided, the default value set in
-            `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
+            The number of equally-distributed orientations to build the Gaussian filter
+            bank that will be used to compute the pixel-level features. The provided
+            argument will be passed to the initialization method of the
+            `PixelFeaturesBuilder` class. If no value is provided, the default value set
+            in `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
         neighborhood : array-like, optional
-            The base neighborhood structure that will be used to compute the
-            entropy features. The provided argument will be passed to the
-            initialization method of the `PixelFeaturesBuilder` class. If no
-            value is provided, a square with a side size of
-            `2 * min_neighborhood_range + 1` will be used.
+            The base neighborhood structure that will be used to compute the entropy
+            features. Theprovided argument will be passed to the initialization method
+            of the `PixelFeaturesBuilder` class. If no value is provided, a square with
+            a side size of `2 * min_neighborhood_range + 1` will be used.
         min_neighborhood_range : int, optional
-            The range (i.e., the square radius) of the smallest neigbhorhood
-            window that will be used to compute the entropy features. The
-            provided argument will be passed to the initialization method of
-            the `PixelFeaturesBuilder` class. If no value is provided, the
-            default value set in
+            The range (i.e., the square radius) of the smallest neigbhorhood window that
+            will be used to compute the entropy features. The provided argument will be
+            passed to the initialization method of the `PixelFeaturesBuilder` class. If
+            no value is provided, the default value set in
             `settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE` will be taken.
         num_neighborhoods : int, optional
             The number of neigbhorhood windows (whose size follows a geometric
-            progression starting at `min_neighborhood_range`) that will be
-            used to compute the entropy features. The provided argument will
-            be passed to the initialization method of the
-            `PixelFeaturesBuilder` class. If no value is provided, the default
-            value set in `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be
-            taken.
+            progression starting at `min_neighborhood_range`) that will be used to
+            compute the entropy features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no value is
+            provided, the default value set in
+            `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be taken.
         tree_val : int, optional
-            The value that designates tree pixels in the response images. The
-            provided argument will be passed to the initialization method of
-            the `PixelResponseBuilder` class. If no value is provided, the
-            default value set in `settings.RESPONSE_DEFAULT_TREE_VAL` will be
-            taken.
+            The value that designates tree pixels in the response images. The provided
+            argument will be passed to the initialization method of the
+            `PixelResponseBuilder` class. If no value is provided, the default value set
+            in `settings.RESPONSE_DEFAULT_TREE_VAL` will be taken.
         nontree_val : int, optional
-            The value that designates non-tree pixels in the response images.
-            The provided argument will be passed to the initialization method
-            of the `PixelResponseBuilder` class. If no value is provided, the
-            default value set in `settings.RESPONSE_DEFAULT_NONTREE_VAL` will
-            be taken.
+            The value that designates non-tree pixels in the response images. The
+            provided argument will be passed to the initialization method of the
+            `PixelResponseBuilder` class. If no value is provided, the default value set
+            in `settings.RESPONSE_DEFAULT_NONTREE_VAL` will be taken.
         adaboost_kws : key-value pairings, optional
             Keyword arguments that will be passed to
             `sklearn.ensemble.AdaBoostClassifier`.
@@ -129,39 +121,37 @@ class ClassifierTrainer(object):
         """
         Train a classifier.
 
-        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
-        more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
 
         Parameters
         ----------
         split_df : pandas DataFrame, optional
-            Data frame with the train/test split
+            Data frame with the train/test split.
         response_img_dir : str representing path to a directory, optional
-            Path to the directory where the response tiles are located.
-            Required if providing `split_df`. Otherwise `response_img_dir`
-            might either be ignored if providing `response_img_filepaths`, or
-            be used as the directory where the images whose filename matches
-            `img_filename_pattern` are to be located.
+            Path to the directory where the response tiles are located. Required if
+            providing `split_df`. Otherwise `response_img_dir` might either be ignored
+            if providing `response_img_filepaths`, or be used as the directory where the
+            images whose filename matches `img_filename_pattern` are to be located.
         img_filepaths : list-like, optional
-            List of paths to the input tiles whose features will be used to
-            train the classifier. Ignored if `split_df` is provided.
+            List of paths to the input tiles whose features will be used to train the
+            classifier. Ignored if `split_df` is provided.
         response_img_filepaths : list-like, optional
-            List of paths to the binary response tiles that will be used to
-            train the classifier. Ignored if `split_df` is provided.
+            List of paths to the binary response tiles that will be used to train the
+            classifier. Ignored if `split_df` is provided.
         img_dir : str representing path to a directory, optional
             Path to the directory where the images whose filename matches
             `img_filename_pattern` are to be located. Ignored if `split_df` or
             `img_filepaths` is provided.
         img_filename_pattern : str representing a file-name pattern, optional
-            Filename pattern to be matched in order to obtain the list of
-            images. If no value is provided, the default value set in
-            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if
-            `split_df` or `img_filepaths` is provided.
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the default value set in
+            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if `split_df`
+            or `img_filepaths` is provided.
         method : {'cluster-I', 'cluster-II'}, optional
-            Method used in the train/test split
+            Method used in the train/test split.
         img_cluster : int, optional
-            The label of the cluster of tiles. Only used if `method` is
-            'cluster-II'
+            The label of the cluster of tiles. Only used if `method` is 'cluster-II'.
 
         Returns
         -------
@@ -169,27 +159,21 @@ class ClassifierTrainer(object):
             The trained classifier
         """
         if split_df is None and response_img_filepaths is None:
-            # this is the only case that needs argument tweaking:
-            # otherwise, if we pass `img_filepaths`/`img_dir` to
-            # `build_features` and `response_img_dir` to `build_response`, the
-            # latter would build a response with all the image files in
-            # `response_img_dir`. Instead, we need to build the response only
+            # this is the only case that needs argument tweaking: otherwise, if we pass
+            # `img_filepaths`/`img_dir` to `build_features` and `response_img_dir` to
+            # `build_response`, the latter would build a response with all the image
+            # files in `response_img_dir`. Instead, we need to build the response only
             # for the files speficied in `img_filepaths`/`img_dir`
             if img_filepaths is None:
-                # TODO: this is copied from `build_features` - ideally, we
-                # should DRY it
+                # TODO: this is copied from `build_features` - ideally, we should DRY it
                 if img_filename_pattern is None:
-                    img_filename_pattern = (
-                        settings.IMG_DEFAULT_FILENAME_PATTERN
-                    )
+                    img_filename_pattern = settings.IMG_DEFAULT_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must "
                         "be provided"
                     )
-                img_filepaths = glob.glob(
-                    path.join(img_dir, img_filename_pattern)
-                )
+                img_filepaths = glob.glob(path.join(img_dir, img_filename_pattern))
 
             response_img_filepaths = [
                 path.join(response_img_dir, path.basename(img_filepath))
@@ -229,22 +213,22 @@ class ClassifierTrainer(object):
         """
         Train a classifier for each first-level cluster in `split_df`.
 
-        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
-        more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
 
         Parameters
         ----------
         split_df : pandas DataFrame
-            Data frame with the train/test split, which must have an
-            `img_cluster` column with the first-level cluster labels.
+            Data frame with the train/test split, which must have an `img_cluster`.
+            column with the first-level cluster labels.
         response_img_dir : str representing path to a directory
             Path to the directory where the response tiles are located.
 
         Returns
         -------
         clf_dict : dictionary
-            Dictionary mapping a scikit-learn AdaBoostClassifier to each
-            first-level cluster label
+            Dictionary mapping a scikit-learn AdaBoostClassifier to each first-level
+            cluster label.
         """
         if "img_cluster" not in split_df:
             raise ValueError(
@@ -283,39 +267,36 @@ class Classifier(object):
         """
         Initialize the classifier instance.
 
-        See the `background <https://bit.ly/2KlCICO>`_ example notebook for
-        more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
 
         Parameters
         ----------
         tree_val : int, optional
-            Label used to denote tree pixels in the predicted images. If no
-            value is provided, the default value set in
-            `settings.CLF_DEFAULT_TREE_VAL` will be taken.
+            Label used to denote tree pixels in the predicted images. If no value is
+            provided, the default value set in `settings.CLF_DEFAULT_TREE_VAL` will be
+            taken.
         nontree_val : int, optional
-            Label used to denote non-tree pixels in the predicted images. If
-            no value is provided, the default value set in
-            `settings.CLF_DEFAULT_NONTREE_VAL` will be taken.
+            Label used to denote non-tree pixels in the predicted images. If no value is
+            provided, the default value set in `settings.CLF_DEFAULT_NONTREE_VAL` will
+            be taken.
         refine : bool, optional
-            Whether the pixel-level classification should be refined by
-            optimizing the consistence between neighboring pixels. If no value
-            is provided, the default value set in `settings.CLF_DEFAULT_REFINE`
-            will be taken.
+            Whether the pixel-level classification should be refined by optimizing the
+            consistence between neighboring pixels. If no value is provided, the default
+            value set in `settings.CLF_DEFAULT_REFINE` will be taken.
         refine_beta : int, optional
-            Parameter of the refinement procedure that controls the
-            smoothness of the labelling. Larger values lead to smoother shapes.
-            If no value is provided, the default value set in
-            `settings.CLF_DEFAULT_REFINE_BETA` will be taken.
+            Parameter of the refinement procedure that controls the smoothness of the
+            labelling. Larger values lead to smoother shapes.  If no value is provided,
+            the default value set in `settings.CLF_DEFAULT_REFINE_BETA` will be taken.
         refine_int_rescale : int, optional
-            Parameter of the refinement procedure that controls the precision
-            of the transformation of float to integer edge weights, required
-            for the employed graph cuts algorithm. Larger values lead to
-            greater precision. If no value is provided, the default value set
-            in `settings.CLF_DEFAULT_REFINE_INT_RESCALE` will be taken.
+            Parameter of the refinement procedure that controls the precision of the
+            transformation of float to integer edge weights, required for the employed
+            graph cuts algorithm. Larger values lead to greater precision. If no value
+            is provided, the default value set in
+            `settings.CLF_DEFAULT_REFINE_INT_RESCALE` will be taken.
         pixel_features_builder_kws : dict, optional
-            Keyword arguments that will be passed to
-            `detectree.PixelFeaturesBuilder`, which customize how the pixel
-            features are built.
+            Keyword arguments that will be passed to `detectree.PixelFeaturesBuilder`,
+            which customize how the pixel features are built.
         """
         super(Classifier, self).__init__()
 
@@ -347,24 +328,23 @@ class Classifier(object):
         Parameters
         ----------
         img_filepath : str, file object or pathlib.Path object
-            Path to a file, URI, file object opened in binary ('rb') mode, or
-            a Path object representing the image to be classified. The value
-            will be passed to `rasterio.open`
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing the image to be classified. The value will be passed to
+            `rasterio.open`.
         clf : scikit-learn AdaBoostClassifier
-            Trained classifier
+            Trained classifier.
         output_filepath : str, file object or pathlib.Path object, optional
-            Path to a file, URI, file object opened in binary ('rb') mode, or
-            a Path object representing where the predicted image is to be
-            dumped. The value will be passed to `rasterio.open` in 'write' mode
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing where the predicted image is to be dumped. The value
+            will be passed to `rasterio.open` in 'write' mode.
 
         Returns
         -------
         y_pred : numpy ndarray
-            Array with the pixel responses
+            Array with the pixel responses.
         """
-        # ACHTUNG: Note that we do not use keyword-only arguments in this
-        # method because `output_filepath` works as the only "optional"
-        # argument
+        # ACHTUNG: Note that we do not use keyword-only arguments in this method because
+        # `output_filepath` works as the only "optional" argument
         src = rio.open(img_filepath)
         img_shape = src.shape
 
@@ -381,17 +361,15 @@ class Classifier(object):
             P_nontree = p_nontree.reshape(img_shape)
             P_tree = p_tree.reshape(img_shape)
 
-            # The AdaBoost probabilities are floats between 0 and 1, and the
-            # graph cuts algorithm requires an integer representation.
-            # Therefore, we will multiply the probabilities by an arbitrary
-            # large number and then transform the result to integers. For
-            # instance, we could use a `refine_int_rescale` of `100` so that
-            # the probabilities are rescaled into integers between 0 and 100
-            # like percentages). The larger `refine_int_rescale`, the greater
-            # the precision.
-            # ACHTUNG: the data term when the pixel is a tree is
-            # `log(1 - P_tree)`, i.e., `log(P_nontree)`, so the two lines
-            # below are correct
+            # The AdaBoost probabilities are floats between 0 and 1, and the graph cuts
+            # algorithm requires an integer representation.  Therefore, we will multiply
+            # the probabilities by an arbitrary large number and then transform the
+            # result to integers. For instance, we could use a `refine_int_rescale` of
+            # `100` so that the probabilities are rescaled into integers between 0 and
+            # 100 like percentages). The larger `refine_int_rescale`, the greater the
+            # precision.
+            # ACHTUNG: the data term when the pixel is a tree is `log(1 - P_tree)`,
+            # i.e., `log(P_nontree)`, so the two lines below are correct
             D_tree = (self.refine_int_rescale * np.log(P_nontree)).astype(int)
             D_nontree = (self.refine_int_rescale * np.log(P_tree)).astype(int)
             # TODO: option to choose Moore/Von Neumann neighborhood?
@@ -406,8 +384,8 @@ class Classifier(object):
             y_pred = np.full(img_shape, self.nontree_val)
             y_pred[g.get_grid_segments(node_ids)] = self.tree_val
 
-        # TODO: make the profile of output rasters more customizable (e.g., via
-        # the `settings` module)
+        # TODO: make the profile of output rasters more customizable (e.g., via the
+        # `settings` module)
         # output_filepath = path.join(output_dir,
         #                             f"tile_{tile_start}-{tile_end}.tif")
         if output_filepath is not None:
@@ -435,13 +413,9 @@ class Classifier(object):
             # filename, ext = path.splitext(path.basename(img_filepath))
             # pred_img_filepath = path.join(
             #     output_dir, f"{filename}-pred{ext}")
-            pred_img_filepath = path.join(
-                output_dir, path.basename(img_filepath)
-            )
+            pred_img_filepath = path.join(output_dir, path.basename(img_filepath))
             pred_imgs_lazy.append(
-                dask.delayed(self.classify_img)(
-                    img_filepath, clf, pred_img_filepath
-                )
+                dask.delayed(self.classify_img)(img_filepath, clf, pred_img_filepath)
             )
             pred_img_filepaths.append(pred_img_filepath)
 
@@ -463,11 +437,9 @@ class Classifier(object):
         """
         Use trained classifier(s) to predict tree pixels in multiple images.
 
-        Use `clf` or `clf_dict` for the classifier(s) depending on the train/
-        test split method, and dump the predicted tree/non-tree images to
-        `output_dir`. See the `background <https://bit.ly/2KlCICO>`_ example
-        notebook for more details.
-
+        Use `clf` or `clf_dict` for the classifier(s) depending on the train/ test split
+        method, and dump the predicted tree/non-tree images to `output_dir`. See the
+        `background <https://bit.ly/2KlCICO>`_ example notebook for more details.
 
         Parameters
         ----------
@@ -478,13 +450,12 @@ class Classifier(object):
         clf : scikit-learn AdaBoostClassifier
             Trained classifier.
         clf_dict : dictionary
-            Dictionary mapping a trained scikit-learn AdaBoostClassifier to
-            each first-level cluster label.
+            Dictionary mapping a trained scikit-learn AdaBoostClassifier to each
+            first-level cluster label.
         method : {'cluster-I', 'cluster-II'}, optional
             Method used in the train/test split.
         img_cluster : int, optional
-            The label of the cluster of tiles. Only used if `method` is
-            'cluster-II'.
+            The label of the cluster of tiles. Only used if `method` is 'cluster-II'.
 
         Returns
         -------
@@ -499,9 +470,7 @@ class Classifier(object):
 
         if method == "cluster-I":
             if clf is None:
-                raise ValueError(
-                    "If using 'cluster-I' method, `clf` must be provided"
-                )
+                raise ValueError("If using 'cluster-I' method, `clf` must be provided")
             return self._classify_imgs(
                 split_df[~split_df["train"]]["img_filepath"], clf, output_dir
             )
@@ -511,9 +480,7 @@ class Classifier(object):
                     if clf_dict is not None:
                         clf = clf_dict[img_cluster]
                     else:
-                        raise ValueError(
-                            "Either `clf` or `clf_dict` must be provided"
-                        )
+                        raise ValueError("Either `clf` or `clf_dict` must be provided")
 
                 return self._classify_imgs(
                     utils.get_img_filepaths(split_df, img_cluster, False),
@@ -523,11 +490,11 @@ class Classifier(object):
 
             if clf_dict is None:
                 raise ValueError(
-                    "If using 'cluster-II' method and not providing "
-                    "`img_cluster`, `clf_dict` must be provided"
+                    "If using 'cluster-II' method and not providing `img_cluster`, "
+                    "`clf_dict` must be provided"
                 )
             pred_imgs = {}
-            for img_cluster, img_cluster_df in split_df.groupby("img_cluster"):
+            for img_cluster, _ in split_df.groupby("img_cluster"):
                 pred_imgs[img_cluster] = self._classify_imgs(
                     utils.get_img_filepaths(split_df, img_cluster, False),
                     clf_dict[img_cluster],

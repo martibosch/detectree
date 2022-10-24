@@ -15,6 +15,8 @@ dependencies:
   - pip
   - pip:
     - pymaxflow>=1.0.0
+    - laszip
+  - pre-commit
   - rasterio>=1.0.0
   - scikit-image
   - scikit-learn
