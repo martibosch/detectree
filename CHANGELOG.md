@@ -1,5 +1,13 @@
 # Change log
 
+## 0.4.2 (24/10/2022)
+
+* moved `_gaussain_kernel1d` from scipy to detectree codebase
+
+## 0.4.1 (05/07/2021)
+
+* added postprocess func args and kwargs to `LidarToCanopy`
+
 ## 0.4.0 (03/07/2021)
 
 * added pre-commit
