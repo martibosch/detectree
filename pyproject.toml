@@ -27,6 +27,7 @@ dependencies = [
     "joblib",
     "laspy >= 2.0.0",
     "numpy >= 1.15",
+    "opencv-python >= 4.0.0",
     "pandas >= 0.23",
     "pymaxflow >= 1.0.0",
     "rasterio >= 1.0.0",
