@@ -111,7 +111,7 @@ class LidarToCanopy:
         output_filepath=None,
         postprocess_func=None,
         postprocess_func_args=None,
-        postprocess_func_kws=None
+        postprocess_func_kws=None,
     ):
         """
         Transform a LiDAR file into a canopy mask.

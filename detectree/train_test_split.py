@@ -14,7 +14,7 @@ from . import filters, image_descriptor, settings
 __all__ = ["TrainingSelector"]
 
 
-class TrainingSelector(object):
+class TrainingSelector:
     """Select the images/tiles to be used to train the classifier(s)."""
 
     def __init__(
@@ -26,7 +26,7 @@ class TrainingSelector(object):
         gabor_frequencies=None,
         gabor_num_orientations=None,
         response_bins_per_axis=None,
-        num_color_bins=None
+        num_color_bins=None,
     ):
         """
         Initialize the training selector.
@@ -73,7 +73,7 @@ class TrainingSelector(object):
             the L*a*b color space. If no value is provided (default), the value will be
             taken from `seettings.GIST_DEFAULT_NUM_COLOR_BINS`.
         """
-        super(TrainingSelector, self).__init__()
+        super().__init__()
 
         # get `None` keyword-arguments from settings
         if img_filename_pattern is None:
@@ -158,7 +158,7 @@ class TrainingSelector(object):
         num_components=12,
         num_img_clusters=4,
         train_prop=0.01,
-        return_evr=False
+        return_evr=False,
     ):
         """
         Select the image/tiles to be used for traning.

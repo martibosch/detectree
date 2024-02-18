@@ -1,0 +1,49 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        include:
+          - os: macos-latest
+            python-version: "3.12"
+          - os: windows-latest
+            python-version: "3.12"
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-name: test-env
+          create-args: >-
+            python=${{ matrix.python-version }}
+            pip
+
+      - name: install dependencies
+        run: pip install tox tox-gh-actions
+
+      - name: test with tox
+        run: tox
+        env:
+          CONDA_EXE: mamba
+
+      - name: upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+
+      - name: list files
+        run: ls -l .

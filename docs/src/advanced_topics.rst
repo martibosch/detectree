@@ -2,7 +2,7 @@
 Advanced Topics
 ===============
 
-Most use cases of DetecTree only make use of the `TrainingSelector`, `ClassifierTrainer` and `Classifier` classes and their respective methods. Nevertheless, 
+Most use cases of DetecTree only make use of the `TrainingSelector`, `ClassifierTrainer` and `Classifier` classes and their respective methods. Nevertheless,
 See the `"background" example notebook <https://github.com/martibosch/detectree-example/blob/master/notebooks/background.ipynb>`_ and the article of Yang et al. :cite:`yang2009tree` for more information.
 
 ----------------
@@ -21,8 +21,8 @@ Nevertheless, the way in which such image descriptor is computer can be customiz
 .. autofunction:: detectree.image_descriptor.compute_image_descriptor_from_filepath
 
 The GIST descriptor might also be directly computed from an array with the RGB representation of the image:
-                  
-.. autofunction:: detectree.image_descriptor.compute_image_descriptor                  
+
+.. autofunction:: detectree.image_descriptor.compute_image_descriptor
 
 On the other hand, in order to obtain a Gabor filter bank (e.g., for the `kernels` argument), the following function can be used:
 
@@ -38,7 +38,7 @@ In order to perform a binary pixel-level classification of tree/non-tree pixels,
    :members:  __init__, build_features
 
 The texture features are obtained by convolving the images with a filter bank, which is obtained by means of the following function:
-      
+
 .. autofunction:: detectree.filters.get_texture_kernel
 
 The arguments of  `Classifier.__init__` also serve to customize how the pixel response (i.e., tree/non-tree labels of each pixel) is computed, by forwarding them to the following class:

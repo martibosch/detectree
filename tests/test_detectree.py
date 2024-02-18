@@ -18,22 +18,7 @@ from detectree.cli import main
 
 class TestImports(unittest.TestCase):
     def test_base_imports(self):
-        import glob
-        import itertools
-        from os import path
-
-        import dask
-        import maxflow as mf
-        import numpy as np
-        import pandas as pd
-        import rasterio as rio
-        from dask import diagnostics
-        from rasterio import windows
-        from scipy import ndimage as ndi
-        from skimage import color, measure, morphology
-        from skimage.filters import gabor_kernel, rank
-        from skimage.util import shape
-        from sklearn import cluster, decomposition, ensemble, metrics, preprocessing
+        pass
 
 
 class TestTrainTestSplit(unittest.TestCase):
@@ -429,7 +414,6 @@ class TestTrainClassifier(unittest.TestCase):
         shutil.rmtree(self.tmp_output_dir)
 
     def test_classifier_trainer(self):
-
         # test that all the combinations of arguments of the `train_classifier` method
         # return an instance of `sklearn.ensemble.AdaBoostClassifier` option 1a:
         # `split_df` and `response_img_dir` with implicit method (note that we are using

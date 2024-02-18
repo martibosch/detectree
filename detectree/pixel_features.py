@@ -39,7 +39,7 @@ NUM_XYZ_CHANNELS = 3
 NUM_ILL_CHANNELS = 3
 
 
-class PixelFeaturesBuilder(object):
+class PixelFeaturesBuilder:
     """Customize how pixel features are computed."""
 
     def __init__(
@@ -49,7 +49,7 @@ class PixelFeaturesBuilder(object):
         num_orientations=None,
         neighborhood=None,
         min_neighborhood_range=None,
-        num_neighborhoods=None
+        num_neighborhoods=None,
     ):
         """
         Initialize the pixel feature builder.
@@ -230,7 +230,7 @@ class PixelFeaturesBuilder(object):
         img_dir=None,
         img_filename_pattern=None,
         method=None,
-        img_cluster=None
+        img_cluster=None,
     ):
         """
         Build the pixel feature array for a list of images.
@@ -256,6 +256,7 @@ class PixelFeaturesBuilder(object):
             Method used in the train/test split
         img_cluster : int, optional
             The label of the cluster of images. Only used if `method` is 'cluster-II'.
+
         Returns
         -------
         X : numpy ndarray

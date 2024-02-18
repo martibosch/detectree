@@ -1,6 +1,6 @@
-* detectree version:
-* Python version:
-* Operating system:
+- detectree version:
+- Python version:
+- Operating system:
 
 ### Description
 

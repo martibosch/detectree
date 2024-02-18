@@ -14,7 +14,7 @@ class NonBinaryResponseError(Exception):
     pass
 
 
-class PixelResponseBuilder(object):
+class PixelResponseBuilder:
     """Customize how pixel responses (tree/non-tree labels) are computed."""
 
     # It is really not necessary to use a class for this, but we do so for the sake of

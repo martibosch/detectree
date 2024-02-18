@@ -1,9 +1,92 @@
-[tool.black]
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "detectree"
+version = "0.4.1"
+description = "Tree detection from aerial imagery in Python."
+readme = "README.md"
+authors = [
+    { name = "Martí Bosch", email = "marti.bosch@epfl.ch" },
+]
+license = { text = "GPL-3.0" }
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "dask[delayed,distributed]",
+    "joblib",
+    "laspy >= 2.0.0",
+    "numpy >= 1.15",
+    "pandas >= 0.23",
+    "pymaxflow >= 1.0.0",
+    "rasterio >= 1.0.0",
+    "scikit-image",
+    "scikit-learn",
+    "scipy >= 1.0.0",
+    "shapely",
+    "tqdm",
+]
+
+[project.urls]
+Repository = "https://github.com/martibosch/detectree"
+
+[project.scripts]
+detectree = "detectree.cli.main:cli"
+
+[project.optional-dependencies]
+test = ["coverage[toml]", "pytest", "pytest-cov", "ruff"]
+dev = ["build", "commitizen", "pre-commit", "pip", "toml", "tox", "twine"]
+doc = ["m2r2", "pydata-sphinx-theme", "sphinx"]
+
+[tool.setuptools.packages.find]
+include = ["detectree", "detectree.*"]
+
+[tool.ruff]
 line-length = 88
 
-[tool.isort]
-known_first_party = "detectree"
-default_section = "THIRDPARTY"
-forced_separate = "test_detectree"
-line_length = 88
-profile = "black"
+[tool.ruff.lint]
+select = ["D", "E", "F", "I"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["detectree"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401", "F403"]
+"tests/test_detectree.py" = ["D"]
+"docs/src/conf.py" = ["D"]
+
+[tool.coverage.run]
+source = ["detectree"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if self.debug:",
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "except ModuleNotFoundError",
+    "except ImportError",
+]
+ignore_errors = true
+omit = ["tests/*", "docs/conf.py"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_provider = "pep621"
+version_files = [
+    "detectree/__init__.py",
+    "pyproject.toml:version"
+]
