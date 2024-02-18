@@ -1,18 +1,17 @@
 """Utilities to get canopy information from LiDAR data."""
-
 import laspy
 import numpy as np
 import pandas as pd
 import rasterio as rio
+import shapely
 from rasterio import enums, features
-from shapely import geometry
 
 from . import settings
 
 __all__ = ["rasterize_lidar", "LidarToCanopy"]
 
 
-def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
+def rasterize_lidar(lidar_filepath, lidar_tree_values, dst_shape, dst_transform):
     """Rasterize a LiDAR file.
 
     Transforms a LiDAR file into a raster aligned to `ref_img_filepath`, where each
@@ -27,8 +26,10 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
         value will be passed to `laspy.file.File`.
     lidar_tree_values : int or list-like
         LiDAR point classes that correspond to trees.
-    ref_img_filepath : str, file object or pathlib.Path object
-        Reference raster image to which the LiDAR data will be rasterized.
+    dst_shape : tuple
+        Shape of the output raster.
+    dst_transform : Affine
+        Affine transformation of the output raster.
 
     Returns
     -------
@@ -42,23 +43,23 @@ def rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath):
 
     cond = np.isin(c, lidar_tree_values)
     lidar_df = pd.DataFrame({"class_val": c[cond], "x": x[cond], "y": y[cond]})
-
-    with rio.open(ref_img_filepath) as src:
+    try:
+        # note that rasterize automatically sets the dst dtype
         return features.rasterize(
             shapes=[
                 (geom, 1)
-                for geom, _ in zip(
-                    [
-                        geometry.Point(x, y)
-                        for x, y in zip(lidar_df["x"], lidar_df["y"])
-                    ],
-                    lidar_df["class_val"],
+                for geom in shapely.points(
+                    *[lidar_df[coord].astype("float64").values for coord in ["x", "y"]]
                 )
             ],
-            out_shape=src.shape,
-            transform=src.transform,
+            out_shape=dst_shape,
+            transform=dst_transform,
             merge_alg=enums.MergeAlg("ADD"),
         )
+    except ValueError:
+        # there are no LiDAR points of the target classes (`lidar_tree_values`). Return
+        # array of zeros of uint8 dtype
+        return np.zeros(dst_shape, np.uint8)
 
 
 class LidarToCanopy:
@@ -149,7 +150,11 @@ class LidarToCanopy:
         #                        iterations=self.num_opening_iterations),
         #     iterations=self.num_dilation_iterations).astype(
         #         self.output_dtype) * self.output_tree_val
-        lidar_arr = rasterize_lidar(lidar_filepath, lidar_tree_values, ref_img_filepath)
+        with rio.open(ref_img_filepath) as src:
+            meta = src.meta.copy()
+        lidar_arr = rasterize_lidar(
+            lidar_filepath, lidar_tree_values, meta["shape"], meta["transform"]
+        )
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:
             canopy_arr = postprocess_func(
@@ -160,8 +165,6 @@ class LidarToCanopy:
         ).astype(self.output_dtype)
 
         if output_filepath is not None:
-            with rio.open(ref_img_filepath) as src:
-                meta = src.meta.copy()
             meta.update(dtype=self.output_dtype, count=1, nodata=self.output_nodata)
             with rio.open(output_filepath, "w", **meta) as dst:
                 dst.write(canopy_arr, 1)
