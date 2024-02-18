@@ -1,7 +1,7 @@
 """Compute image descriptors."""
+import cv2
 import numpy as np
 from PIL import Image
-from scipy import ndimage as ndi
 from skimage import color
 from skimage.util import shape
 from sklearn import preprocessing
@@ -60,7 +60,7 @@ def compute_image_descriptor(img_rgb, kernels, response_bins_per_axis, num_color
         )
 
     for i, kernel in enumerate(kernels):
-        filter_response = ndi.convolve(img_gray, kernel)
+        filter_response = cv2.filter2D(img_gray, ddepth=-1, kernel=kernel)
         response_bins = shape.view_as_blocks(filter_response, block_shape)
         bin_sum = response_bins.sum(axis=(2, 3)).flatten()
         gist_descr[i * num_blocks : (i + 1) * num_blocks] = bin_sum
