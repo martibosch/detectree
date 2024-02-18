@@ -1,0 +1,131 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_sdist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: build source tarball
+        run: |
+          python -m build --sdist
+          twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*
+
+  build_wheels:
+    name: wheel on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # temporarily ignoring binary wheels for windows until pythran issues are fixed
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # see https://github.com/pypa/cibuildwheel/issues/933
+      # - uses: pypa/cibuildwheel@v2
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: install cibuildwheel
+        run: python -m pip install
+
+      - name: build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      - name: upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          path: wheelhouse/*.whl
+
+  publish_dev_build:
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://pypi.org/p/detectree
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - name: publish to test pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  release:
+    needs: [publish_dev_build]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/detectree
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+      # see https://github.com/softprops/action-gh-release/issues/236
+      contents: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      - name: generate change log
+        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issues: true
+          issuesWoLabels: true
+          pullRequests: true
+          prWoLabels: true
+          unreleased: true
+          addSections: '{"documentation":{"prefix":"**Documentation:**","labels":["documentation"]}}'
+          sinceTag: v0.1.0
+          output: RELEASE-CHANGELOG.md
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - name: create github release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ./RELEASE-CHANGELOG.md
+          files: dist/*.whl
+          draft: false
+          prerelease: false
+
+      - name: publish to pypi
+        uses: pypa/gh-action-pypi-publish@release/v1

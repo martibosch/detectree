@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # python_boilerplate documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -93,13 +92,18 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "default"
+html_theme = "pydata_sphinx_theme"
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "github_url": "https://github.com/martibosch/pylandstats",
+    "twitter_url": "https://twitter.com/mortybosch",
+    "pygment_light_style": "tango",
+}
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -135,8 +139,8 @@ latex_documents = [
     (
         master_doc,
         "detectree.tex",
-        u"Detectree Documentation",
-        u"Martí Bosch",
+        "Detectree Documentation",
+        "Martí Bosch",
         "manual",
     ),
 ]
@@ -145,9 +149,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "detectree", u"Detectree Documentation", [author], 1)
-]
+man_pages = [(master_doc, "detectree", "Detectree Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------
 
@@ -158,7 +160,7 @@ texinfo_documents = [
     (
         master_doc,
         "detectree",
-        u"Detectree Documentation",
+        "Detectree Documentation",
         author,
         "detectree",
         "Tree detection from aerial imagery in Python",
