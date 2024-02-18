@@ -1,8 +1,8 @@
 """Build pixel features."""
-
 import glob
 from os import path
 
+import cv2
 import dask
 import numpy as np
 from dask import diagnostics
@@ -180,7 +180,10 @@ class PixelFeaturesBuilder:
                 # theta = orientation / num_orientations * np.pi
                 theta = orientation * 180 / self.num_orientations
                 oriented_kernel_arr = ndi.interpolation.rotate(base_kernel_arr, theta)
-                img_filtered = ndi.convolve(img_lab_l, oriented_kernel_arr)
+                # img_filtered = ndi.convolve(img_lab_l, oriented_kernel_arr)
+                img_filtered = cv2.filter2D(
+                    img_lab_l, ddepth=-1, kernel=oriented_kernel_arr
+                )
                 img_filtered_vec = img_filtered.flatten()
                 X[
                     :, self.num_color_features + i * self.num_orientations + j
