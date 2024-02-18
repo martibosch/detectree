@@ -286,7 +286,6 @@ def get_logger(*, level=None, name=None, filename=None):
 
     # if a logger with this name is not already set up
     if not getattr(logger, "handler_set", None):
-
         # get today's date and construct a log filename
         todays_date = dt.datetime.today().strftime("%Y_%m_%d")
         log_filename = path.join(

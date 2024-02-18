@@ -16,7 +16,7 @@ __all__ = ["ClassifierTrainer", "Classifier"]
 MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
-class ClassifierTrainer(object):
+class ClassifierTrainer:
     """Train binary tree/non-tree classifier(s) of the pixel features."""
 
     def __init__(
@@ -88,7 +88,7 @@ class ClassifierTrainer(object):
             Keyword arguments that will be passed to
             `sklearn.ensemble.AdaBoostClassifier`.
         """
-        super(ClassifierTrainer, self).__init__()
+        super().__init__()
 
         if num_estimators is None:
             num_estimators = settings.CLF_DEFAULT_NUM_ESTIMATORS
@@ -251,7 +251,7 @@ class ClassifierTrainer(object):
         return clfs_dict
 
 
-class Classifier(object):
+class Classifier:
     """Use trained classifier(s) to predict tree pixels."""
 
     def __init__(
@@ -298,7 +298,7 @@ class Classifier(object):
             Keyword arguments that will be passed to `detectree.PixelFeaturesBuilder`,
             which customize how the pixel features are built.
         """
-        super(Classifier, self).__init__()
+        super().__init__()
 
         if tree_val is None:
             tree_val = settings.CLF_DEFAULT_TREE_VAL

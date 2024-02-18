@@ -4,7 +4,6 @@ detectree setup script.
 See license in LICENSE file.
 """
 
-from io import open  # compatible enconding parameter
 from os import path
 
 from setuptools import find_packages, setup
