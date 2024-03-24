@@ -153,7 +153,10 @@ class LidarToCanopy:
         with rio.open(ref_img_filepath) as src:
             meta = src.meta.copy()
         lidar_arr = rasterize_lidar(
-            lidar_filepath, lidar_tree_values, meta["shape"], meta["transform"]
+            lidar_filepath,
+            lidar_tree_values,
+            (meta["height"], meta["width"]),
+            meta["transform"],
         )
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:

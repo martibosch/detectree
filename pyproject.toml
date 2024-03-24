@@ -25,7 +25,7 @@ requires-python = ">=3.8"
 dependencies = [
     "dask[delayed,distributed]",
     "joblib",
-    "laspy >= 2.0.0",
+    "laspy[lazrs] >= 2.0.0",
     "lightgbm",
     "numpy >= 1.15",
     "opencv-python >= 4.0.0",
