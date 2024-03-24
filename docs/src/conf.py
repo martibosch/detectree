@@ -37,7 +37,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx_click.ext",
+    "sphinx_click",
     "sphinxcontrib.bibtex",
 ]
 bibtex_bibfiles = ["references.bib"]
@@ -99,7 +99,7 @@ html_theme = "pydata_sphinx_theme"
 # documentation.
 #
 html_theme_options = {
-    "github_url": "https://github.com/martibosch/pylandstats",
+    "github_url": "https://github.com/martibosch/detectree",
     "twitter_url": "https://twitter.com/mortybosch",
     "pygment_light_style": "tango",
 }
