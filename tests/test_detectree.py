@@ -22,6 +22,12 @@ from detectree import (
 from detectree.cli import main
 
 
+def _create_tmp_dir(tmp_dir):
+    if path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir)
+    os.mkdir(tmp_dir)
+
+
 class TestImports(unittest.TestCase):
     def test_base_imports(self):
         pass
@@ -392,7 +398,7 @@ class TestTrainClassifier(unittest.TestCase):
         )
         self.response_img_dir = path.join(self.data_dir, "response_img")
         self.tmp_train_dir = path.join(self.data_dir, "tmp_train")
-        os.mkdir(self.tmp_train_dir)
+        _create_tmp_dir(self.tmp_train_dir)
         # this file must exist in `response_img`
         self.train_filename = "1091-322_00.tif"
         shutil.copyfile(
@@ -401,7 +407,7 @@ class TestTrainClassifier(unittest.TestCase):
         )
         # to store temporary outputs
         self.tmp_output_dir = path.join(self.data_dir, "tmp_output")
-        os.mkdir(self.tmp_output_dir)
+        _create_tmp_dir(self.tmp_output_dir)
 
         # TODO: test init arguments of `ClassifierTrainer` other than `n_estimators`
         # ACHTUNG: note that `n_estimators` is processed as `classifiers_kwargs`
@@ -617,7 +623,7 @@ class TestLidarToCanopy(unittest.TestCase):
         self.ref_img_filepath = path.join(self.lidar_data_dir, "ref-img.tif")
         self.lidar_tree_values = [4, 5]
         self.tmp_dir = path.join(self.lidar_data_dir, "tmp")
-        os.mkdir(self.tmp_dir)
+        _create_tmp_dir(self.tmp_dir)
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
@@ -664,7 +670,7 @@ class TestUtils(unittest.TestCase):
         self.img_dir = path.join(self.data_dir, "img")
         self.img_filepath = path.join(self.data_dir, "big_img/1091-322_00.tif")
         self.tmp_tiles_dir = path.join(self.data_dir, "tiles")
-        os.mkdir(self.tmp_tiles_dir)
+        _create_tmp_dir(self.tmp_tiles_dir)
         self.split_i_df = pd.read_csv(
             path.join(self.data_dir, "split_cluster-I.csv"), index_col=0
         )
@@ -707,7 +713,7 @@ class TestCLI(unittest.TestCase):
         self.split_ii_filepath = path.join(self.data_dir, "split_cluster-II.csv")
 
         self.tmp_dir = path.join(self.data_dir, "tmp")
-        os.mkdir(self.tmp_dir)
+        _create_tmp_dir(self.tmp_dir)
 
         self.runner = testing.CliRunner()
 
