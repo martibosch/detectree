@@ -347,7 +347,7 @@ def classify_img(
     c.classify_img(
         img_filepath,
         io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED),
-        output_filepath,
+        output_filepath=output_filepath,
     )
     logger.info("Dumped predicted image to %s", output_filepath)
 

@@ -312,7 +312,7 @@ class Classifier:
 
         self.pixel_features_builder_kws = pixel_features_builder_kws
 
-    def classify_img(self, img_filepath, clf, output_filepath=None):
+    def classify_img(self, img_filepath, clf, *, output_filepath=None):
         """
         Use a trained classifier to predict tree pixels in an image.
 
@@ -408,7 +408,9 @@ class Classifier:
             #     output_dir, f"{filename}-pred{ext}")
             pred_img_filepath = path.join(output_dir, path.basename(img_filepath))
             pred_imgs_lazy.append(
-                dask.delayed(self.classify_img)(img_filepath, clf, pred_img_filepath)
+                dask.delayed(self.classify_img)(
+                    img_filepath, clf, output_filepath=pred_img_filepath
+                )
             )
             pred_img_filepaths.append(pred_img_filepath)
 

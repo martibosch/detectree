@@ -67,6 +67,7 @@ class LidarToCanopy:
 
     def __init__(
         self,
+        *,
         tree_threshold=None,
         output_dtype=None,
         output_tree_val=None,

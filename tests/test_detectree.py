@@ -546,7 +546,7 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertIsInstance(c.classify_img(img_filepath, self.clf), np.ndarray)
         # test that `classify_img` with `output_filepath` returns a ndarray and dumps it
         output_filepath = path.join(self.tmp_output_dir, "foo.tif")
-        y_pred = c.classify_img(img_filepath, self.clf, output_filepath)
+        y_pred = c.classify_img(img_filepath, self.clf, output_filepath=output_filepath)
         self.assertIsInstance(y_pred, np.ndarray)
         self.assertTrue(os.path.exists(output_filepath))
         # remove it so that the output dir is clean in the tests below
