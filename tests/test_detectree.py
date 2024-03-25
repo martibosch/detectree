@@ -9,10 +9,16 @@ import pandas as pd
 import rasterio as rio
 from click import testing
 from scipy import ndimage as ndi
-from sklearn import ensemble
 
 import detectree as dtr
-from detectree import filters, image_descriptor, pixel_features, pixel_response, utils
+from detectree import (
+    filters,
+    image_descriptor,
+    pixel_features,
+    pixel_response,
+    settings,
+    utils,
+)
 from detectree.cli import main
 
 
@@ -397,9 +403,10 @@ class TestTrainClassifier(unittest.TestCase):
         self.tmp_output_dir = path.join(self.data_dir, "tmp_output")
         os.mkdir(self.tmp_output_dir)
 
-        # TODO: test init arguments of `ClassifierTrainer` other than `num_estimators`
-        num_estimators = 2  # to speed-up the tests
-        self.ct = dtr.ClassifierTrainer(num_estimators=num_estimators)
+        # TODO: test init arguments of `ClassifierTrainer` other than `n_estimators`
+        # ACHTUNG: note that `n_estimators` is processed as `classifiers_kwargs`
+        n_estimators = 2  # to speed-up the tests
+        self.ct = dtr.ClassifierTrainer(n_estimators=n_estimators)
         # cache this first trained classifier to reuse it below
         self.clf = self.ct.train_classifier(
             split_df=self.split_i_df, response_img_dir=self.response_img_dir
@@ -415,17 +422,17 @@ class TestTrainClassifier(unittest.TestCase):
 
     def test_classifier_trainer(self):
         # test that all the combinations of arguments of the `train_classifier` method
-        # return an instance of `sklearn.ensemble.AdaBoostClassifier` option 1a:
+        # return an instance of `sklearn.settings.CLF_DEFAULT_CLASS` option 1a:
         # `split_df` and `response_img_dir` with implicit method (note that we are using
         # `self.clf` obtained in `setUp`)
-        self.assertIsInstance(self.clf, ensemble.AdaBoostClassifier)
+        self.assertIsInstance(self.clf, settings.CLF_DEFAULT_CLASS)
         self.assertIsInstance(
             self.ct.train_classifier(
                 split_df=self.split_ii_df,
                 response_img_dir=self.response_img_dir,
                 img_cluster=self.img_cluster,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 1b: `split_df` and `response_img_dir` with explicit method
         self.assertIsInstance(
@@ -434,7 +441,7 @@ class TestTrainClassifier(unittest.TestCase):
                 response_img_dir=self.response_img_dir,
                 method="cluster-I",
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -443,7 +450,7 @@ class TestTrainClassifier(unittest.TestCase):
                 method="cluster-II",
                 img_cluster=self.img_cluster,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 2: `img_filepaths` and `response_img_dir`
         img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
@@ -452,7 +459,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_dir=self.response_img_dir,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 3: `img_filepaths` and `response_img_filepaths`
         response_img_filepaths = img_filepaths.apply(
@@ -463,7 +470,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_filepaths=response_img_filepaths,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # from here below, we use `self.tmp_train_dir`, which is a directory with only
         # one image, namely `self.train_filename`, so that the training does not take
@@ -477,14 +484,14 @@ class TestTrainClassifier(unittest.TestCase):
             self.ct.train_classifier(
                 img_dir=img_dir, response_img_dir=self.response_img_dir
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 5: `img_dir` and `response_img_filepaths`
         self.assertIsInstance(
             self.ct.train_classifier(
                 img_dir=img_dir, response_img_filepaths=response_img_filepaths
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 6: `img_filepaths` and `response_img_dir`
         self.assertIsInstance(
@@ -492,7 +499,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_dir=self.response_img_dir,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
         # option 7: `img_filepaths` and `response_img_filepaths`
         self.assertIsInstance(
@@ -500,7 +507,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_filepaths=response_img_filepaths,
             ),
-            ensemble.AdaBoostClassifier,
+            settings.CLF_DEFAULT_CLASS,
         )
 
         # test that either `split_df`, `img_filepaths` or `img_dir` must be provided
@@ -702,8 +709,6 @@ class TestCLI(unittest.TestCase):
         self.tmp_dir = path.join(self.data_dir, "tmp")
         os.mkdir(self.tmp_dir)
 
-        self.num_estimators = 2  # to speed-up the tests
-
         self.runner = testing.CliRunner()
 
         # TODO: test more possibilities of `args` in `invoke`
@@ -741,10 +746,8 @@ class TestCLI(unittest.TestCase):
                 path.join(self.data_dir, "split_cluster-I.csv"),
                 "--response-img-dir",
                 self.response_img_dir,
-                "--num-estimators",
-                self.num_estimators,
                 "--output-filepath",
-                path.join(self.tmp_dir, "clf.joblib"),
+                path.join(self.tmp_dir, "clf.skops"),
             ],
         )
         self.assertEqual(result.exit_code, 0)
@@ -756,8 +759,6 @@ class TestCLI(unittest.TestCase):
                 "train-classifiers",
                 self.split_ii_filepath,
                 self.response_img_dir,
-                "--num-estimators",
-                self.num_estimators,
                 "--output-dir",
                 self.tmp_dir,
             ],
@@ -770,7 +771,7 @@ class TestCLI(unittest.TestCase):
             [
                 "classify-img",
                 glob.glob(path.join(self.img_dir, "*.tif"))[0],
-                path.join(self.models_dir, "clf.joblib"),
+                path.join(self.models_dir, "clf.skops"),
                 "--output-filepath",
                 path.join(self.tmp_dir, "foo.tif"),
             ],

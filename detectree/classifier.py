@@ -7,7 +7,6 @@ import maxflow as mf
 import numpy as np
 import rasterio as rio
 from dask import diagnostics
-from sklearn import ensemble
 
 from . import pixel_features, pixel_response, settings, utils
 
@@ -22,7 +21,6 @@ class ClassifierTrainer:
     def __init__(
         self,
         *,
-        num_estimators=None,
         sigmas=None,
         num_orientations=None,
         neighborhood=None,
@@ -30,7 +28,8 @@ class ClassifierTrainer:
         num_neighborhoods=None,
         tree_val=None,
         nontree_val=None,
-        **adaboost_kws,
+        classifier_class=None,
+        **classifier_kws,
     ):
         """
         Initialize the classifier.
@@ -39,11 +38,6 @@ class ClassifierTrainer:
 
         Parameters
         ----------
-        num_estimators : int, optional
-            The maximum number of estimators at which boosting is terminated. Directly
-            passed to the `n_estimators` keyword argument of
-            `sklearn.ensemble.AdaBoostClassifier`. If no value is provided, the default
-            value set in `settings.CLF_DEFAULT_NUM_ESTIMATORS` will be taken.
         sigmas : list-like, optional
             The list of scale parameters (sigmas) to build the Gaussian filter bank that
             will be used to compute the pixel-level features. The provided argument will
@@ -84,16 +78,17 @@ class ClassifierTrainer:
             provided argument will be passed to the initialization method of the
             `PixelResponseBuilder` class. If no value is provided, the default value set
             in `settings.RESPONSE_DEFAULT_NONTREE_VAL` will be taken.
-        adaboost_kws : key-value pairings, optional
-            Keyword arguments that will be passed to
-            `sklearn.ensemble.AdaBoostClassifier`.
+        classifier_class : class, optional
+            The class of the classifier to be trained. It can be any scikit-learn
+            compatible estimator that implements the `fit`, `predict` and
+            `predict_proba` methods and that can be saved to and loaded from memory
+            using skops. If no value is provided, the default value set in
+            `settings.CLF_DEFAULT_CLASS` will be taken.
+        classifier_kws : key-value pairings, optional
+            Keyword arguments that will be passed to the initialization of
+            `classifier_class`. If no value is provided, the default value set in
+            `settings.CLF_DEFAULT_KWS` will be taken.
         """
-        super().__init__()
-
-        if num_estimators is None:
-            num_estimators = settings.CLF_DEFAULT_NUM_ESTIMATORS
-        self.num_estimators = num_estimators
-
         self.pixel_features_builder_kws = dict(
             sigmas=sigmas,
             num_orientations=num_orientations,
@@ -104,7 +99,12 @@ class ClassifierTrainer:
         self.pixel_response_builder_kws = dict(
             tree_val=tree_val, nontree_val=nontree_val
         )
-        self.adaboost_kws = adaboost_kws
+        if classifier_class is None:
+            classifier_class = settings.CLF_DEFAULT_CLASS
+        self.classifier_class = classifier_class
+        if classifier_kws == {}:
+            classifier_kws = settings.CLF_DEFAULT_KWS
+        self.classifier_kws = classifier_kws
 
     def train_classifier(
         self,
@@ -155,8 +155,8 @@ class ClassifierTrainer:
 
         Returns
         -------
-        clf : scikit-learn AdaBoostClassifier
-            The trained classifier
+        clf : scikit-learn-like classifier
+            The trained classifier.
         """
         if split_df is None and response_img_filepaths is None:
             # this is the only case that needs argument tweaking: otherwise, if we pass
@@ -202,9 +202,7 @@ class ClassifierTrainer:
             img_cluster=img_cluster,
         )
 
-        clf = ensemble.AdaBoostClassifier(
-            n_estimators=self.num_estimators, **self.adaboost_kws
-        )
+        clf = self.classifier_class(**self.classifier_kws)
         clf.fit(X, y)
 
         return clf
@@ -227,7 +225,7 @@ class ClassifierTrainer:
         Returns
         -------
         clf_dict : dictionary
-            Dictionary mapping a scikit-learn AdaBoostClassifier to each first-level
+            Dictionary mapping a scikit-learn-like classifier to each first-level
             cluster label.
         """
         if "img_cluster" not in split_df:
@@ -331,7 +329,7 @@ class Classifier:
             Path to a file, URI, file object opened in binary ('rb') mode, or a Path
             object representing the image to be classified. The value will be passed to
             `rasterio.open`.
-        clf : scikit-learn AdaBoostClassifier
+        clf : scikit-learn-like classifier.
             Trained classifier.
         output_filepath : str, file object or pathlib.Path object, optional
             Path to a file, URI, file object opened in binary ('rb') mode, or a Path
@@ -361,8 +359,8 @@ class Classifier:
             P_nontree = p_nontree.reshape(img_shape)
             P_tree = p_tree.reshape(img_shape)
 
-            # The AdaBoost probabilities are floats between 0 and 1, and the graph cuts
-            # algorithm requires an integer representation.  Therefore, we will multiply
+            # The classifier probabilities are floats between 0 and 1, and the graph
+            # cuts algorithm requires an integer representation. Therefore, we multiply
             # the probabilities by an arbitrary large number and then transform the
             # result to integers. For instance, we could use a `refine_int_rescale` of
             # `100` so that the probabilities are rescaled into integers between 0 and
@@ -447,10 +445,10 @@ class Classifier:
             Data frame with the train/test split.
         output_dir : str or pathlib.Path object
             Path to the directory where the predicted images are to be dumped.
-        clf : scikit-learn AdaBoostClassifier
+        clf : scikit-learn-like classifier
             Trained classifier.
         clf_dict : dictionary
-            Dictionary mapping a trained scikit-learn AdaBoostClassifier to each
+            Dictionary mapping a trained scikit-learn-like classifier to each
             first-level cluster label.
         method : {'cluster-I', 'cluster-II'}, optional
             Method used in the train/test split.

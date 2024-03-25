@@ -3,10 +3,11 @@ import logging
 from os import path
 
 import click
-import joblib
 import pandas as pd
+from skops import io
 
 import detectree as dtr
+from detectree import settings
 
 
 # utils for the CLI
@@ -65,33 +66,32 @@ def _dict_from_kws(kws):
 
 
 def _init_classifier_trainer(
-    num_estimators,
     sigmas,
     num_orientations,
     min_neighborhood_range,
     num_neighborhoods,
     tree_val,
     nontree_val,
-    adaboost_kws,
+    classifier_kws,
 ):
     # pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
     # pixel_response_builder_kws = _dict_from_kws(pixel_response_builder_kws)
-    adaboost_kws = _dict_from_kws(adaboost_kws)
+    classifier_kws = _dict_from_kws(classifier_kws)
 
     return dtr.ClassifierTrainer(
-        num_estimators=num_estimators,
         sigmas=sigmas,
         num_orientations=num_orientations,
         min_neighborhood_range=min_neighborhood_range,
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        **adaboost_kws,
+        **classifier_kws,
     )
 
 
 def _dump_clf(clf, output_filepath, logger):
-    joblib.dump(clf, output_filepath)
+    # joblib.dump(clf, output_filepath)
+    io.dump(clf, output_filepath)
     logger.info("Dumped trained classifier to %s", output_filepath)
 
 
@@ -184,14 +184,13 @@ def train_test_split(
 @click.option("--img-filename-pattern")
 @click.option("--method")
 @click.option("--img-cluster", type=int)
-@click.option("--num-estimators", type=int)
 @click.option("--sigmas", cls=_OptionEatAll)
 @click.option("--num-orientations", type=int)
 @click.option("--min-neighborhood-range", type=int)
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--adaboost-kws", cls=_OptionEatAll)
+@click.option("--classifier-kws", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
 def train_classifier(
     ctx,
@@ -203,14 +202,13 @@ def train_classifier(
     img_filename_pattern,
     method,
     img_cluster,
-    num_estimators,
     sigmas,
     num_orientations,
     min_neighborhood_range,
     num_neighborhoods,
     tree_val,
     nontree_val,
-    adaboost_kws,
+    classifier_kws,
     output_filepath,
 ):
     """Train a tree/non-tree pixel classifier."""
@@ -223,14 +221,13 @@ def train_classifier(
         split_df = None
 
     ct = _init_classifier_trainer(
-        num_estimators=num_estimators,
         sigmas=sigmas,
         num_orientations=num_orientations,
         min_neighborhood_range=min_neighborhood_range,
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        adaboost_kws=adaboost_kws,
+        classifier_kws=classifier_kws,
     )
     clf = ct.train_classifier(
         split_df=split_df,
@@ -244,7 +241,7 @@ def train_classifier(
     )
 
     if output_filepath is None:
-        output_filepath = "clf.joblib"
+        output_filepath = "clf.skops"
 
     _dump_clf(clf, output_filepath, logger)
 
@@ -253,27 +250,25 @@ def train_classifier(
 @click.pass_context
 @click.argument("split_filepath", type=click.Path(exists=True))
 @click.argument("response_img_dir", type=click.Path(exists=True))
-@click.option("--num-estimators", type=int)
 @click.option("--sigmas", cls=_OptionEatAll)
 @click.option("--num-orientations", type=int)
 @click.option("--min-neighborhood-range", type=int)
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--adaboost-kws", cls=_OptionEatAll)
+@click.option("--classifier-kws", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
 def train_classifiers(
     ctx,
     split_filepath,
     response_img_dir,
-    num_estimators,
     sigmas,
     num_orientations,
     min_neighborhood_range,
     num_neighborhoods,
     tree_val,
     nontree_val,
-    adaboost_kws,
+    classifier_kws,
     output_dir,
 ):
     """Train tree/non-tree pixel classifier(s) for a given train/test split."""
@@ -286,14 +281,13 @@ def train_classifiers(
         split_df = None
 
     ct = _init_classifier_trainer(
-        num_estimators=num_estimators,
         sigmas=sigmas,
         num_orientations=num_orientations,
         min_neighborhood_range=min_neighborhood_range,
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        adaboost_kws=adaboost_kws,
+        classifier_kws=classifier_kws,
     )
     clfs_dict = ct.train_classifiers(split_df, response_img_dir)
 
@@ -303,7 +297,7 @@ def train_classifiers(
     for img_cluster in clfs_dict:
         _dump_clf(
             clfs_dict[img_cluster],
-            path.join(output_dir, f"{img_cluster}.joblib"),
+            path.join(output_dir, f"{img_cluster}.skops"),
             logger,
         )
 
@@ -350,7 +344,11 @@ def classify_img(
         filename, ext = path.splitext(path.basename(img_filepath))
         output_filepath = f"{filename}-pred{ext}"
 
-    c.classify_img(img_filepath, joblib.load(clf_filepath), output_filepath)
+    c.classify_img(
+        img_filepath,
+        io.load(clf_filepath, trusted=settings.SKOPS_DEFAULT_TRUSTED),
+        output_filepath,
+    )
     logger.info("Dumped predicted image to %s", output_filepath)
 
 
@@ -390,7 +388,7 @@ def classify_imgs(
 
     if clf_filepath is not None:
         clf_dict = None
-        clf = joblib.load(clf_filepath)
+        clf = io.load(clf_filepath, settings.SKOPS_DEFAULT_TRUSTED)
         logger.info(
             "Classifying images from %s with classifier of %s",
             split_filepath,
@@ -401,8 +399,9 @@ def classify_imgs(
         clf = None
         clf_dict = {}
         for img_cluster in split_df["img_cluster"].unique():
-            clf_dict[img_cluster] = joblib.load(
-                path.join(clf_dir, f"{img_cluster}.joblib")
+            clf_dict[img_cluster] = io.load(
+                path.join(clf_dir, f"{img_cluster}.skops"),
+                settings.SKOPS_DEFAULT_TRUSTED,
             )
 
     pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)

@@ -1,6 +1,7 @@
 """detectree general settings."""
 import logging as lg
 
+import lightgbm as lgb
 import numpy as np
 
 # train/test split
@@ -20,12 +21,18 @@ RESPONSE_DEFAULT_TREE_VAL = 255
 RESPONSE_DEFAULT_NONTREE_VAL = 0
 
 # classifier
-CLF_DEFAULT_NUM_ESTIMATORS = 200
+CLF_DEFAULT_CLASS = lgb.LGBMClassifier
+CLF_DEFAULT_KWS = {"n_estimators": 200}
 CLF_DEFAULT_TREE_VAL = 255
 CLF_DEFAULT_NONTREE_VAL = 0
 CLF_DEFAULT_REFINE = True
 CLF_DEFAULT_REFINE_BETA = 50
 CLF_DEFAULT_REFINE_INT_RESCALE = 10000
+SKOPS_DEFAULT_TRUSTED = [
+    "collections.defaultdict",
+    "lightgbm.basic.Booster",
+    "lightgbm.sklearn.LGBMClassifier",
+]
 
 # LIDAR
 LIDAR_TREE_THRESHOLD = 15
