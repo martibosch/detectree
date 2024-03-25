@@ -22,7 +22,7 @@ RESPONSE_NONTREE_VAL = 0
 
 # classifier
 CLF_CLASS = lgb.LGBMClassifier
-CLF_KWS = {"n_estimators": 200}
+CLF_KWARGS = {"n_estimators": 200}
 CLF_TREE_VAL = 255
 CLF_NONTREE_VAL = 0
 CLF_REFINE = True

@@ -649,7 +649,7 @@ class TestLidarToCanopy(unittest.TestCase):
             self.ref_img_filepath,
             postprocess_func=ndi.binary_dilation,
             postprocess_func_args=[ndi.generate_binary_structure(2, 2)],
-            postprocess_func_kws={"border_value": 0},
+            postprocess_func_kwargs={"border_value": 0},
         )
         # test that `to_canopy_mask` with `output_filepath` returns a ndarray and dumps
         # it

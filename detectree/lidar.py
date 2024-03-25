@@ -119,7 +119,7 @@ class LidarToCanopy:
         output_filepath=None,
         postprocess_func=None,
         postprocess_func_args=None,
-        postprocess_func_kws=None,
+        postprocess_func_kwargs=None,
     ):
         """
         Transform a LiDAR file into a canopy mask.
@@ -144,7 +144,7 @@ class LidarToCanopy:
             ndarray.
         postprocess_func_args : list-like, optional
             Arguments to be passed to `postprocess_func`.
-        postprocess_func_kws : dict, optional
+        postprocess_func_kwargs : dict, optional
             Keyword arguments to be passed to `postprocess_func`.
 
         Returns
@@ -168,7 +168,7 @@ class LidarToCanopy:
         canopy_arr = lidar_arr >= self.tree_threshold
         if postprocess_func is not None:
             canopy_arr = postprocess_func(
-                canopy_arr, *postprocess_func_args, **postprocess_func_kws
+                canopy_arr, *postprocess_func_args, **postprocess_func_kwargs
             )
         canopy_arr = np.where(
             canopy_arr, self.output_tree_val, self.output_nodata

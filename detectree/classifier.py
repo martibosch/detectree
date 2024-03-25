@@ -29,7 +29,7 @@ class ClassifierTrainer:
         tree_val=None,
         nontree_val=None,
         classifier_class=None,
-        **classifier_kws,
+        **classifier_kwargs,
     ):
         """
         Initialize the classifier.
@@ -83,27 +83,27 @@ class ClassifierTrainer:
             `predict_proba` methods and that can be saved to and loaded from memory
             using skops. If no value is provided, the value set in `settings.CLF_CLASS`
             is used.
-        classifier_kws : key-value pairings, optional
+        classifier_kwargs : key-value pairings, optional
             Keyword arguments that will be passed to the initialization of
             `classifier_class`. If no value is provided, the value set in
-            `settings.CLF_KWS` is used.
+            `settings.CLF_KWARGS` is used.
         """
-        self.pixel_features_builder_kws = dict(
+        self.pixel_features_builder_kwargs = dict(
             sigmas=sigmas,
             num_orientations=num_orientations,
             neighborhood=neighborhood,
             min_neighborhood_range=min_neighborhood_range,
             num_neighborhoods=num_neighborhoods,
         )
-        self.pixel_response_builder_kws = dict(
+        self.pixel_response_builder_kwargs = dict(
             tree_val=tree_val, nontree_val=nontree_val
         )
         if classifier_class is None:
             classifier_class = settings.CLF_CLASS
         self.classifier_class = classifier_class
-        if classifier_kws == {}:
-            classifier_kws = settings.CLF_KWS
-        self.classifier_kws = classifier_kws
+        if classifier_kwargs == {}:
+            classifier_kwargs = settings.CLF_KWARGS
+        self.classifier_kwargs = classifier_kwargs
 
     def train_classifier(
         self,
@@ -179,7 +179,7 @@ class ClassifierTrainer:
             ]
 
         X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kws
+            **self.pixel_features_builder_kwargs
         ).build_features(
             split_df=split_df,
             img_filepaths=img_filepaths,
@@ -190,7 +190,7 @@ class ClassifierTrainer:
         )
 
         y = pixel_response.PixelResponseBuilder(
-            **self.pixel_response_builder_kws
+            **self.pixel_response_builder_kwargs
         ).build_response(
             split_df=split_df,
             response_img_dir=response_img_dir,
@@ -200,7 +200,7 @@ class ClassifierTrainer:
             img_cluster=img_cluster,
         )
 
-        clf = self.classifier_class(**self.classifier_kws)
+        clf = self.classifier_class(**self.classifier_kwargs)
         clf.fit(X, y)
 
         return clf
@@ -258,7 +258,7 @@ class Classifier:
         refine=None,
         refine_beta=None,
         refine_int_rescale=None,
-        **pixel_features_builder_kws,
+        **pixel_features_builder_kwargs,
     ):
         """
         Initialize the classifier instance.
@@ -287,7 +287,7 @@ class Classifier:
             transformation of float to integer edge weights, required for the employed
             graph cuts algorithm. Larger values lead to greater precision. If no value
             is provided, the value set in `settings.CLF_REFINE_INT_RESCALE` is used.
-        pixel_features_builder_kws : dict, optional
+        pixel_features_builder_kwargs : dict, optional
             Keyword arguments that will be passed to `detectree.PixelFeaturesBuilder`,
             which customize how the pixel features are built.
         """
@@ -310,7 +310,7 @@ class Classifier:
         self.refine_beta = refine_beta
         self.refine_int_rescale = refine_int_rescale
 
-        self.pixel_features_builder_kws = pixel_features_builder_kws
+        self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
 
     def classify_img(self, img_filepath, clf, *, output_filepath=None):
         """
@@ -342,7 +342,7 @@ class Classifier:
         img_shape = src.shape
 
         X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kws
+            **self.pixel_features_builder_kwargs
         ).build_features_from_filepath(img_filepath)
 
         if not self.refine:

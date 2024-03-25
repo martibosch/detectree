@@ -55,14 +55,14 @@ class _OptionEatAll(click.Option):
         return retval
 
 
-def _dict_from_kws(kws):
+def _dict_from_kwargs(kwargs):
     # Multiple key:value pair arguments in click, see https://bit.ly/32BaES3
-    if kws is not None:
-        kws = dict(kw.split(":") for kw in kws)
+    if kwargs is not None:
+        kwargs = dict(kwarg.split(":") for kwarg in kwargs)
     else:
-        kws = {}
+        kwargs = {}
 
-    return kws
+    return kwargs
 
 
 def _init_classifier_trainer(
@@ -72,11 +72,11 @@ def _init_classifier_trainer(
     num_neighborhoods,
     tree_val,
     nontree_val,
-    classifier_kws,
+    classifier_kwargs,
 ):
     # pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
     # pixel_response_builder_kws = _dict_from_kws(pixel_response_builder_kws)
-    classifier_kws = _dict_from_kws(classifier_kws)
+    classifier_kwargs = _dict_from_kwargs(classifier_kwargs)
 
     return dtr.ClassifierTrainer(
         sigmas=sigmas,
@@ -85,7 +85,7 @@ def _init_classifier_trainer(
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        **classifier_kws,
+        **classifier_kwargs,
     )
 
 
@@ -155,16 +155,16 @@ def train_test_split(
     else:
         logger.info("Loaded %d images", num_imgs)
 
-    tts_kws = {}
+    tts_kwargs = {}
     if method is not None:
-        tts_kws["method"] = method
+        tts_kwargs["method"] = method
     if num_components is not None:
-        tts_kws["num_components"] = num_components
+        tts_kwargs["num_components"] = num_components
     if num_img_clusters is not None:
-        tts_kws["num_img_clusters"] = num_img_clusters
+        tts_kwargs["num_img_clusters"] = num_img_clusters
     if train_prop is not None:
-        tts_kws["train_prop"] = train_prop
-    df, evr = ts.train_test_split(return_evr=True, **tts_kws)
+        tts_kwargs["train_prop"] = train_prop
+    df, evr = ts.train_test_split(return_evr=True, **tts_kwargs)
     logger.info("Variance ratio explained by PCA: %f", evr)
 
     if output_filepath is None:
@@ -190,7 +190,7 @@ def train_test_split(
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--classifier-kws", cls=_OptionEatAll)
+@click.option("--classifier-kwargs", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
 def train_classifier(
     ctx,
@@ -208,7 +208,7 @@ def train_classifier(
     num_neighborhoods,
     tree_val,
     nontree_val,
-    classifier_kws,
+    classifier_kwargs,
     output_filepath,
 ):
     """Train a tree/non-tree pixel classifier."""
@@ -227,7 +227,7 @@ def train_classifier(
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        classifier_kws=classifier_kws,
+        classifier_kwargs=classifier_kwargs,
     )
     clf = ct.train_classifier(
         split_df=split_df,
@@ -256,7 +256,7 @@ def train_classifier(
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--classifier-kws", cls=_OptionEatAll)
+@click.option("--classifier-kwargs", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
 def train_classifiers(
     ctx,
@@ -268,7 +268,7 @@ def train_classifiers(
     num_neighborhoods,
     tree_val,
     nontree_val,
-    classifier_kws,
+    classifier_kwargs,
     output_dir,
 ):
     """Train tree/non-tree pixel classifier(s) for a given train/test split."""
@@ -287,7 +287,7 @@ def train_classifiers(
         num_neighborhoods=num_neighborhoods,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        classifier_kws=classifier_kws,
+        classifier_kwargs=classifier_kwargs,
     )
     clfs_dict = ct.train_classifiers(split_df, response_img_dir)
 
@@ -311,7 +311,7 @@ def train_classifiers(
 @click.option("--refine", is_flag=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kws", cls=_OptionEatAll)
+@click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
 def classify_img(
     ctx,
@@ -322,7 +322,7 @@ def classify_img(
     refine,
     refine_beta,
     refine_int_rescale,
-    pixel_features_builder_kws,
+    pixel_features_builder_kwargs,
     output_filepath,
 ):
     """Use a trained classifier to predict tree pixels in an image."""
@@ -330,14 +330,14 @@ def classify_img(
 
     logger.info("Classifying %s with classifier of %s", img_filepath, clf_filepath)
 
-    pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
+    pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
     c = dtr.Classifier(
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
         refine_beta=refine_beta,
         refine_int_rescale=refine_int_rescale,
-        **pixel_features_builder_kws,
+        **pixel_features_builder_kwargs,
     )
 
     if output_filepath is None:
@@ -364,7 +364,7 @@ def classify_img(
 @click.option("--refine", is_flag=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kws", cls=_OptionEatAll)
+@click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
 def classify_imgs(
     ctx,
@@ -378,7 +378,7 @@ def classify_imgs(
     refine,
     refine_beta,
     refine_int_rescale,
-    pixel_features_builder_kws,
+    pixel_features_builder_kwargs,
     output_dir,
 ):
     """Use trained classifier(s) to predict tree pixels in multiple images."""
@@ -404,7 +404,7 @@ def classify_imgs(
                 settings.SKOPS_TRUSTED,
             )
 
-    pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
+    pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
 
     c = dtr.Classifier(
         tree_val=tree_val,
@@ -412,7 +412,7 @@ def classify_imgs(
         refine=refine,
         refine_beta=refine_beta,
         refine_int_rescale=refine_int_rescale,
-        **pixel_features_builder_kws,
+        **pixel_features_builder_kwargs,
     )
 
     if output_dir is None:
