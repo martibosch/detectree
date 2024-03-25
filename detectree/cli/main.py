@@ -346,7 +346,7 @@ def classify_img(
 
     c.classify_img(
         img_filepath,
-        io.load(clf_filepath, trusted=settings.SKOPS_DEFAULT_TRUSTED),
+        io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED),
         output_filepath,
     )
     logger.info("Dumped predicted image to %s", output_filepath)
@@ -388,7 +388,7 @@ def classify_imgs(
 
     if clf_filepath is not None:
         clf_dict = None
-        clf = io.load(clf_filepath, settings.SKOPS_DEFAULT_TRUSTED)
+        clf = io.load(clf_filepath, settings.SKOPS_TRUSTED)
         logger.info(
             "Classifying images from %s with classifier of %s",
             split_filepath,
@@ -401,7 +401,7 @@ def classify_imgs(
         for img_cluster in split_df["img_cluster"].unique():
             clf_dict[img_cluster] = io.load(
                 path.join(clf_dir, f"{img_cluster}.skops"),
-                settings.SKOPS_DEFAULT_TRUSTED,
+                settings.SKOPS_TRUSTED,
             )
 
     pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)

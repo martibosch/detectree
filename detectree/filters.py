@@ -91,7 +91,7 @@ def get_gabor_filter_bank(frequencies, num_orientations):
     Returns
     -------
     kernels : list-like
-        List of kernel 2-D arrays that correspond to the filter bank
+        List of kernel 2-D arrays that correspond to the filter bank.
     """
     kernels = []
 

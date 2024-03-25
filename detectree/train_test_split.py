@@ -46,46 +46,43 @@ class TrainingSelector:
             provided.
         img_filename_pattern : str representing a file-name pattern, optional
             Filename pattern to be matched in order to obtain the list of images. If no
-            value is provided, the default value set in
-            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if
-            `img_filepaths` is provided.
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `img_filepaths` is provided.
         gabor_frequencies : tuple, optional
             Set of frequencies used to build the Gabor filter bank. If no value is
-            provided (default), the value will be taken from
-            `settings.GIST_DEFAULT_GABOR_FREQUENCIES`.
+            provided, the value set in `settings.GIST_GABOR_FREQUENCIES` is used.
         gabor_num_orientations : int or tuple, optional
             Number of orientations used to build the Gabor filter bank. If an integer is
             provided, the corresponding number of orientations will be used for each
             scale (determined by `gabor_frequencies`). If a tuple is provided, each
             element will determine the number of orientations that must be used at its
             matching scale (determined by `gabor_frequencies`) - thus the tuple must
-            match the length of `gabor_frequencies`. If no value is provided (default),
-            the value will be taken from
-            `seettings.GIST_DEFAULT_GABOR_NUM_ORIENTATIONS`.
+            match the length of `gabor_frequencies`. If no value is provided, the value
+            set in `settings.GIST_GABOR_NUM_ORIENTATIONS` is used.
         response_bins_per_axis : int, optional
             Number of spatial bins per axis into which the responses to the Gabor filter
             bank will be aggreated. For example, a value of 2 will aggregate the
             responses into the four quadrants of the image (i.e., 2x2, 2 bins in each
-            axis of the image). If no value is provided (default), the value will be
-            taken from `seettings.GIST_DEFAULT_RESPONSE_BINS_PER_AXIS`.
+            axis of the image). If no value is provided, the value set in
+            `settings.GIST_RESPONSE_BINS_PER_AXIS` is used.
         num_color_bins : int, optional
             Number of bins in each dimension used to compute a joint color histogram in
-            the L*a*b color space. If no value is provided (default), the value will be
-            taken from `seettings.GIST_DEFAULT_NUM_COLOR_BINS`.
+            the L*a*b color space. If no value is provided, the value set in
+            `settings.GIST_NUM_COLOR_BINS` is used.
         """
         super().__init__()
 
         # get `None` keyword-arguments from settings
         if img_filename_pattern is None:
-            img_filename_pattern = settings.IMG_DEFAULT_FILENAME_PATTERN
+            img_filename_pattern = settings.IMG_FILENAME_PATTERN
         if gabor_frequencies is None:
-            gabor_frequencies = settings.GIST_DEFAULT_GABOR_FREQUENCIES
+            gabor_frequencies = settings.GIST_GABOR_FREQUENCIES
         if gabor_num_orientations is None:
-            gabor_num_orientations = settings.GIST_DEFAULT_GABOR_NUM_ORIENTATIONS
+            gabor_num_orientations = settings.GIST_GABOR_NUM_ORIENTATIONS
         if response_bins_per_axis is None:
-            response_bins_per_axis = settings.GIST_DEFAULT_RESPONSE_BINS_PER_AXIS
+            response_bins_per_axis = settings.GIST_RESPONSE_BINS_PER_AXIS
         if num_color_bins is None:
-            num_color_bins = settings.GIST_DEFAULT_NUM_COLOR_BINS
+            num_color_bins = settings.GIST_NUM_COLOR_BINS
 
         # now proceed
         if img_filepaths is None:

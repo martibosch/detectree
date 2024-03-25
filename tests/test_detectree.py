@@ -431,14 +431,14 @@ class TestTrainClassifier(unittest.TestCase):
         # return an instance of `sklearn.settings.CLF_DEFAULT_CLASS` option 1a:
         # `split_df` and `response_img_dir` with implicit method (note that we are using
         # `self.clf` obtained in `setUp`)
-        self.assertIsInstance(self.clf, settings.CLF_DEFAULT_CLASS)
+        self.assertIsInstance(self.clf, settings.CLF_CLASS)
         self.assertIsInstance(
             self.ct.train_classifier(
                 split_df=self.split_ii_df,
                 response_img_dir=self.response_img_dir,
                 img_cluster=self.img_cluster,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 1b: `split_df` and `response_img_dir` with explicit method
         self.assertIsInstance(
@@ -447,7 +447,7 @@ class TestTrainClassifier(unittest.TestCase):
                 response_img_dir=self.response_img_dir,
                 method="cluster-I",
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -456,7 +456,7 @@ class TestTrainClassifier(unittest.TestCase):
                 method="cluster-II",
                 img_cluster=self.img_cluster,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 2: `img_filepaths` and `response_img_dir`
         img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
@@ -465,7 +465,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_dir=self.response_img_dir,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 3: `img_filepaths` and `response_img_filepaths`
         response_img_filepaths = img_filepaths.apply(
@@ -476,7 +476,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_filepaths=response_img_filepaths,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # from here below, we use `self.tmp_train_dir`, which is a directory with only
         # one image, namely `self.train_filename`, so that the training does not take
@@ -490,14 +490,14 @@ class TestTrainClassifier(unittest.TestCase):
             self.ct.train_classifier(
                 img_dir=img_dir, response_img_dir=self.response_img_dir
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 5: `img_dir` and `response_img_filepaths`
         self.assertIsInstance(
             self.ct.train_classifier(
                 img_dir=img_dir, response_img_filepaths=response_img_filepaths
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 6: `img_filepaths` and `response_img_dir`
         self.assertIsInstance(
@@ -505,7 +505,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_dir=self.response_img_dir,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
         # option 7: `img_filepaths` and `response_img_filepaths`
         self.assertIsInstance(
@@ -513,7 +513,7 @@ class TestTrainClassifier(unittest.TestCase):
                 img_filepaths=img_filepaths,
                 response_img_filepaths=response_img_filepaths,
             ),
-            settings.CLF_DEFAULT_CLASS,
+            settings.CLF_CLASS,
         )
 
         # test that either `split_df`, `img_filepaths` or `img_dir` must be provided

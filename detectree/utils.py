@@ -47,15 +47,14 @@ def split_into_tiles(
     output_dir : str or pathlib.Path object
         Path to the directory where the predicted images are to be dumped.
     tile_width : int, optional
-        Tile width in pixels. If no value is provided (default), the value will be taken
-        from `settings.TILE_DEFAULT_WIDTH`.
+        Tile width in pixels. If no value is provided, the value set in
+        `settings.TILE_WIDTH` is used.
     tile_height : int, optional
-        Tile height in pixels. If no value is provided (default), the value will be
-        taken from `settings.TILE_DEFAULT_HEIGHT`.
+        Tile height in pixels. If no value is provided, the value set in
+        `settings.TILE_HEIGHT` is used.
     output_filename : str, optional
         Template to be string-formatted in order to name the output tiles. If no value
-        is provided (default), the value will be taken from
-        `settings.TILE_DEFAULT_OUTPUT_FILENAME`.
+        is provided, the value set in `settings.TILE_OUTPUT_FILENAME` is used.
     only_full_tiles : bool, optional (default False)
         Whether only full tiles (of size `tile_width`x`tile_height`) should be dumped.
     keep_empty_tiles : bool, optional (default False)
@@ -69,11 +68,11 @@ def split_into_tiles(
         List of the file paths of the dumped tiles.
     """
     if tile_width is None:
-        tile_width = settings.TILE_DEFAULT_WIDTH
+        tile_width = settings.TILE_WIDTH
     if tile_height is None:
-        tile_height = settings.TILE_DEFAULT_HEIGHT
+        tile_height = settings.TILE_HEIGHT
     if output_filename is None:
-        output_filename = settings.TILE_DEFAULT_OUTPUT_FILENAME
+        output_filename = settings.TILE_OUTPUT_FILENAME
 
     output_filepaths = []
     with rio.open(input_filepath) as src:
@@ -159,6 +158,11 @@ def img_rgb_from_filepath(img_filepath):
         Path to a file, URI, file object opened in binary ('rb') mode, or a Path object
         representing the image for which a GIST descriptor will be computed. The value
         will be passed to `rasterio.open`.
+
+    Returns
+    -------
+    img_rgb : numpy.ndarray
+        3-D array with the RGB image.
     """
     with rio.open(img_filepath) as src:
         arr = src.read()

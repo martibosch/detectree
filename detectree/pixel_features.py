@@ -63,41 +63,40 @@ class PixelFeaturesBuilder:
             The list of scale parameters (sigmas) to build the Gaussian filter bank that
             will be used to compute the pixel-level features. The provided argument will
             be passed to the initialization method of the `PixelFeaturesBuilder`
-            class. If no value is provided, the default value set in
-            `settings.GAUSS_DEFAULT_SIGMAS` will be taken.
+            class. If no value is provided, the value set in `settings.GAUSS_SIGMAS` is
+            used.
         num_orientations : int, optional
             The number of equally-distributed orientations to build the Gaussian filter
             bank that will be used to compute the pixel-level features. The provided
             argument will be passed to the initialization method of the
-            `PixelFeaturesBuilder` class. If no value is provided, the default value set
-            in `settings.GAUSS_DEFAULT_NUM_ORIENTATIONS` will be taken.
+            `PixelFeaturesBuilder` class. If no value is provided, the value set in
+            `settings.GAUSS_NUM_ORIENTATIONS` is used.
         neighborhood : array-like, optional
             The base neighborhood structure that will be used to compute the entropy
             features. The provided argument will be passed to the initialization method
             of the `PixelFeaturesBuilder` class. If no value is provided, a square with
-            a side size of `2 * min_neighborhood_range + 1` will be used.
+            a side size of `2 * min_neighborhood_range + 1` is used.
         min_neighborhood_range : int, optional
             The range (i.e., the square radius) of the smallest neigbhorhood window that
             will be used to compute the entropy features. The provided argument will be
             passed to the initialization method of the `PixelFeaturesBuilder` class. If
-            no value is provided, the default value set in
-            `settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE` will be taken.
+            no value is provided, the value set in
+            `settings.ENTROPY_MIN_NEIGHBORHOOD_RANGE` is used.
         num_neighborhoods : int, optional
             The number of neigbhorhood windows (whose size follows a geometric
             progression starting at `min_neighborhood_range`) that will be used to
             compute the entropy features. The provided argument will be passed to the
             initialization method of the `PixelFeaturesBuilder` class. If no value is
-            provided, the default value set in
-            `settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS` will be taken.
+            provided, the value set in `settings.ENTROPY_NUM_NEIGHBORHOODS` is used.
         """
         # preprocess technical keyword arguments
         # texture features
         if sigmas is None:
-            sigmas = settings.GAUSS_DEFAULT_SIGMAS
+            sigmas = settings.GAUSS_SIGMAS
         self.sigmas = sigmas
 
         if num_orientations is None:
-            num_orientations = settings.GAUSS_DEFAULT_NUM_ORIENTATIONS
+            num_orientations = settings.GAUSS_NUM_ORIENTATIONS
         self.num_orientations = num_orientations
 
         # entropy features
@@ -117,11 +116,11 @@ class PixelFeaturesBuilder:
         #     num_neighborhoods = len(neighborhoods)
         if neighborhood is None:
             if min_neighborhood_range is None:
-                min_neighborhood_range = settings.ENTROPY_DEFAULT_MIN_NEIGHBORHOOD_RANGE
+                min_neighborhood_range = settings.ENTROPY_MIN_NEIGHBORHOOD_RANGE
             neighborhood = morphology.square(2 * min_neighborhood_range + 1)
         self.neighborhood = neighborhood
         if num_neighborhoods is None:
-            num_neighborhoods = settings.ENTROPY_DEFAULT_NUM_NEIGHBORHOODS
+            num_neighborhoods = settings.ENTROPY_NUM_NEIGHBORHOODS
         self.scales = np.geomspace(
             1, 2 ** (num_neighborhoods - 1), num_neighborhoods
         ).astype(int)
@@ -148,7 +147,7 @@ class PixelFeaturesBuilder:
         Returns
         -------
         responses : numpy ndarray
-            Array with the pixel responses
+            Array with the pixel responses.
         """
         # the third component `_` is actually the number of channels in RGB, which is
         # already defined in the constant `NUM_RGB_CHANNELS`
@@ -220,7 +219,7 @@ class PixelFeaturesBuilder:
         Returns
         -------
         responses : numpy ndarray
-            Array with the pixel responses
+            Array with the pixel responses.
         """
         img_rgb = utils.img_rgb_from_filepath(img_filepath)
         return self.build_features_from_arr(img_rgb)
@@ -252,9 +251,8 @@ class PixelFeaturesBuilder:
             `img_filepaths` is provided.
         img_filename_pattern : str representing a file-name pattern, optional
             Filename pattern to be matched in order to obtain the list of images. If no
-            value is provided, the default value set in
-            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if `split_df`
-            or `img_filepaths` is provided.
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
         method : {'cluster-I', 'cluster-II'}, optional
             Method used in the train/test split
         img_cluster : int, optional
@@ -263,7 +261,7 @@ class PixelFeaturesBuilder:
         Returns
         -------
         X : numpy ndarray
-            Array with the pixel features
+            Array with the pixel features.
         """
         # TODO: accept `neighborhoods` kwarg
         if split_df is not None:
@@ -286,7 +284,7 @@ class PixelFeaturesBuilder:
         else:
             if img_filepaths is None:
                 if img_filename_pattern is None:
-                    img_filename_pattern = settings.IMG_DEFAULT_FILENAME_PATTERN
+                    img_filename_pattern = settings.IMG_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must "

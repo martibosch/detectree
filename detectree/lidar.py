@@ -81,13 +81,19 @@ class LidarToCanopy:
             Threshold of lidar points classified as tree by pixel at which
             point the pixel is considered a tree. As a rule of thumb, the value can be
             set to result of dividing the point density of the lidar (e.g., pts/m^2) by
-            the pixel area (e.g., m^2).
+            the pixel area (e.g., m^2). If no value is provided, the value set in
+            `settings.LIDAR_TREE_THRESHOLD` is used.
         output_dtype : str or numpy dtype, optional
-            The desired data type of the output raster canopy masks.
+            The desired data type of the output raster canopy masks. If no value is
+            provided, the value set in `settings.LIDAR_OUTPUT_DTYPE` is used.
         output_tree_val : int, optional
-            The value that designates tree pixels in the output raster canopy masks.
+            The value that designates tree pixels in the output raster canopy masks. If
+            no value is provided, the value set in `settings.LIDAR_OUTPUT_TREE_VAL` is
+            used.
         output_nodata : int, optional
             The value that designates non-tree pixels in the output raster canopy masks.
+            If no value is provided, the value set in `settings.LIDAR_OUTPUT_NODATA` is
+            used.
         """
         if tree_threshold is None:
             tree_threshold = settings.LIDAR_TREE_THRESHOLD

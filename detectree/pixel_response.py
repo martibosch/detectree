@@ -34,11 +34,11 @@ class PixelResponseBuilder:
             The value that designates non-tree pixels in the response images.
         """
         if tree_val is None:
-            tree_val = settings.RESPONSE_DEFAULT_TREE_VAL
+            tree_val = settings.RESPONSE_TREE_VAL
         self.tree_val = tree_val
 
         if nontree_val is None:
-            nontree_val = settings.RESPONSE_DEFAULT_NONTREE_VAL
+            nontree_val = settings.RESPONSE_NONTREE_VAL
         self.nontree_val = nontree_val
 
     def build_response_from_arr(self, img_binary):
@@ -53,7 +53,7 @@ class PixelResponseBuilder:
         Returns
         -------
         responses : numpy ndarray
-            Array with the pixel responses
+            Array with the pixel responses.
         """
         response_arr = img_binary.copy()
         response_arr[response_arr == self.tree_val] = 1
@@ -80,7 +80,7 @@ class PixelResponseBuilder:
         Returns
         -------
         responses : numpy ndarray
-            Array with the pixel responses
+            Array with the pixel responses.
         """
         with rio.open(img_filepath) as src:
             img_binary = src.read(1)
@@ -112,7 +112,7 @@ class PixelResponseBuilder:
         split_df : pd.DataFrame
             Data frame with the train/test split.
         response_img_dir : str representing path to a directory, optional
-            Path to the directory where the response images are located.  Required if
+            Path to the directory where the response images are located. Required if
             providing `split_df`. Otherwise `response_img_dir` might either be ignored
             if providing `response_img_filepaths`, or be used as the directory where the
             images whose filename matches `img_filename_pattern` are to be located.
@@ -122,9 +122,8 @@ class PixelResponseBuilder:
             `img_filename_pattern` keyword arguments. Ignored if providing `split_df`.
         img_filename_pattern : str representing a file-name pattern, optional
             Filename pattern to be matched in order to obtain the list of images. If no
-            value is provided, the default value set in
-            `settings.IMG_DEFAULT_FILENAME_PATTERN` will be taken. Ignored if `split_df`
-            or `img_filepaths` is provided.
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
         method : {'cluster-I', 'cluster-II'}, optional
             Method used in the train/test split.
         img_cluster : int, optional
@@ -162,7 +161,7 @@ class PixelResponseBuilder:
         else:
             if response_img_filepaths is None:
                 if img_filename_pattern is None:
-                    img_filename_pattern = settings.IMG_DEFAULT_FILENAME_PATTERN
+                    img_filename_pattern = settings.IMG_FILENAME_PATTERN
                 if response_img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `response_img_filepaths` or "
