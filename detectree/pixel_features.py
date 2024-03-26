@@ -178,7 +178,7 @@ class PixelFeaturesBuilder:
             for j, orientation in enumerate(range(self.num_orientations)):
                 # theta = orientation / num_orientations * np.pi
                 theta = orientation * 180 / self.num_orientations
-                oriented_kernel_arr = ndi.interpolation.rotate(base_kernel_arr, theta)
+                oriented_kernel_arr = ndi.rotate(base_kernel_arr, theta)
                 # img_filtered = ndi.convolve(img_lab_l, oriented_kernel_arr)
                 img_filtered = cv2.filter2D(
                     img_lab_l, ddepth=-1, kernel=oriented_kernel_arr
