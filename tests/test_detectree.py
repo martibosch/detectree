@@ -106,6 +106,31 @@ class TestTrainTestSplit(unittest.TestCase):
         self.assertIsInstance(split_df, pd.DataFrame)
         self.assertIsInstance(evr, float)
 
+        # test pca n_components and kwargs
+        # evr is greater or equal with more components (given the same seed)
+        random_state = 42
+        self.assertGreaterEqual(
+            *(
+                ts.train_test_split(
+                    return_evr=True,
+                    pca_kwargs={
+                        "n_components": n_components,
+                        "random_state": random_state,
+                    },
+                )[1]
+                for n_components in (4, 2)
+            )
+        )
+        # test kwargs for kmeans too
+        # the result should be the same with the same seed
+        tts_kwargs = dict(
+            pca_kwargs={"random_state": random_state},
+            kmeans_kwargs={"random_state": random_state},
+        )
+        self.assertTrue(
+            ts.train_test_split(**tts_kwargs).equals(ts.train_test_split(**tts_kwargs))
+        )
+
 
 class TestImageDescriptor(unittest.TestCase):
     def setUp(self):

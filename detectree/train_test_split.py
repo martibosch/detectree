@@ -152,10 +152,12 @@ class TrainingSelector:
         self,
         *,
         method="cluster-II",
-        num_components=12,
+        n_components=12,
         num_img_clusters=4,
         train_prop=0.01,
         return_evr=False,
+        pca_kwargs=None,
+        kmeans_kwargs=None,
     ):
         """
         Select the image/tiles to be used for traning.
@@ -167,7 +169,7 @@ class TrainingSelector:
         ----------
         method : {'cluster-I', 'cluster-II'}, optional (default 'cluster-II')
             Method used in the train/test split.
-        num_components : int, optional (default 12)
+        n_components : int, default 12
             Number of principal components into which the image descriptors should be
             represented when applying the *k*-means clustering.
         num_img_clusters : int, optional (default 4)
@@ -178,6 +180,12 @@ class TrainingSelector:
         return_evr : bool, optional (default False)
             Whether the explained variance ratio of the principal component
             analysis should be returned
+        pca_kwargs : dict, optional
+            Keyword arguments to be passed to the `sklearn.decomposition.PCA` class
+            constructor (except for `n_components`).
+        kmeans_kwargs : dict, optional
+            Keyword arguments to be passed to the `sklearn.cluster.KMeans` class
+            constructor (except for `n_clusters`).
 
         Returns
         -------
@@ -187,10 +195,16 @@ class TrainingSelector:
             Expected variance ratio of the principal component analysis.
         """
         X = self.descr_feature_matrix
-        pca = decomposition.PCA(n_components=num_components).fit(X)
+        if pca_kwargs is None:
+            _pca_kwargs = {}
+        else:
+            _pca_kwargs = pca_kwargs.copy()
+            # if `n_components` is provided in `pca_kwargs`, it will be ignored
+            _ = _pca_kwargs.pop("n_components", None)
+        pca = decomposition.PCA(n_components=n_components, **_pca_kwargs).fit(X)
 
         X_pca = pca.transform(X)
-        X_cols = range(num_components)
+        X_cols = range(n_components)
         df = pd.concat(
             (
                 pd.Series(self.img_filepaths, name="img_filepath"),
@@ -199,10 +213,16 @@ class TrainingSelector:
             axis=1,
         )
 
+        if kmeans_kwargs is None:
+            _kmeans_kwargs = {}
+        else:
+            _kmeans_kwargs = kmeans_kwargs.copy()
+            # if `n_clusters` is provided in `kmeans_kwargs`, it will be ignored
+            _ = _kmeans_kwargs.pop("n_clusters", None)
         if method == "cluster-I":
-            km = cluster.KMeans(n_clusters=int(np.ceil(train_prop * len(df)))).fit(
-                X_pca
-            )
+            km = cluster.KMeans(
+                n_clusters=int(np.ceil(train_prop * len(df))), **_kmeans_kwargs
+            ).fit(X_pca)
             closest, _ = metrics.pairwise_distances_argmin_min(
                 km.cluster_centers_, df[X_cols]
             )
@@ -216,16 +236,18 @@ class TrainingSelector:
                 # use `ceil` to avoid zeros, which might completely ignore a significant
                 # image cluster
                 num_train = int(np.ceil(train_prop * len(X_cluster_df)))
-                cluster_km = cluster.KMeans(n_clusters=num_train).fit(X_cluster_df)
+                cluster_km = cluster.KMeans(n_clusters=num_train, **_kmeans_kwargs).fit(
+                    X_cluster_df
+                )
                 closest, _ = metrics.pairwise_distances_argmin_min(
                     cluster_km.cluster_centers_, X_cluster_df
                 )
                 train_idx = X_cluster_df.iloc[closest].index
                 return [True if i in train_idx else False for i in X_cluster_df.index]
 
-            df["img_cluster"] = cluster.KMeans(n_clusters=num_img_clusters).fit_predict(
-                X_pca
-            )
+            df["img_cluster"] = cluster.KMeans(
+                n_clusters=num_img_clusters, **_kmeans_kwargs
+            ).fit_predict(X_pca)
             df["train"] = df.groupby("img_cluster")["img_cluster"].transform(
                 cluster_train_test_split
             )
