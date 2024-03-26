@@ -1,4 +1,5 @@
 """detectree general settings."""
+
 import logging as lg
 
 import lightgbm as lgb
@@ -33,6 +34,8 @@ SKOPS_TRUSTED = [
     "lightgbm.basic.Booster",
     "lightgbm.sklearn.LGBMClassifier",
 ]
+HF_HUB_REPO_ID = "martibosch/detectree"
+HF_HUB_FILENAME = "clf.skops"
 
 # LIDAR
 LIDAR_TREE_THRESHOLD = 15

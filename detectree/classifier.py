@@ -1,12 +1,16 @@
 """Binary tree/non-tree classifier(s)."""
+
 import glob
 from os import path
 
 import dask
+import huggingface_hub as hf_hub
 import maxflow as mf
 import numpy as np
 import rasterio as rio
+import skops
 from dask import diagnostics
+from skops import io
 
 from . import pixel_features, pixel_response, settings, utils
 
@@ -253,6 +257,8 @@ class Classifier:
     def __init__(
         self,
         *,
+        clf=None,
+        clf_dict=None,
         tree_val=None,
         nontree_val=None,
         refine=None,
@@ -268,6 +274,12 @@ class Classifier:
 
         Parameters
         ----------
+        clf : scikit-learn-like classifier, optional
+            Trained classifier. If no value is provided, the latest detectree
+            pre-trained classifier is used. Ignored if `clf_dict` is provided.
+        clf_dict : dictionary, optional
+            Dictionary mapping a trained scikit-learn-like classifier to each
+            first-level cluster label.
         tree_val : int, optional
             Label used to denote tree pixels in the predicted images. If no value is
             provided, the value set in `settings.CLF_TREE_VAL` is used.
@@ -293,6 +305,21 @@ class Classifier:
         """
         super().__init__()
 
+        if clf_dict is not None:
+            self.clf_dict = clf_dict
+        elif clf is not None:
+            self.clf = clf
+        else:
+            self.clf = io.load(
+                hf_hub.hf_hub_download(
+                    repo_id=settings.HF_HUB_REPO_ID,
+                    filename=settings.HF_HUB_FILENAME,
+                    library_name="skops",
+                    library_version=skops.__version__,
+                ),
+                trusted=settings.SKOPS_TRUSTED,
+            )
+
         if tree_val is None:
             tree_val = settings.CLF_TREE_VAL
         if nontree_val is None:
@@ -312,30 +339,7 @@ class Classifier:
 
         self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
 
-    def classify_img(self, img_filepath, clf, *, output_filepath=None):
-        """
-        Use a trained classifier to predict tree pixels in an image.
-
-        Optionally dump the predicted tree/non-tree image to `output_filepath`.
-
-        Parameters
-        ----------
-        img_filepath : str, file object or pathlib.Path object
-            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
-            object representing the image to be classified. The value will be passed to
-            `rasterio.open`.
-        clf : scikit-learn-like classifier.
-            Trained classifier.
-        output_filepath : str, file object or pathlib.Path object, optional
-            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
-            object representing where the predicted image is to be dumped. The value
-            will be passed to `rasterio.open` in 'write' mode.
-
-        Returns
-        -------
-        y_pred : numpy ndarray
-            Array with the pixel responses.
-        """
+    def _classify_img(self, img_filepath, clf, *, output_filepath=None):
         # ACHTUNG: Note that we do not use keyword-only arguments in this method because
         # `output_filepath` works as the only "optional" argument
         src = rio.open(img_filepath)
@@ -408,7 +412,7 @@ class Classifier:
             #     output_dir, f"{filename}-pred{ext}")
             pred_img_filepath = path.join(output_dir, path.basename(img_filepath))
             pred_imgs_lazy.append(
-                dask.delayed(self.classify_img)(
+                dask.delayed(self._classify_img)(
                     img_filepath, clf, output_filepath=pred_img_filepath
                 )
             )
@@ -419,22 +423,53 @@ class Classifier:
 
         return pred_img_filepaths
 
-    def classify_imgs(
-        self,
-        split_df,
-        output_dir,
-        *,
-        clf=None,
-        clf_dict=None,
-        method=None,
-        img_cluster=None,
-    ):
+    def classify_img(self, img_filepath, *, img_cluster=None, output_filepath=None):
+        """
+        Use a trained classifier to predict tree pixels in an image.
+
+        Optionally dump the predicted tree/non-tree image to `output_filepath`.
+
+        Parameters
+        ----------
+        img_filepath : str, file object or pathlib.Path object
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing the image to be classified. The value will be passed to
+            `rasterio.open`.
+        img_cluster : int, optional
+            The label of the cluster of tiles. Only used if the `Classifier` instance
+            was initialized with `clf_dict` (i.e., "cluster-II" method).
+        output_filepath : str, file object or pathlib.Path object, optional
+            Path to a file, URI, file object opened in binary ('rb') mode, or a Path
+            object representing where the predicted image is to be dumped. The value
+            will be passed to `rasterio.open` in 'write' mode.
+
+        Returns
+        -------
+        y_pred : numpy ndarray
+            Array with the pixel responses.
+        """
+        # clf = getattr(self, "clf", None)
+        # if clf is None:
+        #     try:
+        #         clf = self.clf_dict[img_cluster]
+        #     except KeyError:
+        #         raise ValueError(
+        #             f"Classifier for cluster {img_cluster} not found in "
+        #             "`self.clf_dict`."
+        #         )
+        # return self._classify_img(
+        #     img_filepath, clf, output_filepath=output_filepath
+        # )
+        return self._classify_img(
+            img_filepath, self.clf, output_filepath=output_filepath
+        )
+
+    def classify_imgs(self, split_df, output_dir):
         """
         Use trained classifier(s) to predict tree pixels in multiple images.
 
-        Use `clf` or `clf_dict` for the classifier(s) depending on the train/ test split
-        method, and dump the predicted tree/non-tree images to `output_dir`. See the
-        `background <https://bit.ly/2KlCICO>`_ example notebook for more details.
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
 
         Parameters
         ----------
@@ -442,57 +477,30 @@ class Classifier:
             Data frame with the train/test split.
         output_dir : str or pathlib.Path object
             Path to the directory where the predicted images are to be dumped.
-        clf : scikit-learn-like classifier
-            Trained classifier.
-        clf_dict : dictionary
-            Dictionary mapping a trained scikit-learn-like classifier to each
-            first-level cluster label.
-        method : {'cluster-I', 'cluster-II'}, optional
-            Method used in the train/test split.
-        img_cluster : int, optional
-            The label of the cluster of tiles. Only used if `method` is 'cluster-II'.
 
         Returns
         -------
         pred_imgs : list or dict
             File paths of the dumped tiles.
         """
-        if method is None:
-            if "img_cluster" in split_df:
-                method = "cluster-II"
-            else:
-                method = "cluster-I"
-
-        if method == "cluster-I":
-            if clf is None:
-                raise ValueError("If using 'cluster-I' method, `clf` must be provided")
+        if hasattr(self, "clf"):
             return self._classify_imgs(
-                split_df[~split_df["train"]]["img_filepath"], clf, output_dir
+                split_df[~split_df["train"]]["img_filepath"], self.clf, output_dir
             )
         else:
-            if img_cluster is not None:
-                if clf is None:
-                    if clf_dict is not None:
-                        clf = clf_dict[img_cluster]
-                    else:
-                        raise ValueError("Either `clf` or `clf_dict` must be provided")
-
-                return self._classify_imgs(
-                    utils.get_img_filepaths(split_df, img_cluster, False),
-                    clf,
-                    output_dir,
-                )
-
-            if clf_dict is None:
-                raise ValueError(
-                    "If using 'cluster-II' method and not providing `img_cluster`, "
-                    "`clf_dict` must be provided"
-                )
+            # `self.clf_dict` is not `None`
             pred_imgs = {}
             for img_cluster, _ in split_df.groupby("img_cluster"):
+                try:
+                    clf = self.clf_dict[img_cluster]
+                except KeyError:
+                    raise ValueError(
+                        f"Classifier for cluster {img_cluster} not found in"
+                        " `self.clf_dict`."
+                    )
                 pred_imgs[img_cluster] = self._classify_imgs(
                     utils.get_img_filepaths(split_df, img_cluster, False),
-                    clf_dict[img_cluster],
+                    clf,
                     output_dir,
                 )
 

@@ -563,82 +563,72 @@ class TestTrainClassifier(unittest.TestCase):
             os.remove(pred_img)
 
     def test_classifier(self):
+        # test init classifier
         # TODO: test init arguments of `Classifier`
-        c = dtr.Classifier()
+        # test that for the pre-trained classifier (no init `clf`/`clf_dict` arg) and
+        # for the classifier initialized with the `clf` arg, the `clf` attribute is set
+        # but not `clf_dict`
+        for c in [dtr.Classifier(), dtr.Classifier(clf=self.clf)]:
+            self.assertTrue(hasattr(c, "clf"))
+            self.assertFalse(hasattr(c, "clf_dict"))
+        # test that when initalizing `clf_dict`, the `clf_dict` attribute is set but not
+        # `clf
+        c = dtr.Classifier(clf_dict=self.clf_dict)
+        self.assertFalse(hasattr(c, "clf"))
+        self.assertTrue(hasattr(c, "clf_dict"))
 
-        img_filepath = self.split_i_df.iloc[0]["img_filepath"]
-        # test that `classify_img` returns a ndarray
-        self.assertIsInstance(c.classify_img(img_filepath, self.clf), np.ndarray)
-        # test that `classify_img` with `output_filepath` returns a ndarray and dumps it
-        output_filepath = path.join(self.tmp_output_dir, "foo.tif")
-        y_pred = c.classify_img(img_filepath, self.clf, output_filepath=output_filepath)
-        self.assertIsInstance(y_pred, np.ndarray)
-        self.assertTrue(os.path.exists(output_filepath))
-        # remove it so that the output dir is clean in the tests below
-        os.remove(output_filepath)
+        # test image classification separately for each method
+        # "cluster-I"
+        for c in [
+            dtr.Classifier(),
+            dtr.Classifier(clf=self.clf),
+        ]:
+            img_filepath = self.split_i_df.iloc[0]["img_filepath"]
+            # test that `classify_img` returns a ndarray
+            self.assertIsInstance(c.classify_img(img_filepath), np.ndarray)
+            # test that `classify_img` with `output_filepath` returns a ndarray and
+            # dumps it
+            output_filepath = path.join(self.tmp_output_dir, "foo.tif")
+            y_pred = c.classify_img(img_filepath, output_filepath=output_filepath)
+            self.assertIsInstance(y_pred, np.ndarray)
+            self.assertTrue(os.path.exists(output_filepath))
+            # remove it so that the output dir is clean in the tests below
+            os.remove(output_filepath)
 
-        # test that `classify_imgs` with implicit `cluster-I` method returns a list and
-        # that the images have been dumped
-        pred_imgs = c.classify_imgs(self.split_i_df, self.tmp_output_dir, clf=self.clf)
-        self.assertIsInstance(pred_imgs, list)
-        self._test_imgs_exist_and_rm(pred_imgs)
-
-        # test that `classify_imgs` with implicit `cluster-II` method, `clf` and
-        # `img_label` returns a list and that the images have been dumped
-        pred_imgs = c.classify_imgs(
-            self.split_ii_df,
-            self.tmp_output_dir,
-            clf=self.clf,
-            img_cluster=self.img_cluster,
-        )
-        self.assertIsInstance(pred_imgs, list)
-        self._test_imgs_exist_and_rm(pred_imgs)
-        # test that this works equally when providing `clf_dict`
-        pred_imgs = c.classify_imgs(
-            self.split_ii_df,
-            self.tmp_output_dir,
-            clf_dict=self.clf_dict,
-            img_cluster=self.img_cluster,
-        )
-        self.assertIsInstance(pred_imgs, list)
-        self._test_imgs_exist_and_rm(pred_imgs)
-
-        # test that `classify_imgs` with implicit `cluster-II` method and `clf_dict`
-        # returns a dict and that the images have been dumped
-        pred_imgs = c.classify_imgs(
-            self.split_ii_df, self.tmp_output_dir, clf_dict=self.clf_dict
-        )
-        self.assertIsInstance(pred_imgs, dict)
-        for img_cluster in pred_imgs:
-            self._test_imgs_exist_and_rm(pred_imgs[img_cluster])
-
-        # test that `clf=None` with 'cluster-I' raises a `ValueError`
-        self.assertRaises(
-            ValueError, c.classify_imgs, self.split_i_df, self.tmp_output_dir
-        )
-
-        # test that `clf=None` and `clf_dict=None` with 'cluster-II' raises a
-        # `ValueError`
-        self.assertRaises(
-            ValueError, c.classify_imgs, self.split_ii_df, self.tmp_output_dir
-        )
-        # test that `clf_dict=None` with 'cluster-II' and `img_cluster=None` raises a
-        # `ValueError`, even when providing a non-None `clf`
-        self.assertRaises(
-            ValueError,
-            c.classify_imgs,
-            self.split_ii_df,
-            self.tmp_output_dir,
-            clf=c,
-        )
-
-        # TODO: test with explicit `method` keyword argument
+            # test that `classify_imgs` returns a list and that the images have been
+            # dumped. This works regardless of whether a "img_cluster" column is present
+            # in the split data frame - since it is ignored for "cluster-I"
+            for split_df in [self.split_i_df, self.split_ii_df]:
+                pred_imgs = c.classify_imgs(split_df, self.tmp_output_dir)
+                self.assertIsInstance(pred_imgs, list)
+                self._test_imgs_exist_and_rm(pred_imgs)
 
         # test that `Classifier` with `refine=False` also returns an ndarray
-        c = dtr.Classifier(refine=False)
-        img_filepath = self.split_i_df.iloc[0]["img_filepath"]
-        # test that `classify_img` returns a ndarray
-        self.assertIsInstance(c.classify_img(img_filepath, self.clf), np.ndarray)
+        for c in [
+            dtr.Classifier(refine=False),
+            dtr.Classifier(clf=self.clf, refine=False),
+        ]:
+            img_filepath = self.split_i_df.iloc[0]["img_filepath"]
+            # test that `classify_img` returns a ndarray
+            self.assertIsInstance(c.classify_img(img_filepath), np.ndarray)
+
+        # "cluster-II"
+        c = dtr.Classifier(clf_dict=self.clf_dict)
+        # `classify_imgs` should raise a `KeyError` if `split_df` doesn't have a
+        # "img_cluster" column
+        self.assertRaises(
+            KeyError, c.classify_imgs, self.split_i_df, self.tmp_output_dir
+        )
+        # otherwise it should return a list and dump the images (regardless of the
+        # `refine` value
+        for c in [
+            dtr.Classifier(clf_dict=self.clf_dict, refine=refine)
+            for refine in [True, False]
+        ]:
+            pred_imgs = c.classify_imgs(self.split_ii_df, self.tmp_output_dir)
+            self.assertIsInstance(pred_imgs, dict)
+            for img_cluster in pred_imgs:
+                self._test_imgs_exist_and_rm(pred_imgs[img_cluster])
 
 
 class TestLidarToCanopy(unittest.TestCase):
@@ -733,6 +723,7 @@ class TestCLI(unittest.TestCase):
         self.data_dir = "tests/data"
         self.img_dir = path.join(self.data_dir, "img")
         self.models_dir = path.join(self.data_dir, "models")
+        self.model_filepath = path.join(self.models_dir, "clf.skops")
         self.response_img_dir = path.join(self.data_dir, "response_img")
 
         self.split_ii_filepath = path.join(self.data_dir, "split_cluster-II.csv")
@@ -797,28 +788,26 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     def test_classify_img(self):
-        result = self.runner.invoke(
-            main.cli,
-            [
-                "classify-img",
-                glob.glob(path.join(self.img_dir, "*.tif"))[0],
-                path.join(self.models_dir, "clf.skops"),
-                "--output-filepath",
-                path.join(self.tmp_dir, "foo.tif"),
-            ],
-        )
-        self.assertEqual(result.exit_code, 0)
+        base_args = [
+            "classify-img",
+            glob.glob(path.join(self.img_dir, "*.tif"))[0],
+            "--output-filepath",
+            path.join(self.tmp_dir, "foo.tif"),
+        ]
+        for extra_args in [[], ["--clf-filepath", self.model_filepath]]:
+            result = self.runner.invoke(main.cli, base_args + extra_args)
+            self.assertEqual(result.exit_code, 0)
 
     def test_classify_imgs(self):
-        result = self.runner.invoke(
-            main.cli,
-            [
-                "classify-imgs",
-                self.split_ii_filepath,
-                "--clf-dir",
-                self.models_dir,
-                "--output-dir",
-                self.tmp_dir,
-            ],
-        )
-        self.assertEqual(result.exit_code, 0)
+        base_args = ["classify-imgs", self.split_ii_filepath]
+        final_args = [
+            "--output-dir",
+            self.tmp_dir,
+        ]
+        for args in [
+            [],
+            ["--clf-filepath", self.model_filepath],
+            ["--clf-dir", self.models_dir],
+        ]:
+            result = self.runner.invoke(main.cli, base_args + args + final_args)
+            self.assertEqual(result.exit_code, 0)

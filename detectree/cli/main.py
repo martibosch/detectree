@@ -305,7 +305,7 @@ def train_classifiers(
 @cli.command()
 @click.pass_context
 @click.argument("img_filepath", type=click.Path(exists=True))
-@click.argument("clf_filepath", type=click.Path(exists=True))
+@click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine", is_flag=True)
@@ -325,13 +325,23 @@ def classify_img(
     pixel_features_builder_kwargs,
     output_filepath,
 ):
-    """Use a trained classifier to predict tree pixels in an image."""
+    """Predict tree pixels in an image."""
     logger = ctx.obj["LOGGER"]
 
-    logger.info("Classifying %s with classifier of %s", img_filepath, clf_filepath)
+    if clf_filepath:
+        clf = io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED)
+        logger.info("Classifying %s with classifier of %s", img_filepath, clf_filepath)
+    else:
+        clf = None
+        logger.info(
+            "Classifying %s with pre-trained classifier of %s",
+            img_filepath,
+            settings.HF_HUB_REPO_ID,
+        )
 
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
     c = dtr.Classifier(
+        clf=clf,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
@@ -346,7 +356,6 @@ def classify_img(
 
     c.classify_img(
         img_filepath,
-        io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED),
         output_filepath=output_filepath,
     )
     logger.info("Dumped predicted image to %s", output_filepath)
@@ -357,8 +366,6 @@ def classify_img(
 @click.argument("split_filepath", type=click.Path(exists=True))
 @click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--clf-dir", type=click.Path(exists=True))
-@click.option("--method")
-@click.option("--img-cluster", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine", is_flag=True)
@@ -371,8 +378,6 @@ def classify_imgs(
     split_filepath,
     clf_filepath,
     clf_dir,
-    method,
-    img_cluster,
     tree_val,
     nontree_val,
     refine,
@@ -381,32 +386,43 @@ def classify_imgs(
     pixel_features_builder_kwargs,
     output_dir,
 ):
-    """Use trained classifier(s) to predict tree pixels in multiple images."""
+    """Predict tree pixels in multiple images."""
     logger = ctx.obj["LOGGER"]
 
     split_df = pd.read_csv(split_filepath)
 
+    # init them as None and change them if needed
+    clf = None
+    clf_dict = None
     if clf_filepath is not None:
-        clf_dict = None
+        # clf_dict = None
         clf = io.load(clf_filepath, settings.SKOPS_TRUSTED)
         logger.info(
             "Classifying images from %s with classifier of %s",
             split_filepath,
             clf_filepath,
         )
-
-    if clf_dir is not None:
-        clf = None
+    elif clf_dir is not None:
+        # clf = None
         clf_dict = {}
         for img_cluster in split_df["img_cluster"].unique():
             clf_dict[img_cluster] = io.load(
                 path.join(clf_dir, f"{img_cluster}.skops"),
                 settings.SKOPS_TRUSTED,
             )
+    else:
+        # at this point, this means that neither `clf_filepath` nor `clf_dir` have been
+        # provided, so we use the pre-trained classifier
+        logger.info(
+            "Classifying images with pre-trained classifier of %s",
+            settings.HF_HUB_REPO_ID,
+        )
 
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
 
     c = dtr.Classifier(
+        clf=clf,
+        clf_dict=clf_dict,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
@@ -421,9 +437,5 @@ def classify_imgs(
     pred_imgs = c.classify_imgs(
         split_df,
         output_dir,
-        clf=clf,
-        clf_dict=clf_dict,
-        method=method,
-        img_cluster=img_cluster,
     )
     logger.info("Dumped %d predicted images to %s", len(pred_imgs), output_dir)
