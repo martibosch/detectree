@@ -277,7 +277,7 @@ class PixelFeaturesBuilder:
             else:
                 if img_cluster is None:
                     raise ValueError(
-                        "If `method` is 'cluster-II', `img_cluster` must be " "provided"
+                        "If `method` is 'cluster-II', `img_cluster` must be provided"
                     )
                 img_filepaths = utils.get_img_filepaths(split_df, img_cluster, True)
 
@@ -287,8 +287,8 @@ class PixelFeaturesBuilder:
                     img_filename_pattern = settings.IMG_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
-                        "Either `split_df`, `img_filepaths` or `img_dir` must "
-                        "be provided"
+                        "Either `split_df`, `img_filepaths` or `img_dir` must be"
+                        " provided"
                     )
 
                 img_filepaths = glob.glob(path.join(img_dir, img_filename_pattern))

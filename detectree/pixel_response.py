@@ -89,9 +89,8 @@ class PixelResponseBuilder:
             return self.build_response_from_arr(img_binary)
         except NonBinaryResponseError:
             raise ValueError(
-                f"The response mask {img_filepath} must consist of only "
-                f"{self.tree_val} (tree) and {self.nontree_val} (non-tree) "
-                "pixel values"
+                f"The response mask {img_filepath} must consist of only {self.tree_val}"
+                f" (tree) and {self.nontree_val} (non-tree) pixel values"
             )
 
     def build_response(
@@ -137,8 +136,8 @@ class PixelResponseBuilder:
         if split_df is not None:
             if response_img_dir is None:
                 raise ValueError(
-                    "If `split_df` is provided, `response_img_dir` must also "
-                    "be provided"
+                    "If `split_df` is provided, `response_img_dir` must also be"
+                    " provided"
                 )
             if method is None:
                 if "img_cluster" in split_df:
@@ -151,7 +150,7 @@ class PixelResponseBuilder:
             else:
                 if img_cluster is None:
                     raise ValueError(
-                        "If `method` is 'cluster-II', `img_cluster` must be " "provided"
+                        "If `method` is 'cluster-II', `img_cluster` must be provided"
                     )
                 img_filepaths = utils.get_img_filepaths(split_df, img_cluster, True)
 
