@@ -40,11 +40,11 @@ jobs:
           name: artifact
           path: dist
 
-      - name: publish to test pypi
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
+      # - name: publish to test pypi
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     repository-url: https://test.pypi.org/legacy/
+      #     skip-existing: true
 
   release:
     needs: [publish_dev_build]
