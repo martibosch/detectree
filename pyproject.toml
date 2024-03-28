@@ -58,7 +58,7 @@ include = ["detectree", "detectree.*"]
 line-length = 88
 
 [tool.ruff.lint]
-select = ["D", "E", "F", "I"]
+select = ["D", "E", "F", "I", "ARG"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
