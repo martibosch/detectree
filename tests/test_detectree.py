@@ -585,11 +585,11 @@ class TestTrainClassifier(unittest.TestCase):
         ]:
             img_filepath = self.split_i_df.iloc[0]["img_filepath"]
             # test that `classify_img` returns a ndarray
-            self.assertIsInstance(c.classify_img(img_filepath), np.ndarray)
+            self.assertIsInstance(c.predict_img(img_filepath), np.ndarray)
             # test that `classify_img` with `output_filepath` returns a ndarray and
             # dumps it
             output_filepath = path.join(self.tmp_output_dir, "foo.tif")
-            y_pred = c.classify_img(img_filepath, output_filepath=output_filepath)
+            y_pred = c.predict_img(img_filepath, output_filepath=output_filepath)
             self.assertIsInstance(y_pred, np.ndarray)
             self.assertTrue(os.path.exists(output_filepath))
             # remove it so that the output dir is clean in the tests below
@@ -599,7 +599,7 @@ class TestTrainClassifier(unittest.TestCase):
             # dumped. This works regardless of whether a "img_cluster" column is present
             # in the split data frame - since it is ignored for "cluster-I"
             for split_df in [self.split_i_df, self.split_ii_df]:
-                pred_imgs = c.classify_imgs(split_df, self.tmp_output_dir)
+                pred_imgs = c.predict_imgs(split_df, self.tmp_output_dir)
                 self.assertIsInstance(pred_imgs, list)
                 self._test_imgs_exist_and_rm(pred_imgs)
 
@@ -610,14 +610,14 @@ class TestTrainClassifier(unittest.TestCase):
         ]:
             img_filepath = self.split_i_df.iloc[0]["img_filepath"]
             # test that `classify_img` returns a ndarray
-            self.assertIsInstance(c.classify_img(img_filepath), np.ndarray)
+            self.assertIsInstance(c.predict_img(img_filepath), np.ndarray)
 
         # "cluster-II"
         c = dtr.Classifier(clf_dict=self.clf_dict)
         # `classify_imgs` should raise a `KeyError` if `split_df` doesn't have a
         # "img_cluster" column
         self.assertRaises(
-            KeyError, c.classify_imgs, self.split_i_df, self.tmp_output_dir
+            KeyError, c.predict_imgs, self.split_i_df, self.tmp_output_dir
         )
         # otherwise it should return a list and dump the images (regardless of the
         # `refine` value
@@ -625,7 +625,7 @@ class TestTrainClassifier(unittest.TestCase):
             dtr.Classifier(clf_dict=self.clf_dict, refine=refine)
             for refine in [True, False]
         ]:
-            pred_imgs = c.classify_imgs(self.split_ii_df, self.tmp_output_dir)
+            pred_imgs = c.predict_imgs(self.split_ii_df, self.tmp_output_dir)
             self.assertIsInstance(pred_imgs, dict)
             for img_cluster in pred_imgs:
                 self._test_imgs_exist_and_rm(pred_imgs[img_cluster])
@@ -787,9 +787,9 @@ class TestCLI(unittest.TestCase):
         )
         self.assertEqual(result.exit_code, 0)
 
-    def test_classify_img(self):
+    def test_predict_img(self):
         base_args = [
-            "classify-img",
+            "predict-img",
             glob.glob(path.join(self.img_dir, "*.tif"))[0],
             "--output-filepath",
             path.join(self.tmp_dir, "foo.tif"),
@@ -798,8 +798,8 @@ class TestCLI(unittest.TestCase):
             result = self.runner.invoke(main.cli, base_args + extra_args)
             self.assertEqual(result.exit_code, 0)
 
-    def test_classify_imgs(self):
-        base_args = ["classify-imgs", self.split_ii_filepath]
+    def test_predict_imgs(self):
+        base_args = ["predict-imgs", self.split_ii_filepath]
         final_args = [
             "--output-dir",
             self.tmp_dir,

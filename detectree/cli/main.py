@@ -313,7 +313,7 @@ def train_classifiers(
 @click.option("--refine-int-rescale", type=int)
 @click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
 @click.option("--output-filepath", type=click.Path())
-def classify_img(
+def predict_img(
     ctx,
     img_filepath,
     clf_filepath,
@@ -354,7 +354,7 @@ def classify_img(
         filename, ext = path.splitext(path.basename(img_filepath))
         output_filepath = f"{filename}-pred{ext}"
 
-    c.classify_img(
+    c.predict_img(
         img_filepath,
         output_filepath=output_filepath,
     )
@@ -373,7 +373,7 @@ def classify_img(
 @click.option("--refine-int-rescale", type=int)
 @click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
 @click.option("--output-dir", type=click.Path(exists=True))
-def classify_imgs(
+def predict_imgs(
     ctx,
     split_filepath,
     clf_filepath,
@@ -434,7 +434,7 @@ def classify_imgs(
     if output_dir is None:
         output_dir = ""
 
-    pred_imgs = c.classify_imgs(
+    pred_imgs = c.predict_imgs(
         split_df,
         output_dir,
     )

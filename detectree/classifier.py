@@ -339,7 +339,7 @@ class Classifier:
 
         self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
 
-    def _classify_img(self, img_filepath, clf, *, output_filepath=None):
+    def _predict_img(self, img_filepath, clf, *, output_filepath=None):
         # ACHTUNG: Note that we do not use keyword-only arguments in this method because
         # `output_filepath` works as the only "optional" argument
         src = rio.open(img_filepath)
@@ -403,7 +403,7 @@ class Classifier:
         src.close()
         return y_pred
 
-    def _classify_imgs(self, img_filepaths, clf, output_dir):
+    def _predict_imgs(self, img_filepaths, clf, output_dir):
         pred_imgs_lazy = []
         pred_img_filepaths = []
         for img_filepath in img_filepaths:
@@ -412,7 +412,7 @@ class Classifier:
             #     output_dir, f"{filename}-pred{ext}")
             pred_img_filepath = path.join(output_dir, path.basename(img_filepath))
             pred_imgs_lazy.append(
-                dask.delayed(self._classify_img)(
+                dask.delayed(self._predict_img)(
                     img_filepath, clf, output_filepath=pred_img_filepath
                 )
             )
@@ -423,7 +423,7 @@ class Classifier:
 
         return pred_img_filepaths
 
-    def classify_img(self, img_filepath, *, img_cluster=None, output_filepath=None):
+    def predict_img(self, img_filepath, *, img_cluster=None, output_filepath=None):
         """
         Use a trained classifier to predict tree pixels in an image.
 
@@ -460,11 +460,11 @@ class Classifier:
         # return self._classify_img(
         #     img_filepath, clf, output_filepath=output_filepath
         # )
-        return self._classify_img(
+        return self._predict_img(
             img_filepath, self.clf, output_filepath=output_filepath
         )
 
-    def classify_imgs(self, split_df, output_dir):
+    def predict_imgs(self, split_df, output_dir):
         """
         Use trained classifier(s) to predict tree pixels in multiple images.
 
@@ -484,7 +484,7 @@ class Classifier:
             File paths of the dumped tiles.
         """
         if hasattr(self, "clf"):
-            return self._classify_imgs(
+            return self._predict_imgs(
                 split_df[~split_df["train"]]["img_filepath"], self.clf, output_dir
             )
         else:
@@ -498,7 +498,7 @@ class Classifier:
                         f"Classifier for cluster {img_cluster} not found in"
                         " `self.clf_dict`."
                     )
-                pred_imgs[img_cluster] = self._classify_imgs(
+                pred_imgs[img_cluster] = self._predict_imgs(
                     utils.get_img_filepaths(split_df, img_cluster, False),
                     clf,
                     output_dir,
