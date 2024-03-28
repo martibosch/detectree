@@ -11,7 +11,37 @@
 
 ## Overview
 
-DetecTree is a Pythonic library to classify tree/non-tree pixels from aerial imagery, following the methods of Yang et al. \[1\]. The target audience is researchers and practitioners in GIS that are interested in two-dimensional aspects of trees, such as their proportional abundance and spatial distribution throughout a region of study. These measurements can be used to assess important aspects of urban planning such as the provision of urban ecosystem services. The approach is of special relevance when LIDAR data is not available or it is too costly in monetary or computational terms.
+DetecTree is a Pythonic library to perform semantic segmentation of aerial imagery into tree/non-tree pixels, following the methods of Yang et al. \[1\]. A pre-trained model is available at [Hugging Face hub](https://huggingface.co/martibosch/detectree), which can be used as follows:
+
+```python
+from urllib import request
+
+import detectree as dtr
+import matplotlib.pyplot as plt
+import rasterio as rio
+from rasterio import plot
+
+# download a tile from the SWISSIMAGE WMS
+tile_url = (
+    "https://wms.geo.admin.ch/?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&"
+    "FORMAT=image/png&LAYERS=ch.swisstopo.images-swissimage&CRS=EPSG:2056"
+    "&BBOX=2532980,1152150,2533380,1152450&WIDTH=800&HEIGHT=600"
+)
+tile_filename = "tile.png"
+request.urlretrieve(tile_url, tile_filename)
+
+# use the pre-trained model to segment the image into tree/non-tree-pixels
+y_pred = dtr.Classifier().predict_img(tile_filename)
+
+# side-by-side plot of the tile and the predicted tree/non-tree pixels
+figwidth, figheight = plt.rcParams["figure.figsize"]
+fig, axes = plt.subplots(1, 2, figsize=(2 * figwidth, figheight))
+with rio.open(tile_filename) as src:
+    plot.show(src, ax=axes[0])
+axes[1].imshow(y_pred)
+```
+
+Alternatively, you can use detectree to train your own model on your aerial imagery dataset:
 
 ```python
 import detectree as dtr
@@ -42,7 +72,9 @@ axes[1].imshow(y_pred)
 
 ![Example](figures/example.png)
 
-A full example application of DetecTree to predict a tree canopy map for the Aussersihl district in Zurich [is available as a Jupyter notebook](https://github.com/martibosch/detectree-example/blob/master/notebooks/aussersihl-canopy.ipynb). See also [the API reference documentation](https://detectree.readthedocs.io/en/latest/?badge=latest) and the [example repository](https://github.com/martibosch/detectree-example) for more information on the background and some example notebooks.
+A full example application of DetecTree to predict a tree canopy map for the Aussersihl district in Zurich [is available as a Jupyter notebook](https://github.com/martibosch/detectree-examples/blob/main/notebooks/aussersihl-canopy.ipynb). See also [the API reference documentation](https://detectree.readthedocs.io/en/latest/?badge=latest) and the [examples repository](https://github.com/martibosch/detectree-examples) for more information on the background and some example notebooks.
+
+The target audience is researchers and practitioners in GIS that are interested in two-dimensional aspects of trees, such as their proportional abundance and spatial distribution throughout a region of study. These measurements can be used to assess important aspects of urban planning such as the provision of urban ecosystem services. The approach is of special relevance when LIDAR data is not available or it is too costly in monetary or computational terms.
 
 ## Citation
 
