@@ -41,6 +41,8 @@ with rio.open(tile_filename) as src:
 axes[1].imshow(y_pred)
 ```
 
+![Pre-trained example](figures/example-pre-trained.png)
+
 Alternatively, you can use detectree to train your own model on your aerial imagery dataset:
 
 ```python
