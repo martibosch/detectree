@@ -448,21 +448,22 @@ class Classifier:
         y_pred : numpy ndarray
             Array with the pixel responses.
         """
-        # clf = getattr(self, "clf", None)
-        # if clf is None:
-        #     try:
-        #         clf = self.clf_dict[img_cluster]
-        #     except KeyError:
-        #         raise ValueError(
-        #             f"Classifier for cluster {img_cluster} not found in "
-        #             "`self.clf_dict`."
-        #         )
-        # return self._classify_img(
-        #     img_filepath, clf, output_filepath=output_filepath
-        # )
-        return self._predict_img(
-            img_filepath, self.clf, output_filepath=output_filepath
-        )
+        clf = getattr(self, "clf", None)
+        if clf is None:
+            if img_cluster is not None:
+                try:
+                    clf = self.clf_dict[img_cluster]
+                except KeyError:
+                    raise ValueError(
+                        f"Classifier for cluster {img_cluster} not found in"
+                        " `self.clf_dict`."
+                    )
+            else:
+                raise ValueError(
+                    "A valid `img_cluster` must be provided for classifiers"
+                    " instantiated with `clf_dict`."
+                )
+        return self._predict_img(img_filepath, clf, output_filepath=output_filepath)
 
     def predict_imgs(self, split_df, output_dir):
         """
