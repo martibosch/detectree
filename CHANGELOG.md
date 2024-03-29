@@ -1,7 +1,9 @@
 # Change log
 
 ## [v0.5.0] - 2024-03-28
+
 ### :sparkles: New Features
+
 - [`6bdbdc3`](https://github.com/martibosch/detectree/commit/6bdbdc3c348922488ec5cea06cf271d41028fbc8) - rasterize_lidar with shape/transform args and return zeros *(commit by [@martibosch](https://github.com/martibosch))*
 - [`c619239`](https://github.com/martibosch/detectree/commit/c619239c3e7c3fd3bb01cd6c49763e887491d0f6) - adaboost->generic classifier (default lgb), joblib->skops *(commit by [@martibosch](https://github.com/martibosch))*
 - [`853d9ad`](https://github.com/martibosch/detectree/commit/853d9ad2f22886fbb20fd334de7ab84f390e4c6e) - fix to enforce all keyword-only args *(commit by [@martibosch](https://github.com/martibosch))*
@@ -10,17 +12,19 @@
 - [`4f50349`](https://github.com/martibosch/detectree/commit/4f50349a6647abb802d61e63c2416260c8b2c631) - pre-trained model from huggingface hub *(commit by [@martibosch](https://github.com/martibosch))*
 
 ### :bug: Bug Fixes
+
 - [`bbb7c19`](https://github.com/martibosch/detectree/commit/bbb7c197bbdf13897f49ddeb07089a470571b59d) - l2c meta height/width instead of shape, lazrs lidar backend *(commit by [@martibosch](https://github.com/martibosch))*
 
 ### :recycle: Refactors
+
 - [`694966a`](https://github.com/martibosch/detectree/commit/694966ad7541de2a2d9708774255c8c1a05ccf08) - using opencv for faster convolution *(commit by [@martibosch](https://github.com/martibosch))*
 - [`5c00c95`](https://github.com/martibosch/detectree/commit/5c00c954134a9ce2484bb8fa6f09d0da2f059c14) - dropped `DEFAULT` from settings, consistent docs *(commit by [@martibosch](https://github.com/martibosch))*
 - [`0c9da36`](https://github.com/martibosch/detectree/commit/0c9da361f89452c7d34c6a3763fb5063cf9f469b) - kws->kwargs *(commit by [@martibosch](https://github.com/martibosch))*
 - [`73ab0c4`](https://github.com/martibosch/detectree/commit/73ab0c4492f097755ecadb002b179553176a6368) - change `classify_img`->`predict_img` *(commit by [@martibosch](https://github.com/martibosch))*
 
 ### :white_check_mark: Tests
-- [`9696124`](https://github.com/martibosch/detectree/commit/96961244679d1ebca5e5414d8678576f7e73bb03) - _create_tmp_dir to rm test tmp dirs if existing *(commit by [@martibosch](https://github.com/martibosch))*
 
+- [`9696124`](https://github.com/martibosch/detectree/commit/96961244679d1ebca5e5414d8678576f7e73bb03) - \_create_tmp_dir to rm test tmp dirs if existing *(commit by [@martibosch](https://github.com/martibosch))*
 
 ## 0.4.2 (24/10/2022)
 
