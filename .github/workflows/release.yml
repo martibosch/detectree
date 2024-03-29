@@ -88,6 +88,13 @@ jobs:
       - name: publish to pypi
         uses: pypa/gh-action-pypi-publish@release/v1
 
+      - name: pre-commit on changelog
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --files CHANGELOG.md
+        # we only run this to format CHANGELOG.md so pre-commit will fail (yet format it)
+        continue-on-error: true
+
       - name: commit changelog
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
