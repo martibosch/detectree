@@ -2,6 +2,7 @@
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/detectree.svg)](https://anaconda.org/conda-forge/detectree)
 [![Documentation Status](https://readthedocs.org/projects/detectree/badge/?version=latest)](https://detectree.readthedocs.io/en/latest/?badge=latest)
 [![tests](https://github.com/martibosch/detectree/actions/workflows/tests.yml/badge.svg)](https://github.com/martibosch/detectree/blob/main/.github/workflows/tests.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/martibosch/detectree/main.svg)](https://results.pre-commit.ci/latest/github/martibosch/detectree/main)
 [![codecov](https://codecov.io/gh/martibosch/detectree/branch/main/graph/badge.svg?token=ZTZK2LFR6T)](https://codecov.io/gh/martibosch/detectree)
 [![GitHub license](https://img.shields.io/github/license/martibosch/detectree.svg)](https://github.com/martibosch/detectree/blob/master/LICENSE)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02172/status.svg)](https://doi.org/10.21105/joss.02172)
