@@ -1,4 +1,5 @@
 """Build pixel features."""
+
 import glob
 from os import path
 
@@ -184,9 +185,9 @@ class PixelFeaturesBuilder:
                     img_lab_l, ddepth=-1, kernel=oriented_kernel_arr
                 )
                 img_filtered_vec = img_filtered.flatten()
-                X[
-                    :, self.num_color_features + i * self.num_orientations + j
-                ] = img_filtered_vec
+                X[:, self.num_color_features + i * self.num_orientations + j] = (
+                    img_filtered_vec
+                )
 
         # entropy features
         # tpf.compute_entropy_features(X_img[:, self.entropy_slice],

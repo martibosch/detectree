@@ -1,4 +1,5 @@
 """Utilities to get canopy information from LiDAR data."""
+
 import laspy
 import numpy as np
 import pandas as pd
