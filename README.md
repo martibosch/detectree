@@ -62,7 +62,7 @@ clf = dtr.ClassifierTrainer().train_classifier(
 
 # use the trained classifier to predict the tree/non-tree pixels
 test_filepath = split_df[~split_df['train'].sample(1).iloc[0]['img_filepath']
-y_pred = dtr.Classifier().classify_img(test_filepath, clf)
+y_pred = dtr.Classifier(clf=clf).classify_img(test_filepath)
 
 # side-by-side plot of the tile and the predicted tree/non-tree pixels
 figwidth, figheight = plt.rcParams['figure.figsize']
