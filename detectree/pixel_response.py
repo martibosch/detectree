@@ -1,4 +1,5 @@
 """Build pixel binary (tree/non-tree) responses."""
+
 import glob
 from os import path
 

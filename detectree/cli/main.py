@@ -1,4 +1,5 @@
 """detectree CLI."""
+
 import logging
 from os import path
 
