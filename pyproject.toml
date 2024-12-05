@@ -152,6 +152,9 @@ commands = [
     "tests"
   ]
 ]
+conda_deps = [
+  "lightgbm"
+]
 extras = [
   "test"
 ]
