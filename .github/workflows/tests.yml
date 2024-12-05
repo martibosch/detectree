@@ -27,19 +27,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: mamba-org/setup-micromamba@v1
+      - uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           create-args: >-
+            lightgbm
             python=${{ matrix.python-version }}
-            pip
-
-      - name: install dependencies
-        run: pip install tox tox-gh-actions
+            tox
+            tox-gh
 
       - name: test with tox
         run: tox
         env:
+          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
           CONDA_EXE: mamba
 
       - name: upload coverage reports to Codecov
