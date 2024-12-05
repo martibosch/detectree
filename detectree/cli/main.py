@@ -1,4 +1,5 @@
 """detectree CLI."""
+
 import logging
 from os import path
 
@@ -177,10 +178,10 @@ def train_test_split(
 @cli.command()
 @click.pass_context
 @click.option("--split-filepath", type=click.Path(exists=True))
+@click.option("--img-dir", type=click.Path(exists=True))
 @click.option("--response-img-dir", type=click.Path(exists=True))
 @click.option("--img-filepaths", cls=_OptionEatAll)
 @click.option("--response-img-filepaths", cls=_OptionEatAll)
-@click.option("--img-dir", type=click.Path(exists=True))
 @click.option("--img-filename-pattern")
 @click.option("--method")
 @click.option("--img-cluster", type=int)
@@ -195,10 +196,10 @@ def train_test_split(
 def train_classifier(
     ctx,
     split_filepath,
+    img_dir,
     response_img_dir,
     img_filepaths,
     response_img_filepaths,
-    img_dir,
     img_filename_pattern,
     method,
     img_cluster,
@@ -231,10 +232,10 @@ def train_classifier(
     )
     clf = ct.train_classifier(
         split_df=split_df,
+        img_dir=img_dir,
         response_img_dir=response_img_dir,
         img_filepaths=img_filepaths,
         response_img_filepaths=response_img_filepaths,
-        img_dir=img_dir,
         img_filename_pattern=img_filename_pattern,
         method=method,
         img_cluster=img_cluster,
@@ -249,6 +250,7 @@ def train_classifier(
 @cli.command()
 @click.pass_context
 @click.argument("split_filepath", type=click.Path(exists=True))
+@click.argument("img_dir", type=click.Path(exists=True))
 @click.argument("response_img_dir", type=click.Path(exists=True))
 @click.option("--sigmas", cls=_OptionEatAll)
 @click.option("--num-orientations", type=int)
@@ -261,6 +263,7 @@ def train_classifier(
 def train_classifiers(
     ctx,
     split_filepath,
+    img_dir,
     response_img_dir,
     sigmas,
     num_orientations,
@@ -289,7 +292,7 @@ def train_classifiers(
         nontree_val=nontree_val,
         classifier_kwargs=classifier_kwargs,
     )
-    clfs_dict = ct.train_classifiers(split_df, response_img_dir)
+    clfs_dict = ct.train_classifiers(split_df, img_dir, response_img_dir)
 
     if output_dir is None:
         output_dir = ""
@@ -364,6 +367,7 @@ def predict_img(
 @cli.command()
 @click.pass_context
 @click.argument("split_filepath", type=click.Path(exists=True))
+@click.argument("img_dir", type=click.Path(exists=True))
 @click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--clf-dir", type=click.Path(exists=True))
 @click.option("--tree-val", type=int)
@@ -376,6 +380,7 @@ def predict_img(
 def predict_imgs(
     ctx,
     split_filepath,
+    img_dir,
     clf_filepath,
     clf_dir,
     tree_val,
@@ -436,6 +441,7 @@ def predict_imgs(
 
     pred_imgs = c.predict_imgs(
         split_df,
+        img_dir,
         output_dir,
     )
     logger.info("Dumped %d predicted images to %s", len(pred_imgs), output_dir)

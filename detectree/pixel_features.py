@@ -1,4 +1,5 @@
 """Build pixel features."""
+
 import glob
 from os import path
 
@@ -265,6 +266,10 @@ class PixelFeaturesBuilder:
         """
         # TODO: accept `neighborhoods` kwarg
         if split_df is not None:
+            if img_dir is None:
+                raise ValueError(
+                    "If `split_df` is provided, `img_dir` must also be provided"
+                )
             if method is None:
                 if "img_cluster" in split_df:
                     method = "cluster-II"
@@ -273,13 +278,20 @@ class PixelFeaturesBuilder:
 
             if method == "cluster-I":
                 # dump_train_feature_arrays(split_df, output_filepath)
-                img_filepaths = split_df[split_df["train"]]["img_filepath"]
+                img_filename_ser = split_df[split_df["train"]]["img_filename"]
             else:
                 if img_cluster is None:
                     raise ValueError(
                         "If `method` is 'cluster-II', `img_cluster` must be provided"
                     )
-                img_filepaths = utils.get_img_filepaths(split_df, img_cluster, True)
+                img_filename_ser = utils.get_img_filename_ser(
+                    split_df, img_cluster, True
+                )
+
+            # set img_filepaths from img_filename_ser
+            img_filepaths = img_filename_ser.apply(
+                lambda img_filename: path.join(img_dir, img_filename)
+            )
 
         else:
             if img_filepaths is None:

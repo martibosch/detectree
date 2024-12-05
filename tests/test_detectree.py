@@ -199,25 +199,37 @@ class TestPixelFeatures(unittest.TestCase):
             num_pixel_features,
         )
 
+        # test that when providing `split_df` we also need to provide `img_dir`
+        self.assertRaises(
+            ValueError,
+            self.pfb.build_features,
+            split_df=self.split_i_df,
+        )
         # test providing `method` implicitly (and `split_df`)
         self.assertEqual(
-            self.pfb.build_features(split_df=self.split_i_df).shape, shape_i
+            self.pfb.build_features(
+                split_df=self.split_i_df, img_dir=self.img_dir
+            ).shape,
+            shape_i,
         )
         self.assertEqual(
             self.pfb.build_features(
-                split_df=self.split_ii_df, img_cluster=img_cluster
+                split_df=self.split_ii_df, img_dir=self.img_dir, img_cluster=img_cluster
             ).shape,
             shape_ii,
         )
 
         # test providing `method` explicitly (and `split_df`)
         self.assertEqual(
-            self.pfb.build_features(split_df=self.split_i_df, method="cluster-I").shape,
+            self.pfb.build_features(
+                split_df=self.split_i_df, img_dir=self.img_dir, method="cluster-I"
+            ).shape,
             shape_i,
         )
         self.assertEqual(
             self.pfb.build_features(
                 split_df=self.split_ii_df,
+                img_dir=self.img_dir,
                 method="cluster-II",
                 img_cluster=img_cluster,
             ).shape,
@@ -228,7 +240,7 @@ class TestPixelFeatures(unittest.TestCase):
         # split data frame
         self.assertEqual(
             self.pfb.build_features(
-                split_df=self.split_ii_df, method="cluster-I"
+                split_df=self.split_ii_df, img_dir=self.img_dir, method="cluster-I"
             ).shape,
             (
                 len(self.split_ii_df[self.split_ii_df["train"]]) * self.pixels_per_img,
@@ -241,6 +253,7 @@ class TestPixelFeatures(unittest.TestCase):
             ValueError,
             self.pfb.build_features,
             split_df=self.split_i_df,
+            img_dir=self.img_dir,
             method="cluster-II",
         )
 
@@ -250,16 +263,19 @@ class TestPixelFeatures(unittest.TestCase):
             ValueError,
             self.pfb.build_features,
             split_df=self.split_i_df,
+            img_dir=self.img_dir,
             method="cluster-II",
         )
 
         # test providing `img_filepaths`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
+        img_filepath_ser = self.split_i_df[self.split_i_df["train"]][
+            "img_filename"
+        ].apply(lambda img_filename: path.join(self.img_dir, img_filename))
 
         # the shape of the feature matrix below is the same as `shape_i`
         self.assertEqual(
-            self.pfb.build_features(img_filepaths=img_filepaths).shape,
-            (len(img_filepaths) * self.pixels_per_img, num_pixel_features),
+            self.pfb.build_features(img_filepaths=img_filepath_ser).shape,
+            (len(img_filepath_ser) * self.pixels_per_img, num_pixel_features),
         )
 
         # test providing `img_dir`. In this case all the images (not only the ones
@@ -386,7 +402,7 @@ class TestPixelResponse(unittest.TestCase):
         )
 
         # test providing `img_filepaths`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"].apply(
+        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filename"].apply(
             lambda filepath: path.join(self.response_img_dir, path.basename(filepath))
         )
 
@@ -440,11 +456,13 @@ class TestTrainClassifier(unittest.TestCase):
         self.ct = dtr.ClassifierTrainer(n_estimators=n_estimators)
         # cache this first trained classifier to reuse it below
         self.clf = self.ct.train_classifier(
-            split_df=self.split_i_df, response_img_dir=self.response_img_dir
+            split_df=self.split_i_df,
+            img_dir=self.img_dir,
+            response_img_dir=self.response_img_dir,
         )
         # cache the classifier dict to reuse it below
         self.clf_dict = self.ct.train_classifiers(
-            self.split_ii_df, self.response_img_dir
+            self.split_ii_df, self.img_dir, self.response_img_dir
         )
 
     def tearDown(self):
@@ -460,6 +478,7 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertIsInstance(
             self.ct.train_classifier(
                 split_df=self.split_ii_df,
+                img_dir=self.img_dir,
                 response_img_dir=self.response_img_dir,
                 img_cluster=self.img_cluster,
             ),
@@ -469,6 +488,7 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertIsInstance(
             self.ct.train_classifier(
                 split_df=self.split_i_df,
+                img_dir=self.img_dir,
                 response_img_dir=self.response_img_dir,
                 method="cluster-I",
             ),
@@ -477,6 +497,7 @@ class TestTrainClassifier(unittest.TestCase):
         self.assertIsInstance(
             self.ct.train_classifier(
                 split_df=self.split_ii_df,
+                img_dir=self.img_dir,
                 response_img_dir=self.response_img_dir,
                 method="cluster-II",
                 img_cluster=self.img_cluster,
@@ -484,7 +505,10 @@ class TestTrainClassifier(unittest.TestCase):
             settings.CLF_CLASS,
         )
         # option 2: `img_filepaths` and `response_img_dir`
-        img_filepaths = self.split_i_df[self.split_i_df["train"]]["img_filepath"]
+        img_filename_ser = self.split_i_df[self.split_i_df["train"]]["img_filename"]
+        img_filepaths = img_filename_ser.apply(
+            lambda img_filename: path.join(self.img_dir, img_filename)
+        )
         self.assertIsInstance(
             self.ct.train_classifier(
                 img_filepaths=img_filepaths,
@@ -493,8 +517,8 @@ class TestTrainClassifier(unittest.TestCase):
             settings.CLF_CLASS,
         )
         # option 3: `img_filepaths` and `response_img_filepaths`
-        response_img_filepaths = img_filepaths.apply(
-            lambda filepath: path.join(self.response_img_dir, path.basename(filepath))
+        response_img_filepaths = img_filename_ser.apply(
+            lambda img_filename: path.join(self.response_img_dir, img_filename)
         )
         self.assertIsInstance(
             self.ct.train_classifier(
@@ -550,6 +574,7 @@ class TestTrainClassifier(unittest.TestCase):
             ValueError,
             self.ct.train_classifiers,
             split_df=self.split_i_df,
+            img_dir=self.img_dir,
             response_img_dir=self.response_img_dir,
         )
         # test that `train_classifiers` returns a dict otherwise (note that we are using
@@ -579,7 +604,7 @@ class TestTrainClassifier(unittest.TestCase):
 
     def test_classifier(self):
         # define this here to reuse it below
-        img_filepath = self.split_i_df.iloc[0]["img_filepath"]
+        img_filepath = path.join(self.img_dir, self.split_i_df.iloc[0]["img_filename"])
         # test init classifier
         # TODO: test init arguments of `Classifier`
         # test that for the pre-trained classifier (no init `clf`/`clf_dict` arg) and
@@ -606,7 +631,7 @@ class TestTrainClassifier(unittest.TestCase):
             # dumped. This works regardless of whether a "img_cluster" column is present
             # in the split data frame - since it is ignored for "cluster-I"
             for split_df in [self.split_i_df, self.split_ii_df]:
-                pred_imgs = c.predict_imgs(split_df, self.tmp_output_dir)
+                pred_imgs = c.predict_imgs(split_df, self.img_dir, self.tmp_output_dir)
                 self.assertIsInstance(pred_imgs, list)
                 self._test_imgs_exist_and_rm(pred_imgs)
 
@@ -631,15 +656,15 @@ class TestTrainClassifier(unittest.TestCase):
         # `predict_imgs` should raise a `ValueError` if `split_df` doesn't have an
         # "img_cluster" column
         self.assertRaises(
-            KeyError, c.predict_imgs, self.split_i_df, self.tmp_output_dir
+            KeyError, c.predict_imgs, self.split_i_df, self.img_dir, self.tmp_output_dir
         )
         # `classify_imgs` should raise a `KeyError` if `split_df` doesn't have a
         # "img_cluster" column
         self.assertRaises(
-            KeyError, c.predict_imgs, self.split_i_df, self.tmp_output_dir
+            KeyError, c.predict_imgs, self.split_i_df, self.img_dir, self.tmp_output_dir
         )
         # otherwise, it should work
-        pred_imgs = c.predict_imgs(self.split_ii_df, self.tmp_output_dir)
+        pred_imgs = c.predict_imgs(self.split_ii_df, self.img_dir, self.tmp_output_dir)
         self.assertIsInstance(pred_imgs, dict)
         for _img_cluster in pred_imgs:
             self._test_imgs_exist_and_rm(pred_imgs[_img_cluster])
@@ -728,8 +753,10 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(len(full_tiles) <= len(tiles))
         self.assertTrue(len(tiles) <= len(maybe_empty_tiles))
 
-    def test_get_img_filepaths(self):
-        self.assertRaises(ValueError, utils.get_img_filepaths, self.split_i_df, 0, True)
+    def test_get_img_filename_ser(self):
+        self.assertRaises(
+            ValueError, utils.get_img_filename_ser, self.split_i_df, 0, True
+        )
 
     def test_logging(self):
         # Taken from osmnx
@@ -790,6 +817,8 @@ class TestCLI(unittest.TestCase):
                 "train-classifier",
                 "--split-filepath",
                 path.join(self.data_dir, "split_cluster-I.csv"),
+                "--img-dir",
+                self.img_dir,
                 "--response-img-dir",
                 self.response_img_dir,
                 "--output-filepath",
@@ -804,6 +833,7 @@ class TestCLI(unittest.TestCase):
             [
                 "train-classifiers",
                 self.split_ii_filepath,
+                self.img_dir,
                 self.response_img_dir,
                 "--output-dir",
                 self.tmp_dir,
@@ -823,7 +853,7 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_predict_imgs(self):
-        base_args = ["predict-imgs", self.split_ii_filepath]
+        base_args = ["predict-imgs", self.split_ii_filepath, self.img_dir]
         final_args = [
             "--output-dir",
             self.tmp_dir,

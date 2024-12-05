@@ -113,10 +113,10 @@ class ClassifierTrainer:
         self,
         *,
         split_df=None,
+        img_dir=None,
         response_img_dir=None,
         img_filepaths=None,
         response_img_filepaths=None,
-        img_dir=None,
         img_filename_pattern=None,
         method=None,
         img_cluster=None,
@@ -131,6 +131,10 @@ class ClassifierTrainer:
         ----------
         split_df : pandas DataFrame, optional
             Data frame with the train/test split.
+        img_dir : str representing path to a directory, optional
+            Path to the directory where the images from `split_df` or whose filename
+            matches `img_filename_pattern` are located. Required if `split_df` is
+            provided. Ignored if `img_filepaths` is provided.
         response_img_dir : str representing path to a directory, optional
             Path to the directory where the response tiles are located. Required if
             providing `split_df`. Otherwise `response_img_dir` might either be ignored
@@ -142,10 +146,6 @@ class ClassifierTrainer:
         response_img_filepaths : list-like, optional
             List of paths to the binary response tiles that will be used to train the
             classifier. Ignored if `split_df` is provided.
-        img_dir : str representing path to a directory, optional
-            Path to the directory where the images whose filename matches
-            `img_filename_pattern` are to be located. Ignored if `split_df` or
-            `img_filepaths` is provided.
         img_filename_pattern : str representing a file-name pattern, optional
             Filename pattern to be matched in order to obtain the list of images. If no
             value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
@@ -209,7 +209,7 @@ class ClassifierTrainer:
 
         return clf
 
-    def train_classifiers(self, split_df, response_img_dir):
+    def train_classifiers(self, split_df, img_dir, response_img_dir):
         """
         Train a classifier for each first-level cluster in `split_df`.
 
@@ -221,6 +221,10 @@ class ClassifierTrainer:
         split_df : pandas DataFrame
             Data frame with the train/test split, which must have an `img_cluster`.
             column with the first-level cluster labels.
+        img_dir : str representing path to a directory
+            Path to the directory where the images from `split_df` or whose filename
+            matches `img_filename_pattern` are located. Required if `split_df` is
+            provided. Ignored if `img_filepaths` is provided.
         response_img_dir : str representing path to a directory
             Path to the directory where the response tiles are located.
 
@@ -240,6 +244,7 @@ class ClassifierTrainer:
         for img_cluster, _ in split_df.groupby("img_cluster"):
             clfs_lazy[img_cluster] = dask.delayed(self.train_classifier)(
                 split_df=split_df,
+                img_dir=img_dir,
                 response_img_dir=response_img_dir,
                 method="cluster-II",
                 img_cluster=img_cluster,
@@ -465,7 +470,7 @@ class Classifier:
                 )
         return self._predict_img(img_filepath, clf, output_filepath=output_filepath)
 
-    def predict_imgs(self, split_df, output_dir):
+    def predict_imgs(self, split_df, img_dir, output_dir):
         """
         Use trained classifier(s) to predict tree pixels in multiple images.
 
@@ -476,6 +481,10 @@ class Classifier:
         ----------
         split_df : pandas DataFrame, optional
             Data frame with the train/test split.
+        img_dir : str representing path to a directory
+            Path to the directory where the images from `split_df` or whose filename
+            matches `img_filename_pattern` are located. Required if `split_df` is
+            provided. Ignored if `img_filepaths` is provided.
         output_dir : str or pathlib.Path object
             Path to the directory where the predicted images are to be dumped.
 
@@ -486,7 +495,11 @@ class Classifier:
         """
         if hasattr(self, "clf"):
             return self._predict_imgs(
-                split_df[~split_df["train"]]["img_filepath"], self.clf, output_dir
+                split_df[~split_df["train"]]["img_filename"].apply(
+                    lambda img_filename: path.join(img_dir, img_filename)
+                ),
+                self.clf,
+                output_dir,
             )
         else:
             # `self.clf_dict` is not `None`
@@ -500,7 +513,9 @@ class Classifier:
                         " `self.clf_dict`."
                     )
                 pred_imgs[img_cluster] = self._predict_imgs(
-                    utils.get_img_filepaths(split_df, img_cluster, False),
+                    utils.get_img_filename_ser(split_df, img_cluster, False).apply(
+                        lambda img_filename: path.join(img_dir, img_filename)
+                    ),
                     clf,
                     output_dir,
                 )

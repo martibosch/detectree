@@ -1,4 +1,5 @@
 """Build pixel binary (tree/non-tree) responses."""
+
 import glob
 from os import path
 
@@ -146,16 +147,18 @@ class PixelResponseBuilder:
                     method = "cluster-I"
 
             if method == "cluster-I":
-                img_filepaths = split_df[split_df["train"]]["img_filepath"]
+                img_filename_ser = split_df[split_df["train"]]["img_filename"]
             else:
                 if img_cluster is None:
                     raise ValueError(
                         "If `method` is 'cluster-II', `img_cluster` must be provided"
                     )
-                img_filepaths = utils.get_img_filepaths(split_df, img_cluster, True)
+                img_filename_ser = utils.get_img_filename_ser(
+                    split_df, img_cluster, True
+                )
 
-            response_img_filepaths = img_filepaths.apply(
-                lambda filepath: path.join(response_img_dir, path.basename(filepath))
+            response_img_filepaths = img_filename_ser.apply(
+                lambda img_filename: path.join(response_img_dir, img_filename)
             )
         else:
             if response_img_filepaths is None:

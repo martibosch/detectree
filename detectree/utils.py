@@ -1,4 +1,5 @@
 """detectree general utility functions."""
+
 import datetime as dt
 import itertools
 import logging as lg
@@ -17,7 +18,7 @@ from . import settings
 __all__ = [
     "split_into_tiles",
     "img_rgb_from_filepath",
-    "get_img_filepaths",
+    "get_img_filename_ser",
     "log",
     "get_logger",
 ]
@@ -171,9 +172,9 @@ def img_rgb_from_filepath(img_filepath):
 
 
 # non-image utils
-def get_img_filepaths(split_df, img_cluster, train):
+def get_img_filename_ser(split_df, img_cluster, train):
     """
-    Get image filepaths from a train/test split data frame.
+    Get image filenames from a train/test split data frame.
 
     Parameters
     ----------
@@ -187,8 +188,8 @@ def get_img_filepaths(split_df, img_cluster, train):
 
     Returns
     -------
-    img_filepaths : pandas Series
-        List of paths to image files.
+    img_filenames : pandas Series
+        List of image file names.
     """
     if train:
         train_cond = split_df["train"]
@@ -196,7 +197,7 @@ def get_img_filepaths(split_df, img_cluster, train):
         train_cond = ~split_df["train"]
     try:
         return split_df[train_cond & (split_df["img_cluster"] == img_cluster)][
-            "img_filepath"
+            "img_filename"
         ]
     except KeyError:
         raise ValueError(

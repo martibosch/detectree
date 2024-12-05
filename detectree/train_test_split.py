@@ -207,7 +207,7 @@ class TrainingSelector:
         X_cols = range(n_components)
         df = pd.concat(
             (
-                pd.Series(self.img_filepaths, name="img_filepath"),
+                pd.Series(self.img_filepaths, name="img_filename").apply(path.basename),
                 pd.DataFrame(X_pca, columns=X_cols),
             ),
             axis=1,
