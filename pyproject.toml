@@ -15,13 +15,12 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "dask[delayed,distributed]",
     "joblib",
@@ -82,6 +81,7 @@ exclude_lines = [
     "except ModuleNotFoundError",
     "except ImportError",
 ]
+
 ignore_errors = true
 omit = ["tests/*", "docs/conf.py"]
 
@@ -96,3 +96,81 @@ version_files = [
 
 [tool.codespell]
 skip = "CHANGELOG.md,paper/paper.bib"
+
+[tool.tox]
+env_list = [
+    "lint",
+    "py39",
+    "py310",
+    "py311",
+    "py312",
+]
+requires = [
+    "tox>=4.19",
+]
+
+[tool.tox.env.lint]
+commands = [
+    [
+        [
+            "python",
+            "-m",
+            "build",
+        ],
+        [
+            "sphinx-build",
+            "docs",
+            "docs/_build",
+        ],
+        [
+            "twine",
+            "check",
+            "dist/*",
+        ],
+    ],
+]
+extras = [
+    "dev",
+    "doc",
+    "test",
+]
+whitelist_externals = [
+    "build",
+    "sphinx-build",
+    "twine",
+]
+
+[tool.tox.env_run_base]
+commands = [
+    [
+        "pytest",
+        "-s",
+        "--cov=detectree",
+        "--cov-append",
+        "--cov-report=xml",
+        "--cov-report",
+        "term-missing",
+        "tests",
+    ],
+]
+extras = [
+    "test",
+]
+whitelist_externals = [
+    "pytest",
+]
+
+[tool.tox.gh.python]
+"3.9" = [
+    "3.9",
+]
+"3.10" = [
+    "3.10",
+]
+"3.11" = [
+    "3.11",
+]
+"3.12" = [
+    "3.12",
+    "lint",
+]
