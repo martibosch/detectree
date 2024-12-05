@@ -8,59 +8,79 @@ version = "0.5.1"
 description = "Tree detection from aerial imagery in Python."
 readme = "README.md"
 authors = [
-    { name = "Martí Bosch", email = "marti.bosch@epfl.ch" },
+  {name = "Martí Bosch", email = "marti.bosch@epfl.ch"}
 ]
-license = { text = "GPL-3.0" }
+license = {text = "GPL-3.0"}
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "dask[delayed,distributed]",
-    "joblib",
-    "laspy[lazrs] >= 2.0.0",
-    "lightgbm",
-    "numpy >= 1.15",
-    "opencv-python >= 4.0.0",
-    "pandas >= 0.23",
-    "pymaxflow >= 1.0.0",
-    "rasterio >= 1.0.0",
-    "scikit-image",
-    "scikit-learn",
-    "scipy >= 1.0.0",
-    "skops",
-    "shapely",
-    "tqdm",
+  "dask[delayed,distributed]",
+  "joblib",
+  "laspy[lazrs] >= 2.0.0",
+  "lightgbm",
+  "numpy >= 1.15",
+  "opencv-python >= 4.0.0",
+  "pandas >= 0.23",
+  "pymaxflow >= 1.0.0",
+  "rasterio >= 1.0.0",
+  "scikit-image",
+  "scikit-learn",
+  "scipy >= 1.0.0",
+  "skops",
+  "shapely",
+  "tqdm"
 ]
-
-[project.urls]
-Repository = "https://github.com/martibosch/detectree"
-
-[project.scripts]
-detectree = "detectree.cli.main:cli"
 
 [project.optional-dependencies]
 test = ["coverage[toml]", "pytest", "pytest-cov", "ruff"]
 dev = ["build", "commitizen", "pre-commit", "pip", "toml", "tox", "twine"]
 doc = ["m2r2", "pydata-sphinx-theme", "sphinx"]
 
-[tool.setuptools.packages.find]
-include = ["detectree", "detectree.*"]
+[project.scripts]
+detectree = "detectree.cli.main:cli"
+
+[project.urls]
+Repository = "https://github.com/martibosch/detectree"
+
+[tool.codespell]
+skip = "CHANGELOG.md,paper/paper.bib"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_provider = "pep621"
+version_files = [
+  "detectree/__init__.py",
+  "pyproject.toml:version"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "if self.debug:",
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "except ModuleNotFoundError",
+  "except ImportError"
+]
+ignore_errors = true
+omit = ["tests/*", "docs/conf.py"]
+
+[tool.coverage.run]
+source = ["detectree"]
 
 [tool.ruff]
 line-length = 88
 
 [tool.ruff.lint]
 select = ["D", "E", "F", "I", "ARG"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "numpy"
 
 [tool.ruff.lint.isort]
 known-first-party = ["detectree"]
@@ -70,107 +90,86 @@ known-first-party = ["detectree"]
 "tests/test_detectree.py" = ["D"]
 "docs/src/conf.py" = ["D"]
 
-[tool.coverage.run]
-source = ["detectree"]
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
-[tool.coverage.report]
-exclude_lines = [
-    "if self.debug:",
-    "pragma: no cover",
-    "raise NotImplementedError",
-    "except ModuleNotFoundError",
-    "except ImportError",
-]
-
-ignore_errors = true
-omit = ["tests/*", "docs/conf.py"]
-
-[tool.commitizen]
-name = "cz_conventional_commits"
-tag_format = "v$version"
-version_provider = "pep621"
-version_files = [
-    "detectree/__init__.py",
-    "pyproject.toml:version"
-]
-
-[tool.codespell]
-skip = "CHANGELOG.md,paper/paper.bib"
+[tool.setuptools.packages.find]
+include = ["detectree", "detectree.*"]
 
 [tool.tox]
 env_list = [
-    "lint",
-    "py39",
-    "py310",
-    "py311",
-    "py312",
+  "lint",
+  "py39",
+  "py310",
+  "py311",
+  "py312"
 ]
 requires = [
-    "tox>=4.19",
+  "tox>=4.19"
 ]
 
 [tool.tox.env.lint]
 commands = [
+  [
     [
-        [
-            "python",
-            "-m",
-            "build",
-        ],
-        [
-            "sphinx-build",
-            "docs",
-            "docs/_build",
-        ],
-        [
-            "twine",
-            "check",
-            "dist/*",
-        ],
+      "python",
+      "-m",
+      "build"
     ],
+    [
+      "sphinx-build",
+      "docs",
+      "docs/_build"
+    ],
+    [
+      "twine",
+      "check",
+      "dist/*"
+    ]
+  ]
 ]
 extras = [
-    "dev",
-    "doc",
-    "test",
+  "dev",
+  "doc",
+  "test"
 ]
 whitelist_externals = [
-    "build",
-    "sphinx-build",
-    "twine",
+  "build",
+  "sphinx-build",
+  "twine"
 ]
 
 [tool.tox.env_run_base]
 commands = [
-    [
-        "pytest",
-        "-s",
-        "--cov=detectree",
-        "--cov-append",
-        "--cov-report=xml",
-        "--cov-report",
-        "term-missing",
-        "tests",
-    ],
+  [
+    "pytest",
+    "-s",
+    "--cov=detectree",
+    "--cov-append",
+    "--cov-report=xml",
+    "--cov-report",
+    "term-missing",
+    "tests"
+  ]
 ]
 extras = [
-    "test",
+  "test"
 ]
 whitelist_externals = [
-    "pytest",
+  "pytest"
 ]
 
 [tool.tox.gh.python]
 "3.9" = [
-    "3.9",
+  "3.9"
 ]
 "3.10" = [
-    "3.10",
+  "3.10"
 ]
 "3.11" = [
-    "3.11",
+  "3.11"
 ]
 "3.12" = [
-    "3.12",
-    "lint",
+  "3.12",
+  "lint"
 ]

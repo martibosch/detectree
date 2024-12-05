@@ -24,6 +24,12 @@ repos:
           - mdformat-gfm
           - mdformat-black
 
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.24.2
+    hooks:
+      - id: toml-sort-fix
+        args: ["--in-place"]
+
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
     hooks:
