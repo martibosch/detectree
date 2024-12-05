@@ -9,12 +9,12 @@ See the `"background" example notebook <https://github.com/martibosch/detectree-
 Train/test split
 ----------------
 
-In order to enhance the robustness of the classifier, it is important that the subset of pixels selected as training samples are representative of the whole dataset. Given the large variety of scenes that can be found in such a datset of urban aerial imagery (e.g., lakes, buildings, parks, forests...), a random selection of training tiles might not be representative of such variety and therefore lead to a classifier with low overall accuracy.
+In order to enhance the robustness of the classifier, it is important that the subset of pixels selected as training samples are representative of the whole dataset. Given the large variety of scenes that can be found in such a dataset of urban aerial imagery (e.g., lakes, buildings, parks, forests...), a random selection of training tiles might not be representative of such variety and therefore lead to a classifier with low overall accuracy.
 
 To overcome such problem, Yang et al. :cite:`yang2009tree` proposed a procedure of selecting training samples that intends to find the set of tiles that is most representative of the dataset. The scene structure of an image can be represented by a Gist descriptor :cite:`oliva2001modeling`, a low dimensional vector encoding which captures the high-level semantics of real-world aerial images. Following the approach of Yang et al. :cite:`yang2009tree`, the image descriptor is computed by:
 
 * convolving it with Gabor filters on 3 frequencies and 4, 8 and orientations respectively, which accounts for 320 components
-* computing a 8x8x8 joint color histogram in the Lab color space, which accounts for 512 components the two components are normalized to unit L-1 norm separatedly and then concatenated to form a 832-component image descriptor.
+* computing a 8x8x8 joint color histogram in the Lab color space, which accounts for 512 components the two components are normalized to unit L-1 norm separately and then concatenated to form a 832-component image descriptor.
 
 Nevertheless, the way in which such image descriptor is computer can be customized by means of the arguments of `TrainingSelector.__init__`. Such arguments will then be forwarded to the following function in order to compute the GIST descriptor of the input image:
 

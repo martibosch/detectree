@@ -61,7 +61,7 @@ class TrainingSelector:
             set in `settings.GIST_GABOR_NUM_ORIENTATIONS` is used.
         response_bins_per_axis : int, optional
             Number of spatial bins per axis into which the responses to the Gabor filter
-            bank will be aggreated. For example, a value of 2 will aggregate the
+            bank will be aggregated. For example, a value of 2 will aggregate the
             responses into the four quadrants of the image (i.e., 2x2, 2 bins in each
             axis of the image). If no value is provided, the value set in
             `settings.GIST_RESPONSE_BINS_PER_AXIS` is used.
@@ -160,7 +160,7 @@ class TrainingSelector:
         kmeans_kwargs=None,
     ):
         """
-        Select the image/tiles to be used for traning.
+        Select the image/tiles to be used for training.
 
         See the `background <https://bit.ly/2KlCICO>`_ example notebook
         for more details.

@@ -78,13 +78,13 @@ class PixelFeaturesBuilder:
             of the `PixelFeaturesBuilder` class. If no value is provided, a square with
             a side size of `2 * min_neighborhood_range + 1` is used.
         min_neighborhood_range : int, optional
-            The range (i.e., the square radius) of the smallest neigbhorhood window that
+            The range (i.e., the square radius) of the smallest neighborhood window that
             will be used to compute the entropy features. The provided argument will be
             passed to the initialization method of the `PixelFeaturesBuilder` class. If
             no value is provided, the value set in
             `settings.ENTROPY_MIN_NEIGHBORHOOD_RANGE` is used.
         num_neighborhoods : int, optional
-            The number of neigbhorhood windows (whose size follows a geometric
+            The number of neighborhood windows (whose size follows a geometric
             progression starting at `min_neighborhood_range`) that will be used to
             compute the entropy features. The provided argument will be passed to the
             initialization method of the `PixelFeaturesBuilder` class. If no value is

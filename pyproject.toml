@@ -93,3 +93,6 @@ version_files = [
     "detectree/__init__.py",
     "pyproject.toml:version"
 ]
+
+[tool.codespell]
+skip = "CHANGELOG.md,paper/paper.bib"

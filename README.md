@@ -56,7 +56,7 @@ from rasterio import plot
 ts = dtr.TrainingSelector(img_dir='data/tiles')
 split_df = ts.train_test_split(method='cluster-I')
 
-# train a tree/non-tree pixel classfier
+# train a tree/non-tree pixel classifier
 clf = dtr.ClassifierTrainer().train_classifier(
     split_df=split_df, response_img_dir='data/response_tiles')
 

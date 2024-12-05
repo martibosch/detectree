@@ -613,8 +613,8 @@ class TestTrainClassifier(unittest.TestCase):
         for c in [dtr.Classifier(), dtr.Classifier(clf=self.clf)]:
             self.assertTrue(hasattr(c, "clf"))
             self.assertFalse(hasattr(c, "clf_dict"))
-        # test that when initalizing `clf_dict`, the `clf_dict` attribute is set but not
-        # `clf
+        # test that when initializing `clf_dict`, the `clf_dict` attribute is set but
+        # not `clf`
         c = dtr.Classifier(clf_dict=self.clf_dict)
         self.assertFalse(hasattr(c, "clf"))
         self.assertTrue(hasattr(c, "clf_dict"))
@@ -669,7 +669,7 @@ class TestTrainClassifier(unittest.TestCase):
         for _img_cluster in pred_imgs:
             self._test_imgs_exist_and_rm(pred_imgs[_img_cluster])
 
-        # thest the `refine` argument
+        # test the `refine` argument
         for c in [
             dtr.Classifier(clf_dict=self.clf_dict, refine=refine)
             for refine in [True, False]

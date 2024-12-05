@@ -1,4 +1,5 @@
 """Compute image descriptors."""
+
 import cv2
 import numpy as np
 from PIL import Image
@@ -28,7 +29,7 @@ def compute_image_descriptor(img_rgb, kernels, response_bins_per_axis, num_color
         List of kernel 2-D arrays that correspond to the filter bank.
     response_bins_per_axis : int
         Number of spatial bins per axis into which the responses to the filter bank will
-        be aggreated. For example, a value of 2 will aggregate the responses into the
+        be aggregated. For example, a value of 2 will aggregate the responses into the
         four quadrants of the image (i.e., 2x2, 2 bins in each axis of the image).
     num_color_bins : int
         Number of color bins per axis of the L*a*b color space with which the joint
@@ -100,7 +101,7 @@ def compute_image_descriptor_from_filepath(
         List of kernel 2-D arrays that correspond to the filter bank.
     response_bins_per_axis : int
         Number of spatial bins per axis into which the responses to the filter bank will
-        be aggreated. For example, a value of 2 will aggregate the responses into the
+        be aggregated. For example, a value of 2 will aggregate the responses into the
         four quadrants of the image (i.e., 2x2, 2 bins in each axis of the image).
     num_color_bins : int
         Number of color bins per axis of the L*a*b color space with which the joint
