@@ -43,7 +43,7 @@ jobs:
           CONDA_EXE: mamba
 
       - name: upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
       - name: list files
         run: ls -l .
