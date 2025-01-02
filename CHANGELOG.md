@@ -1,5 +1,22 @@
 # Change log
 
+## [v0.6.0] - 2025-01-02
+
+### :boom: BREAKING CHANGES
+
+- due to [`24fe2d4`](https://github.com/martibosch/detectree/commit/24fe2d4b6c0ae51757d6a2f26b1aa113ebece84e) - split_df with file names instead of paths, required img_dir *(commit by [@martibosch](https://github.com/martibosch))*:
+
+  split_df with file names instead of paths, required img_dir
+
+### :sparkles: New Features
+
+- [`24fe2d4`](https://github.com/martibosch/detectree/commit/24fe2d4b6c0ae51757d6a2f26b1aa113ebece84e) - split_df with file names instead of paths, required img_dir *(commit by [@martibosch](https://github.com/martibosch))*
+
+### :white_check_mark: Tests
+
+- [`9657e62`](https://github.com/martibosch/detectree/commit/9657e626b76d2509367d1b31368fcaaed1aa502b) - conda install lightgbm to avoid macos issues; use tox-gh *(commit by [@martibosch](https://github.com/martibosch))*
+- [`0941763`](https://github.com/martibosch/detectree/commit/0941763c40ae5064fd503f97d20836d24046d4bd) - revert to tox.ini (see github.com/tox-dev/tox/issues/3457) *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.5.0] - 2024-03-28
 
 ### :sparkles: New Features
@@ -65,3 +82,4 @@
 - initial release
 
 [v0.5.0]: https://github.com/martibosch/detectree/compare/v0.4.2...v0.5.0
+[v0.6.0]: https://github.com/martibosch/detectree/compare/v0.5.1...v0.6.0
