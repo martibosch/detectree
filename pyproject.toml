@@ -42,7 +42,7 @@ dependencies = [
 [project.optional-dependencies]
 test = ["coverage[toml]", "pytest", "pytest-cov", "ruff"]
 dev = ["build", "commitizen", "pre-commit", "pip", "toml", "tox", "twine"]
-doc = ["m2r2", "pydata-sphinx-theme", "sphinx"]
+doc = ["pydata-sphinx-theme", "sphinx", "sphinx-click", "sphinx-mdinclude", "sphinxcontrib-bibtex"]
 
 [project.scripts]
 detectree = "detectree.cli.main:cli"

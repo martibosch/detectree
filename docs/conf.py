@@ -35,11 +35,11 @@ sys.path.insert(0, os.path.abspath(".."))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "m2r2",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_click",
+    "sphinx_mdinclude",
     "sphinxcontrib.bibtex",
 ]
 bibtex_bibfiles = ["references.bib"]
