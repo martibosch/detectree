@@ -54,6 +54,7 @@ Repository = "https://github.com/martibosch/detectree"
 skip = "CHANGELOG.md,paper/paper.bib"
 
 [tool.commitizen]
+major_version_zero = true
 name = "cz_conventional_commits"
 tag_format = "v$version"
 version_provider = "pep621"
