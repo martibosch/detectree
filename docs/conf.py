@@ -1,3 +1,5 @@
+"""Docs config."""
+
 #!/usr/bin/env python
 #
 # python_boilerplate documentation build configuration file, created by
