@@ -12,7 +12,7 @@
 
 ## Overview
 
-DetecTree is a Pythonic library to perform semantic segmentation of aerial imagery into tree/non-tree pixels, following the methods of Yang et al. \[1\]. A pre-trained model is available at [Hugging Face hub](https://huggingface.co/martibosch/detectree), which can be used as follows:
+DetecTree is a Pythonic library to perform semantic segmentation of aerial imagery into tree/non-tree pixels, following the methods of Yang et al. [1]. A pre-trained model is available at [Hugging Face hub](https://huggingface.co/martibosch/detectree), which can be used as follows:
 
 ```python
 from urllib import request
@@ -83,7 +83,7 @@ The target audience is researchers and practitioners in GIS that are interested 
 
 Bosch M. 2020. “DetecTree: Tree detection from aerial imagery in Python”. *Journal of Open Source Software, 5(50), 2172.* [doi.org/10.21105/joss.02172](https://doi.org/10.21105/joss.02172)
 
-Note that DetecTree is based on the methods of Yang et al. \[1\], therefore it seems fair to reference their work too. An example citation in an academic paper might read as follows:
+Note that DetecTree is based on the methods of Yang et al. [1], therefore it seems fair to reference their work too. An example citation in an academic paper might read as follows:
 
 > The classification of tree pixels has been performed with the Python library DetecTree (Bosch, 2020), which is based on the approach of Yang et al. (2009).
 

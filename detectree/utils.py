@@ -201,8 +201,7 @@ def get_img_filename_ser(split_df, img_cluster, train):
         ]
     except KeyError:
         raise ValueError(
-            "If `method` is 'cluster-II', `split_df` must have a "
-            "'img_cluster' column"
+            "If `method` is 'cluster-II', `split_df` must have a 'img_cluster' column"
         )
 
 
