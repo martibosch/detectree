@@ -118,7 +118,10 @@ class PixelFeaturesBuilder:
         if neighborhood is None:
             if min_neighborhood_range is None:
                 min_neighborhood_range = settings.ENTROPY_MIN_NEIGHBORHOOD_RANGE
-            neighborhood = morphology.square(2 * min_neighborhood_range + 1)
+            neighborhood_side = 2 * min_neighborhood_range + 1
+            neighborhood = morphology.footprint_rectangle(
+                (neighborhood_side, neighborhood_side)
+            )
         self.neighborhood = neighborhood
         if num_neighborhoods is None:
             num_neighborhoods = settings.ENTROPY_NUM_NEIGHBORHOODS
