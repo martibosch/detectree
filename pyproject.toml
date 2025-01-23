@@ -31,7 +31,7 @@ dependencies = [
   "pandas >= 0.23",
   "pymaxflow >= 1.0.0",
   "rasterio >= 1.0.0",
-  "scikit-image",
+  "scikit-image >= 0.25.0",
   "scikit-learn",
   "scipy >= 1.0.0",
   "skops",
