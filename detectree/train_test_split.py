@@ -210,7 +210,7 @@ class TrainingSelector:
                 pd.Series(self.img_filepaths, name="img_filename").apply(path.basename),
                 pd.DataFrame(X_pca, columns=X_cols),
             ),
-            axis=1,
+            axis="columns",
         )
 
         if kmeans_kwargs is None:
@@ -252,7 +252,7 @@ class TrainingSelector:
                 cluster_train_test_split
             )
 
-        split_df = df.drop(X_cols, axis=1)
+        split_df = df.drop(X_cols, axis="columns")
 
         if return_evr:
             return split_df, pca.explained_variance_ratio_.sum()
