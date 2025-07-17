@@ -31,6 +31,7 @@ CLF_REFINE_BETA = 50
 CLF_REFINE_INT_RESCALE = 10000
 SKOPS_TRUSTED = [
     "collections.defaultdict",
+    "collections.OrderedDict",
     "lightgbm.basic.Booster",
     "lightgbm.sklearn.LGBMClassifier",
 ]
