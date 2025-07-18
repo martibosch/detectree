@@ -264,6 +264,10 @@ class Classifier:
         *,
         clf=None,
         clf_dict=None,
+        hf_hub_repo_id=None,
+        hf_hub_clf_filename=None,
+        hf_hub_download_kwargs=None,
+        skops_trusted=None,
         tree_val=None,
         nontree_val=None,
         refine=None,
@@ -285,6 +289,20 @@ class Classifier:
         clf_dict : dictionary, optional
             Dictionary mapping a trained scikit-learn-like classifier to each
             first-level cluster label.
+        hf_hub_repo_id, hf_hub_clf_filename : str, optional
+            HuggingFace Hub repository id (string with the user or organization and
+            repository name separated by a `/`) and file name of the skops classifier
+            respectively. If no value is provided, the values set in
+            `settings.HF_HUB_REPO_ID` and `settings.HF_HUB_CLF_FILENAME` Ignored if
+            `clf` or `clf_dict` are provided.
+        hf_hub_download_kwargs : dict, optional
+            Additional keyword arguments (besides "repo_id", "filename", "library_name"
+            and "library_version") to pass to `huggingface_hub.hf_hub_download`.
+        skosp_trusted : list, optional
+            List of trusted object types to load the classifier from HuggingFace Hub,
+            passed to `skops.io.load`. If no value is provided, the value from
+            `settings.SKOPS_TRUSTED` is used. Ignored if `clf` or `clf_dict` are
+            provided.
         tree_val : int, optional
             Label used to denote tree pixels in the predicted images. If no value is
             provided, the value set in `settings.CLF_TREE_VAL` is used.
@@ -315,14 +333,32 @@ class Classifier:
         elif clf is not None:
             self.clf = clf
         else:
+            if hf_hub_repo_id is None:
+                hf_hub_repo_id = settings.HF_HUB_REPO_ID
+            if hf_hub_clf_filename is None:
+                hf_hub_clf_filename = settings.HF_HUB_CLF_FILENAME
+            if hf_hub_download_kwargs is None:
+                _hf_hub_download_kwargs = {}
+            else:
+                _hf_hub_download_kwargs = hf_hub_download_kwargs.copy()
+                for key in [
+                    "repo_id",
+                    "filename",
+                    "library_name",
+                    "library_version",
+                ]:
+                    _ = _hf_hub_download_kwargs.pop(key, None)
+            if skops_trusted is None:
+                skops_trusted = settings.SKOPS_TRUSTED
             self.clf = io.load(
                 hf_hub.hf_hub_download(
-                    repo_id=settings.HF_HUB_REPO_ID,
-                    filename=settings.HF_HUB_FILENAME,
+                    repo_id=hf_hub_repo_id,
+                    filename=hf_hub_clf_filename,
                     library_name="skops",
                     library_version=skops.__version__,
+                    **_hf_hub_download_kwargs,
                 ),
-                trusted=settings.SKOPS_TRUSTED,
+                trusted=skops_trusted,
             )
 
         if tree_val is None:

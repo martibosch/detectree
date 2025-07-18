@@ -610,7 +610,14 @@ class TestTrainClassifier(unittest.TestCase):
         # test that for the pre-trained classifier (no init `clf`/`clf_dict` arg) and
         # for the classifier initialized with the `clf` arg, the `clf` attribute is set
         # but not `clf_dict`
-        for c in [dtr.Classifier(), dtr.Classifier(clf=self.clf)]:
+        for c in [
+            dtr.Classifier(),
+            dtr.Classifier(clf=self.clf),
+            dtr.Classifier(
+                hf_hub_repo_id=settings.HF_HUB_REPO_ID,
+                hf_hub_clf_filename=settings.HF_HUB_CLF_FILENAME,
+            ),
+        ]:
             self.assertTrue(hasattr(c, "clf"))
             self.assertFalse(hasattr(c, "clf_dict"))
         # test that when initializing `clf_dict`, the `clf_dict` attribute is set but

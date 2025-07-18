@@ -309,6 +309,10 @@ def train_classifiers(
 @click.pass_context
 @click.argument("img_filepath", type=click.Path(exists=True))
 @click.option("--clf-filepath", type=click.Path(exists=True))
+@click.option("--hf-hub-repo-id", type=str)
+@click.option("--hf-hub-clf-filename", type=str)
+@click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
+@click.option("--skops-trusted", cls=_OptionEatAll)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine", is_flag=True)
@@ -320,6 +324,10 @@ def predict_img(
     ctx,
     img_filepath,
     clf_filepath,
+    hf_hub_repo_id,
+    hf_hub_clf_filename,
+    hf_hub_download_kwargs,
+    skops_trusted,
     tree_val,
     nontree_val,
     refine,
@@ -332,19 +340,28 @@ def predict_img(
     logger = ctx.obj["LOGGER"]
 
     if clf_filepath:
-        clf = io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED)
-        logger.info("Classifying %s with classifier of %s", img_filepath, clf_filepath)
+        if not skops_trusted:
+            skops_trusted = settings.SKOPS_TRUSTED
+        clf = io.load(clf_filepath, trusted=skops_trusted)
+        _clf_msg = clf_filepath
+
     else:
         clf = None
-        logger.info(
-            "Classifying %s with pre-trained classifier of %s",
-            img_filepath,
-            settings.HF_HUB_REPO_ID,
-        )
+        # we are repeating the logic from `Classifier.__init__` here just so we can log
+        # which classifier is being used - TODO: DRY
+        if hf_hub_repo_id is None:
+            hf_hub_repo_id = settings.HF_HUB_REPO_ID
+        _clf_msg = hf_hub_repo_id
+    logger.info("Classifying %s with classifier of %s", img_filepath, _clf_msg)
 
+    hf_hub_download_kwargs = _dict_from_kwargs(hf_hub_download_kwargs)
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
     c = dtr.Classifier(
         clf=clf,
+        hf_hub_repo_id=hf_hub_repo_id,
+        hf_hub_clf_filename=hf_hub_clf_filename,
+        hf_hub_download_kwargs=hf_hub_download_kwargs,
+        skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
@@ -370,6 +387,10 @@ def predict_img(
 @click.argument("img_dir", type=click.Path(exists=True))
 @click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--clf-dir", type=click.Path(exists=True))
+@click.option("--hf-hub-repo-id", type=str)
+@click.option("--hf-hub-clf-filename", type=str)
+@click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
+@click.option("--skops-trusted", cls=_OptionEatAll)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine", is_flag=True)
@@ -383,6 +404,10 @@ def predict_imgs(
     img_dir,
     clf_filepath,
     clf_dir,
+    hf_hub_repo_id,
+    hf_hub_clf_filename,
+    hf_hub_download_kwargs,
+    skops_trusted,
     tree_val,
     nontree_val,
     refine,
@@ -400,7 +425,8 @@ def predict_imgs(
     clf = None
     clf_dict = None
     if clf_filepath is not None:
-        # clf_dict = None
+        if not skops_trusted:
+            skops_trusted = settings.SKOPS_TRUSTED
         clf = io.load(clf_filepath, settings.SKOPS_TRUSTED)
         logger.info(
             "Classifying images from %s with classifier of %s",
@@ -408,26 +434,40 @@ def predict_imgs(
             clf_filepath,
         )
     elif clf_dir is not None:
-        # clf = None
         clf_dict = {}
         for img_cluster in split_df["img_cluster"].unique():
             clf_dict[img_cluster] = io.load(
                 path.join(clf_dir, f"{img_cluster}.skops"),
                 settings.SKOPS_TRUSTED,
             )
+        logger.info(
+            "Classifying images from %s with classifiers from %s",
+            split_filepath,
+            clf_dir,
+        )
     else:
         # at this point, this means that neither `clf_filepath` nor `clf_dir` have been
         # provided, so we use the pre-trained classifier
+        # we are repeating the logic from `Classifier.__init__` here just so we can log
+        # which classifier is being used - TODO: DRY
+        if hf_hub_repo_id is None:
+            hf_hub_repo_id = settings.HF_HUB_REPO_ID
+        _clf_msg = hf_hub_repo_id
         logger.info(
-            "Classifying images with pre-trained classifier of %s",
-            settings.HF_HUB_REPO_ID,
+            "Classifying images from %s with classifiers from %s",
+            split_filepath,
+            hf_hub_repo_id,
         )
 
+    hf_hub_download_kwargs = _dict_from_kwargs(hf_hub_download_kwargs)
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
-
     c = dtr.Classifier(
         clf=clf,
         clf_dict=clf_dict,
+        hf_hub_repo_id=hf_hub_repo_id,
+        hf_hub_clf_filename=hf_hub_clf_filename,
+        hf_hub_download_kwargs=hf_hub_download_kwargs,
+        skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
