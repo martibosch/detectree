@@ -2,6 +2,7 @@ import glob
 import os
 import shutil
 import unittest
+from importlib import metadata
 from os import path
 
 import numpy as np
@@ -802,7 +803,7 @@ class TestCLI(unittest.TestCase):
         # https://github.com/mapbox/rasterio/blob/master/tests/test_cli_main.py
         result = self.runner.invoke(main.cli, ["--version"])
         self.assertEqual(result.exit_code, 0)
-        self.assertIn(dtr.__version__, result.output)
+        self.assertIn(metadata.version("detectree"), result.output)
 
     def test_train_test_split(self):
         result = self.runner.invoke(

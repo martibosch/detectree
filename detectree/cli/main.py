@@ -1,6 +1,7 @@
 """detectree CLI."""
 
 import logging
+from importlib import metadata
 from os import path
 
 import click
@@ -98,7 +99,7 @@ def _dump_clf(clf, output_filepath, logger):
 
 # CLI
 @click.group()
-@click.version_option(version=dtr.__version__, message="%(version)s")
+@click.version_option(version=metadata.version("detectree"), message="%(version)s")
 @click.pass_context
 def cli(ctx):
     """Detectree CLI."""
