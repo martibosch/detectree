@@ -9,7 +9,7 @@ import pandas as pd
 from dask import diagnostics
 from sklearn import cluster, decomposition, metrics
 
-from . import filters, image_descriptor, settings
+from detectree import filters, image_descriptor, settings
 
 __all__ = ["TrainingSelector"]
 

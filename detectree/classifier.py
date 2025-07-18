@@ -12,7 +12,7 @@ import skops
 from dask import diagnostics
 from skops import io
 
-from . import pixel_features, pixel_response, settings, utils
+from detectree import pixel_features, pixel_response, settings, utils
 
 __all__ = ["ClassifierTrainer", "Classifier"]
 

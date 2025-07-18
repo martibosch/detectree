@@ -7,7 +7,7 @@ from skimage import color
 from skimage.util import shape
 from sklearn import preprocessing
 
-from . import utils
+from detectree import utils
 
 __all__ = [
     "compute_image_descriptor",

@@ -6,7 +6,7 @@ from os import path
 import numpy as np
 import rasterio as rio
 
-from . import settings, utils
+from detectree import settings, utils
 
 __all__ = ["PixelResponseBuilder"]
 

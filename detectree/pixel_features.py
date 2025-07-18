@@ -11,7 +11,7 @@ from scipy import ndimage as ndi
 from skimage import color, morphology, transform
 from skimage.filters import rank
 
-from . import filters, settings, utils
+from detectree import filters, settings, utils
 
 __all__ = ["PixelFeaturesBuilder"]
 

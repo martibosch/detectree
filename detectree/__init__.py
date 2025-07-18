@@ -1,6 +1,6 @@
 """detectree init."""
 
-from .classifier import Classifier, ClassifierTrainer
-from .lidar import LidarToCanopy, rasterize_lidar
-from .train_test_split import TrainingSelector
-from .utils import split_into_tiles
+from detectree.classifier import Classifier, ClassifierTrainer
+from detectree.lidar import LidarToCanopy, rasterize_lidar
+from detectree.train_test_split import TrainingSelector
+from detectree.utils import split_into_tiles

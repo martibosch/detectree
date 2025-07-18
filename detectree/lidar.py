@@ -7,7 +7,7 @@ import rasterio as rio
 import shapely
 from rasterio import enums, features
 
-from . import settings
+from detectree import settings
 
 __all__ = ["rasterize_lidar", "LidarToCanopy"]
 
