@@ -101,7 +101,7 @@ class ClassifierTrainer:
         if classifier_class is None:
             classifier_class = settings.CLF_CLASS
         self.classifier_class = classifier_class
-        if classifier_kwargs == {}:
+        if not classifier_kwargs:
             classifier_kwargs = settings.CLF_KWARGS
         self.classifier_kwargs = classifier_kwargs
 
@@ -488,11 +488,11 @@ class Classifier:
             if img_cluster is not None:
                 try:
                     clf = self.clf_dict[img_cluster]
-                except KeyError:
+                except KeyError as exc:
                     raise ValueError(
                         f"Classifier for cluster {img_cluster} not found in"
                         " `self.clf_dict`."
-                    )
+                    ) from exc
             else:
                 raise ValueError(
                     "A valid `img_cluster` must be provided for classifiers"
@@ -531,23 +531,23 @@ class Classifier:
                 self.clf,
                 output_dir,
             )
-        else:
-            # `self.clf_dict` is not `None`
-            pred_imgs = {}
-            for img_cluster, _ in split_df.groupby("img_cluster"):
-                try:
-                    clf = self.clf_dict[img_cluster]
-                except KeyError:
-                    raise ValueError(
-                        f"Classifier for cluster {img_cluster} not found in"
-                        " `self.clf_dict`."
-                    )
-                pred_imgs[img_cluster] = self._predict_imgs(
-                    utils.get_img_filename_ser(split_df, img_cluster, False).apply(
-                        lambda img_filename: path.join(img_dir, img_filename)
-                    ),
-                    clf,
-                    output_dir,
-                )
 
-            return pred_imgs
+        # `self.clf_dict` is not `None`
+        pred_imgs = {}
+        for img_cluster, _ in split_df.groupby("img_cluster"):
+            try:
+                clf = self.clf_dict[img_cluster]
+            except KeyError as exc:
+                raise ValueError(
+                    f"Classifier for cluster {img_cluster} not found in"
+                    " `self.clf_dict`."
+                ) from exc
+            pred_imgs[img_cluster] = self._predict_imgs(
+                utils.get_img_filename_ser(split_df, img_cluster, False).apply(
+                    lambda img_filename: path.join(img_dir, img_filename)
+                ),
+                clf,
+                output_dir,
+            )
+
+        return pred_imgs
