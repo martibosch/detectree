@@ -29,17 +29,17 @@ class PixelResponseBuilder:
 
         Parameters
         ----------
-        tree_val : int, optional
-            The value that designates tree pixels in the response images.
-        nontree_val : int, optional
-            The value that designates non-tree pixels in the response images.
+        tree_val, nontree_val : int, optional
+            The values that designate tree and non-tree pixels respectively in the
+            response images. If no values are provided, the values set in
+            `settings.TREE_VAL` and `settings.NON_TREE_VAL` are respectively used.
         """
         if tree_val is None:
-            tree_val = settings.RESPONSE_TREE_VAL
+            tree_val = settings.TREE_VAL
         self.tree_val = tree_val
 
         if nontree_val is None:
-            nontree_val = settings.RESPONSE_NONTREE_VAL
+            nontree_val = settings.NONTREE_VAL
         self.nontree_val = nontree_val
 
     def build_response_from_arr(self, img_binary):

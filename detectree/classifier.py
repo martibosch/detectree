@@ -71,16 +71,12 @@ class ClassifierTrainer:
             compute the entropy features. The provided argument will be passed to the
             initialization method of the `PixelFeaturesBuilder` class. If no value is
             provided, the value set in `settings.ENTROPY_NUM_NEIGHBORHOODS` is used.
-        tree_val : int, optional
-            The value that designates tree pixels in the response images. The provided
-            argument will be passed to the initialization method of the
-            `PixelResponseBuilder` class. If no value is provided, the value set in
-            `settings.RESPONSE_TREE_VAL` is used.
-        nontree_val : int, optional
-            The value that designates non-tree pixels in the response images. The
-            provided argument will be passed to the initialization method of the
-            `PixelResponseBuilder` class. If no value is provided, the value set in
-            `settings.RESPONSE_NONTREE_VAL` is used.
+        tree_val, nontree_val : int, optional
+            The values that designate tree and non-tree pixels respectively in the
+            response images. The provided arguments will be passed to the initialization
+            method of the `PixelResponseBuilder` class. If no values are provided, the
+            values set in `settings.TREE_VAL` and `settings.NON_TREE_VAL` are
+            respectively used.
         classifier_class : class, optional
             The class of the classifier to be trained. It can be any scikit-learn
             compatible estimator that implements the `fit`, `predict` and
@@ -303,12 +299,10 @@ class Classifier:
             passed to `skops.io.load`. If no value is provided, the value from
             `settings.SKOPS_TRUSTED` is used. Ignored if `clf` or `clf_dict` are
             provided.
-        tree_val : int, optional
-            Label used to denote tree pixels in the predicted images. If no value is
-            provided, the value set in `settings.CLF_TREE_VAL` is used.
-        nontree_val : int, optional
-            Label used to denote non-tree pixels in the predicted images. If no value is
-            provided, the value set in `settings.CLF_NONTREE_VAL` is used.
+        tree_val, nontree_val : int, optional
+            The values that designate tree and non-tree pixels respectively in the
+            response images. If no values are provided, the values set in
+            `settings.TREE_VAL` and `settings.NON_TREE_VAL` are respectively used.
         refine : bool, optional
             Whether the pixel-level classification should be refined by optimizing the
             consistence between neighboring pixels. If no value is provided, the value
@@ -362,9 +356,9 @@ class Classifier:
             )
 
         if tree_val is None:
-            tree_val = settings.CLF_TREE_VAL
+            tree_val = settings.TREE_VAL
         if nontree_val is None:
-            nontree_val = settings.CLF_NONTREE_VAL
+            nontree_val = settings.NONTREE_VAL
         if refine is None:
             refine = settings.CLF_REFINE
         if refine_beta is None:
