@@ -1,6 +1,7 @@
 """detectree general utility functions."""
 
 import datetime as dt
+import glob
 import itertools
 import logging as lg
 import os
@@ -18,6 +19,7 @@ from detectree import settings
 __all__ = [
     "split_into_tiles",
     "img_rgb_from_filepath",
+    "get_img_filepaths",
     "get_img_filename_ser",
     "log",
     "get_logger",
@@ -172,6 +174,29 @@ def img_rgb_from_filepath(img_filepath):
 
 
 # non-image utils
+def get_img_filepaths(img_dir, *, img_filename_pattern=None):
+    """Get image file paths from a directory.
+
+    Parameters
+    ----------
+    img_dir : str representing path to a directory, optional
+        Path to the directory where the images whose filename matches
+        `img_filename_pattern` are to be located.
+    img_filename_pattern : str representing a file-name pattern, optional
+        Filename pattern to be matched in order to obtain the list of images. If no
+        value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+
+    Returns
+    -------
+    img_filepaths : list
+        List of image filepaths.
+    """
+    if img_filename_pattern is None:
+        img_filename_pattern = settings.IMG_FILENAME_PATTERN
+
+    return glob.glob(path.join(img_dir, img_filename_pattern))
+
+
 def get_img_filename_ser(split_df, img_cluster, train):
     """
     Get image filenames from a train/test split data frame.

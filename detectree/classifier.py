@@ -1,6 +1,5 @@
 """Binary tree/non-tree classifier(s)."""
 
-import glob
 from os import path
 
 import dask
@@ -163,15 +162,14 @@ class ClassifierTrainer:
             # files in `response_img_dir`. Instead, we need to build the response only
             # for the files specified in `img_filepaths`/`img_dir`
             if img_filepaths is None:
-                # TODO: this is copied from `build_features` - ideally, we should DRY it
-                if img_filename_pattern is None:
-                    img_filename_pattern = settings.IMG_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
-                        "Either `split_df`, `img_filepaths` or `img_dir` must "
-                        "be provided"
+                        "Either `split_df`, `img_filepaths` or `img_dir` must be"
+                        " provided"
                     )
-                img_filepaths = glob.glob(path.join(img_dir, img_filename_pattern))
+                img_filepaths = utils.get_img_filepaths(
+                    img_dir, img_filename_pattern=img_filename_pattern
+                )
 
             response_img_filepaths = [
                 path.join(response_img_dir, path.basename(img_filepath))

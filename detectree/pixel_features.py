@@ -1,6 +1,5 @@
 """Build pixel features."""
 
-import glob
 from os import path
 
 import cv2
@@ -298,15 +297,14 @@ class PixelFeaturesBuilder:
 
         else:
             if img_filepaths is None:
-                if img_filename_pattern is None:
-                    img_filename_pattern = settings.IMG_FILENAME_PATTERN
                 if img_dir is None:
                     raise ValueError(
                         "Either `split_df`, `img_filepaths` or `img_dir` must be"
                         " provided"
                     )
-
-                img_filepaths = glob.glob(path.join(img_dir, img_filename_pattern))
+                img_filepaths = utils.get_img_filepaths(
+                    img_dir, img_filename_pattern=img_filename_pattern
+                )
 
         values = [
             dask.delayed(self.build_features_from_filepath)(img_filepath)
