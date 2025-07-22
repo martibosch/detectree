@@ -20,7 +20,7 @@ ENTROPY_NUM_NEIGHBORHOODS = 3
 # classifier
 CLF_CLASS = lgb.LGBMClassifier
 CLF_KWARGS = {"n_estimators": 200}
-TREE_VAL = 255
+TREE_VAL = 1
 NONTREE_VAL = 0
 CLF_REFINE = True
 CLF_REFINE_BETA = 50
