@@ -1,5 +1,22 @@
 # Change log
 
+## [v0.7.0] - 2025-07-24
+
+### :sparkles: New Features
+
+- [`d02c405`](https://github.com/martibosch/detectree/commit/d02c4057b8325a0b6379fc10735a7a137d82a535) - python 3.13 support *(commit by [@martibosch](https://github.com/martibosch))*
+- [`0fa88d5`](https://github.com/martibosch/detectree/commit/0fa88d5b358ff80e702db679b05f180ccf013848) - run any skops model from hf hub *(commit by [@martibosch](https://github.com/martibosch))*
+
+### :bug: Bug Fixes
+
+- [`e76a043`](https://github.com/martibosch/detectree/commit/e76a043f59c682e520c99950b815d29793a848c1) - add collections.OrderedDict to skops trusted object types *(commit by [@martibosch](https://github.com/martibosch))*
+
+### :recycle: Refactors
+
+- [`92c065c`](https://github.com/martibosch/detectree/commit/92c065c3738ed8d0a6a6ca36dfbd06c515c3fcf6) - change square->footprint_rectangle in skimage.morphology *(commit by [@martibosch](https://github.com/martibosch))*
+- [`6e8f250`](https://github.com/martibosch/detectree/commit/6e8f25054666dfbccf263af73b3b38900443c664) - use "columns" instead of 0 in pandas axis arg *(commit by [@martibosch](https://github.com/martibosch))*
+- [`bf2399d`](https://github.com/martibosch/detectree/commit/bf2399da97c456b8b1efdc3f968bb9ce72cb02eb) - use detectree instead of . in relative imports *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.6.0] - 2025-01-02
 
 ### :boom: BREAKING CHANGES
@@ -83,3 +100,4 @@
 
 [v0.5.0]: https://github.com/martibosch/detectree/compare/v0.4.2...v0.5.0
 [v0.6.0]: https://github.com/martibosch/detectree/compare/v0.5.1...v0.6.0
+[v0.7.0]: https://github.com/martibosch/detectree/compare/v0.6.0...v0.7.0
