@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "detectree"
-version = "0.7.0"
+version = "0.8.0"
 description = "Tree detection from aerial imagery in Python."
 readme = "README.md"
 authors = [
