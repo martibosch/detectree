@@ -439,6 +439,14 @@ class TestTrainClassifier(unittest.TestCase):
             path.join(self.data_dir, "split_cluster-II.csv"), index_col=0
         )
         self.response_img_dir = path.join(self.data_dir, "response_img")
+        # img_filename_ser = utils.get_img_filename_ser(self.split_i_df)
+        img_filename_ser = self.split_i_df[self.split_i_df["train"]]["img_filename"]
+        self.img_filepaths = img_filename_ser.apply(
+            lambda img_filename: path.join(self.img_dir, img_filename)
+        )
+        self.response_img_filepaths = img_filename_ser.apply(
+            lambda img_filename: path.join(self.response_img_dir, img_filename)
+        )
         self.tmp_train_dir = path.join(self.data_dir, "tmp_train")
         _create_tmp_dir(self.tmp_train_dir)
         # this file must exist in `response_img`
@@ -506,25 +514,18 @@ class TestTrainClassifier(unittest.TestCase):
             settings.CLF_CLASS,
         )
         # option 2: `img_filepaths` and `response_img_dir`
-        img_filename_ser = self.split_i_df[self.split_i_df["train"]]["img_filename"]
-        img_filepaths = img_filename_ser.apply(
-            lambda img_filename: path.join(self.img_dir, img_filename)
-        )
         self.assertIsInstance(
             self.ct.train_classifier(
-                img_filepaths=img_filepaths,
+                img_filepaths=self.img_filepaths,
                 response_img_dir=self.response_img_dir,
             ),
             settings.CLF_CLASS,
         )
         # option 3: `img_filepaths` and `response_img_filepaths`
-        response_img_filepaths = img_filename_ser.apply(
-            lambda img_filename: path.join(self.response_img_dir, img_filename)
-        )
         self.assertIsInstance(
             self.ct.train_classifier(
-                img_filepaths=img_filepaths,
-                response_img_filepaths=response_img_filepaths,
+                img_filepaths=self.img_filepaths,
+                response_img_filepaths=self.response_img_filepaths,
             ),
             settings.CLF_CLASS,
         )
@@ -635,11 +636,18 @@ class TestTrainClassifier(unittest.TestCase):
         ]:
             self._test_predict_img(c, img_filepath)
 
-            # test that `classify_imgs` returns a list and that the images have been
+            # test that `predict_imgs` returns a list and that the images have been
             # dumped. This works regardless of whether a "img_cluster" column is present
-            # in the split data frame - since it is ignored for "cluster-I"
-            for split_df in [self.split_i_df, self.split_ii_df]:
-                pred_imgs = c.predict_imgs(split_df, self.img_dir, self.tmp_output_dir)
+            # in the split data frame - since it is ignored for "cluster-I".
+            # Test all potential keyword argument combinations
+            for kwargs in [
+                {"split_df": self.split_i_df, "img_dir": self.img_dir},
+                {"split_df": self.split_i_df, "img_dir": self.img_dir},
+                {"img_filepaths": self.img_filepaths},
+                {"img_dir": self.img_dir},
+                {"img_dir": self.img_dir, "img_filename_pattern": "*.tiff"},
+            ]:
+                pred_imgs = c.predict_imgs(self.tmp_output_dir, **kwargs)
                 self.assertIsInstance(pred_imgs, list)
                 self._test_imgs_exist_and_rm(pred_imgs)
 
@@ -664,18 +672,27 @@ class TestTrainClassifier(unittest.TestCase):
         # `predict_imgs` should raise a `ValueError` if `split_df` doesn't have an
         # "img_cluster" column
         self.assertRaises(
-            KeyError, c.predict_imgs, self.split_i_df, self.img_dir, self.tmp_output_dir
+            KeyError,
+            c.predict_imgs,
+            self.tmp_output_dir,
+            split_df=self.split_i_df,
+            img_dir=self.img_dir,
         )
         # `classify_imgs` should raise a `KeyError` if `split_df` doesn't have a
         # "img_cluster" column
         self.assertRaises(
-            KeyError, c.predict_imgs, self.split_i_df, self.img_dir, self.tmp_output_dir
+            KeyError,
+            c.predict_imgs,
+            self.tmp_output_dir,
+            split_df=self.split_i_df,
+            img_dir=self.img_dir,
         )
         # otherwise, it should work
-        pred_imgs = c.predict_imgs(self.split_ii_df, self.img_dir, self.tmp_output_dir)
-        self.assertIsInstance(pred_imgs, dict)
-        for _img_cluster in pred_imgs:
-            self._test_imgs_exist_and_rm(pred_imgs[_img_cluster])
+        pred_imgs = c.predict_imgs(
+            self.tmp_output_dir, split_df=self.split_ii_df, img_dir=self.img_dir
+        )
+        self.assertIsInstance(pred_imgs, list)
+        self._test_imgs_exist_and_rm(pred_imgs)
 
         # test the `refine` argument
         for c in [
@@ -861,15 +878,29 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_predict_imgs(self):
-        base_args = ["predict-imgs", self.split_ii_filepath, self.img_dir]
-        final_args = [
-            "--output-dir",
-            self.tmp_dir,
-        ]
-        for args in [
-            [],
-            ["--clf-filepath", self.model_filepath],
-            ["--clf-dir", self.models_dir],
-        ]:
-            result = self.runner.invoke(main.cli, base_args + args + final_args)
+        base_args = ["predict-imgs", self.tmp_dir]
+        img_dir_args = ["--img-dir", self.img_dir]
+        split_args = ["--split-filepath", self.split_ii_filepath] + img_dir_args
+        for args in (
+            [
+                _args + img_dir_args
+                for _args in [
+                    ["--clf-filepath", self.model_filepath],
+                    ["--hf-hub-repo-id", settings.HF_HUB_REPO_ID],
+                    ["--hf-hub-clf-filename", settings.HF_HUB_CLF_FILENAME],
+                    ["--tree-val", settings.TREE_VAL],
+                    ["--nontree-val", settings.NONTREE_VAL],
+                    ["--refine"],
+                    ["--refine-beta", settings.CLF_REFINE_BETA],
+                    ["--refine-int-rescale", settings.CLF_REFINE_INT_RESCALE],
+                ]
+            ]
+            + [["--clf-dir", self.models_dir] + split_args]
+            + [
+                split_args,
+                img_dir_args,
+                ["--img-dir", self.img_dir, "--img-filename-pattern", "*.tif"],
+            ]
+        ):
+            result = self.runner.invoke(main.cli, base_args + args)
             self.assertEqual(result.exit_code, 0)

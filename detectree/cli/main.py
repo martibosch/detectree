@@ -60,7 +60,11 @@ class _OptionEatAll(click.Option):
 def _dict_from_kwargs(kwargs):
     # Multiple key:value pair arguments in click, see https://bit.ly/32BaES3
     if kwargs is not None:
-        kwargs = dict(kwarg.split(":") for kwarg in kwargs)
+        _kwargs = {}
+        for kwarg in eval(kwargs):
+            k, v = kwarg.split(":")
+            _kwargs[k] = v
+        kwargs = _kwargs
     else:
         kwargs = {}
 
@@ -313,10 +317,10 @@ def train_classifiers(
 @click.option("--hf-hub-repo-id", type=str)
 @click.option("--hf-hub-clf-filename", type=str)
 @click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
-@click.option("--skops-trusted", cls=_OptionEatAll)
+# @click.option("--skops-trusted", cls=_OptionEatAll)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--refine", is_flag=True)
+@click.option("--refine/--no-refine", default=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
 @click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
@@ -328,7 +332,7 @@ def predict_img(
     hf_hub_repo_id,
     hf_hub_clf_filename,
     hf_hub_download_kwargs,
-    skops_trusted,
+    # skops_trusted,
     tree_val,
     nontree_val,
     refine,
@@ -341,9 +345,9 @@ def predict_img(
     logger = ctx.obj["LOGGER"]
 
     if clf_filepath:
-        if not skops_trusted:
-            skops_trusted = settings.SKOPS_TRUSTED
-        clf = io.load(clf_filepath, trusted=skops_trusted)
+        # if not skops_trusted:
+        #     skops_trusted = settings.SKOPS_TRUSTED
+        clf = io.load(clf_filepath, trusted=settings.SKOPS_TRUSTED)
         _clf_msg = clf_filepath
 
     else:
@@ -362,7 +366,7 @@ def predict_img(
         hf_hub_repo_id=hf_hub_repo_id,
         hf_hub_clf_filename=hf_hub_clf_filename,
         hf_hub_download_kwargs=hf_hub_download_kwargs,
-        skops_trusted=skops_trusted,
+        # skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
@@ -384,68 +388,69 @@ def predict_img(
 
 @cli.command()
 @click.pass_context
-@click.argument("split_filepath", type=click.Path(exists=True))
-@click.argument("img_dir", type=click.Path(exists=True))
+@click.argument("output_dir", type=click.Path(exists=True))
 @click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--clf-dir", type=click.Path(exists=True))
 @click.option("--hf-hub-repo-id", type=str)
 @click.option("--hf-hub-clf-filename", type=str)
 @click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
-@click.option("--skops-trusted", cls=_OptionEatAll)
+# @click.option("--skops-trusted", cls=_OptionEatAll)
+@click.option("--split-filepath", type=click.Path(exists=True))
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--refine", is_flag=True)
+@click.option("--refine/--no-refine", default=True)
 @click.option("--refine-beta", type=int)
 @click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
-@click.option("--output-dir", type=click.Path(exists=True))
+@click.option("--img-dir", type=click.Path(exists=True))
+# @click.option("--img-filepaths", type=_OptionEatAll)
+@click.option("--img-filename-pattern", type=str)
+@click.option("--pixel_features_builder-kwargs", cls=_OptionEatAll)
 def predict_imgs(
     ctx,
-    split_filepath,
-    img_dir,
+    output_dir,
     clf_filepath,
     clf_dir,
     hf_hub_repo_id,
     hf_hub_clf_filename,
     hf_hub_download_kwargs,
-    skops_trusted,
+    # skops_trusted,
     tree_val,
     nontree_val,
     refine,
     refine_beta,
     refine_int_rescale,
+    split_filepath,
+    img_dir,
+    # img_filepaths,
+    img_filename_pattern,
     pixel_features_builder_kwargs,
-    output_dir,
 ):
     """Predict tree pixels in multiple images."""
     logger = ctx.obj["LOGGER"]
 
-    split_df = pd.read_csv(split_filepath)
-
     # init them as None and change them if needed
     clf = None
     clf_dict = None
+    split_df = None
+    if split_filepath is not None:
+        split_df = pd.read_csv(split_filepath)
     if clf_filepath is not None:
-        if not skops_trusted:
-            skops_trusted = settings.SKOPS_TRUSTED
+        # if not skops_trusted:
+        #     skops_trusted = settings.SKOPS_TRUSTED
         clf = io.load(clf_filepath, settings.SKOPS_TRUSTED)
-        logger.info(
-            "Classifying images from %s with classifier of %s",
-            split_filepath,
-            clf_filepath,
-        )
+        _clf_msg = clf_filepath
     elif clf_dir is not None:
         clf_dict = {}
+        if split_df is None:
+            raise ValueError(
+                "If `clf_dir` is provided, `split_filepath` must also be provided."
+            )
         for img_cluster in split_df["img_cluster"].unique():
             clf_dict[img_cluster] = io.load(
                 path.join(clf_dir, f"{img_cluster}.skops"),
                 settings.SKOPS_TRUSTED,
             )
-        logger.info(
-            "Classifying images from %s with classifiers from %s",
-            split_filepath,
-            clf_dir,
-        )
+        _clf_msg = clf_dir
     else:
         # at this point, this means that neither `clf_filepath` nor `clf_dir` have been
         # provided, so we use the pre-trained classifier
@@ -454,11 +459,10 @@ def predict_imgs(
         if hf_hub_repo_id is None:
             hf_hub_repo_id = settings.HF_HUB_REPO_ID
         _clf_msg = hf_hub_repo_id
-        logger.info(
-            "Classifying images from %s with classifiers from %s",
-            split_filepath,
-            hf_hub_repo_id,
-        )
+    logger.info(
+        "Predicting with classifier(s) from %s",
+        _clf_msg,
+    )
 
     hf_hub_download_kwargs = _dict_from_kwargs(hf_hub_download_kwargs)
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
@@ -468,7 +472,7 @@ def predict_imgs(
         hf_hub_repo_id=hf_hub_repo_id,
         hf_hub_clf_filename=hf_hub_clf_filename,
         hf_hub_download_kwargs=hf_hub_download_kwargs,
-        skops_trusted=skops_trusted,
+        # skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
         refine=refine,
@@ -477,12 +481,11 @@ def predict_imgs(
         **pixel_features_builder_kwargs,
     )
 
-    if output_dir is None:
-        output_dir = ""
-
     pred_imgs = c.predict_imgs(
-        split_df,
-        img_dir,
         output_dir,
+        split_df=split_df,
+        img_dir=img_dir,
+        # img_filepaths=img_filepaths,
+        img_filename_pattern=img_filename_pattern,
     )
     logger.info("Dumped %d predicted images to %s", len(pred_imgs), output_dir)

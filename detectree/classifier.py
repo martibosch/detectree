@@ -292,7 +292,7 @@ class Classifier:
         hf_hub_download_kwargs : dict, optional
             Additional keyword arguments (besides "repo_id", "filename", "library_name"
             and "library_version") to pass to `huggingface_hub.hf_hub_download`.
-        skosp_trusted : list, optional
+        skops_trusted : list, optional
             List of trusted object types to load the classifier from HuggingFace Hub,
             passed to `skops.io.load`. If no value is provided, the value from
             `settings.SKOPS_TRUSTED` is used. Ignored if `clf` or `clf_dict` are
@@ -498,7 +498,15 @@ class Classifier:
                 )
         return self._predict_img(img_filepath, clf, output_filepath=output_filepath)
 
-    def predict_imgs(self, split_df, img_dir, output_dir):
+    def predict_imgs(
+        self,
+        output_dir,
+        *,
+        split_df=None,
+        img_dir=None,
+        img_filepaths=None,
+        img_filename_pattern=None,
+    ):
         """
         Use trained classifier(s) to predict tree pixels in multiple images.
 
@@ -507,45 +515,67 @@ class Classifier:
 
         Parameters
         ----------
-        split_df : pandas DataFrame, optional
-            Data frame with the train/test split.
-        img_dir : str representing path to a directory
-            Path to the directory where the images from `split_df` or whose filename
-            matches `img_filename_pattern` are located. Required if `split_df` is
-            provided. Ignored if `img_filepaths` is provided.
         output_dir : str or pathlib.Path object
             Path to the directory where the predicted images are to be dumped.
+        split_df : pandas DataFrame, optional
+            Data frame with the train/test split.
+        img_dir : str representing path to a directory, optional
+            Path to the directory where the images from `val_df` are located. Required
+            if `split_df` is provided. Ignored if `img_filepaths` is provided.
+        img_filepaths : list-like, optional
+            List of paths to the tiles that will be used for validation. Ignored if
+            `split_df` is provided.
+        img_filename_pattern : str representing a file-name pattern, optional
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
 
         Returns
         -------
-        pred_imgs : list or dict
+        pred_imgs : list
             File paths of the dumped tiles.
         """
         if hasattr(self, "clf"):
-            return self._predict_imgs(
-                split_df[~split_df["train"]]["img_filename"].apply(
+            # predicting with a single classifier
+            if split_df is None:
+                if img_filepaths is None:
+                    if img_dir is None:
+                        raise ValueError(
+                            "Either `split_df`, `img_filepaths` or `img_dir` must be"
+                            " provided."
+                        )
+                    img_filepaths = utils.get_img_filepaths(
+                        img_dir,
+                        img_filename_pattern=img_filename_pattern,
+                    )
+            else:
+                img_filepaths = split_df["img_filename"].apply(
                     lambda img_filename: path.join(img_dir, img_filename)
-                ),
+                )
+            pred_imgs = self._predict_imgs(
+                img_filepaths,
                 self.clf,
                 output_dir,
             )
 
-        # `self.clf_dict` is not `None`
-        pred_imgs = {}
-        for img_cluster, _ in split_df.groupby("img_cluster"):
-            try:
-                clf = self.clf_dict[img_cluster]
-            except KeyError as exc:
-                raise ValueError(
-                    f"Classifier for cluster {img_cluster} not found in"
-                    " `self.clf_dict`."
-                ) from exc
-            pred_imgs[img_cluster] = self._predict_imgs(
-                utils.get_img_filename_ser(split_df, img_cluster, False).apply(
-                    lambda img_filename: path.join(img_dir, img_filename)
-                ),
-                clf,
-                output_dir,
-            )
+        else:
+            # `self.clf_dict` is not `None`
+            # predicting with multiple classifiers
+            pred_imgs = []
+            for img_cluster, _ in split_df.groupby("img_cluster"):
+                try:
+                    clf = self.clf_dict[img_cluster]
+                except KeyError as exc:
+                    raise ValueError(
+                        f"Classifier for cluster {img_cluster} not found in"
+                        " `self.clf_dict`."
+                    ) from exc
+                pred_imgs += self._predict_imgs(
+                    utils.get_img_filename_ser(split_df, img_cluster, False).apply(
+                        lambda img_filename: path.join(img_dir, img_filename)
+                    ),
+                    clf,
+                    output_dir,
+                )
 
         return pred_imgs
