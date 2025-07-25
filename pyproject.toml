@@ -23,6 +23,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
   "dask[delayed,distributed]",
+  "huggingface-hub",
   "joblib",
   "laspy[lazrs] >= 2.0.0",
   "lightgbm",
