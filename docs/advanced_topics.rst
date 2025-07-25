@@ -32,7 +32,7 @@ On the other hand, in order to obtain a Gabor filter bank (e.g., for the `kernel
 Pixel classification
 --------------------
 
-In order to perform a binary pixel-level classification of tree/non-tree pixels, each pixel is transformed into a feature vector. In DetecTree, the way in which feature vectors are computed can be customized by means of the arguments of  `Classifier.__init__`.  With the default argument values, which follow the methods of Yang et al. [1], each pixel is transformed into a 27-feature vector where 6, 18 and 3 features capture characteristics of color, texture and entropy respectively. Such arguments are forwarded to the following class:
+In order to perform a binary pixel-level classification of tree/non-tree pixels, each pixel is transformed into a feature vector. In DetecTree, the way in which feature vectors are computed can be customized by means of the arguments of  `Classifier.__init__`.  With the default argument values, which follow the methods of Yang et al. :cite:`yang2009tree`, each pixel is transformed into a 27-feature vector where 6, 18 and 3 features capture characteristics of color, texture and entropy respectively. Such arguments are forwarded to the following class:
 
 .. autoclass:: detectree.pixel_features.PixelFeaturesBuilder
    :members:  __init__, build_features
@@ -45,3 +45,23 @@ The arguments of  `Classifier.__init__` also serve to customize how the pixel re
 
 .. autoclass:: detectree.pixel_response.PixelResponseBuilder
    :members:  __init__, build_response
+
+Optionally, the predicted pixel labels can be refined with the graph-cut max-flow procedure from Boykov and Komogrov :cite:`boykov2004experimental` (used by default when refinement is enabled in `Classifier`), implemented as:
+
+.. autofunction:: detectree.refine.maxflow_refine
+
+----------
+Evaluation
+----------
+
+You can evaluate the pixel classification using the `compute_eval_metrics` function, whose `metrics` argument accepts either metric names from `sklearn.metrics` (strings) or callables that accept `y_true` and `y_pred`:
+
+.. autofunction:: detectree.evaluate.compute_eval_metrics
+
+Additionally, you can use the `metrics_kwargs` argument to provide per-metric options (as a list of keyword arguments passed to each matching item of `metrics`). The function will return the values of the metrics computed for the validation images.
+
+It is also possible to compare the performance of refinement parameters with the `eval_refine_params` function, which given a `refine_method` (by default the graph-cut max-flow procedure of `detectree.maxflow_refine` as defined in the `settings.CLF_REFINE_METHOD`) will compute the metrics for a list of parameter dicts (`refine_params_list`):
+
+.. autofunction:: detectree.evaluate.eval_refine_params
+
+The function returns a DataFrame with metrics as rows and parameter sets as columns.

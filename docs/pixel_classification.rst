@@ -7,3 +7,5 @@ Pixel Classification
 
 .. autoclass:: detectree.Classifier
    :members:  __init__, classify_img, classify_imgs
+
+.. autofunction:: detectree.maxflow_refine

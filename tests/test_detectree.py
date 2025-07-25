@@ -10,9 +10,11 @@ import pandas as pd
 import rasterio as rio
 from click import testing
 from scipy import ndimage as ndi
+from skops import io
 
 import detectree as dtr
 from detectree import (
+    evaluate,
     filters,
     image_descriptor,
     pixel_features,
@@ -703,6 +705,135 @@ class TestTrainClassifier(unittest.TestCase):
             self.assertIsInstance(
                 c.predict_img(img_filepath, img_cluster=img_cluster), np.ndarray
             )
+
+
+class TestEvaluate(unittest.TestCase):
+    def setUp(self):
+        # TODO: dry with TestRefine.setUp or merge into a single class?
+        self.data_dir = "tests/data"
+        self.img_dir = path.join(self.data_dir, "img")
+        self.response_img_dir = path.join(self.data_dir, "response_img")
+        # select two images that are also in `self.response_img_dir`
+        n_imgs = 2
+        self.response_img_filepaths = glob.glob(
+            path.join(self.response_img_dir, "*.tif")
+        )[:n_imgs]
+        self.img_filepaths = [
+            path.join(self.img_dir, path.basename(img_filepath))
+            for img_filepath in self.response_img_filepaths
+        ]
+        # model
+        self.model_filepath = path.join(self.data_dir, "models", "clf.skops")
+        self.clf = io.load(self.model_filepath, trusted=settings.SKOPS_TRUSTED)
+
+    def test_get_true_pred_arr(self):
+        # test getting a true/pred array
+        true_pred_arr = evaluate.get_true_pred_arr(
+            clf=self.clf,
+            img_filepaths=self.img_filepaths,
+            response_img_dir=self.response_img_dir,
+            refine_method=False,
+        )
+        # test shape
+        num_pixels = 0
+        for response_img_filepath in self.response_img_filepaths:
+            with rio.open(response_img_filepath) as src:
+                num_pixels += src.shape[0] * src.shape[1]
+        self.assertEqual(true_pred_arr.shape, (2, num_pixels))
+        # test values when providing tree/nontree values
+        tree_val = settings.TREE_VAL
+        nontree_val = settings.NONTREE_VAL
+        true_pred_arr = evaluate.get_true_pred_arr(
+            clf=self.clf,
+            img_filepaths=self.img_filepaths,
+            response_img_dir=self.response_img_dir,
+            refine_method=False,
+            tree_val=tree_val,
+            nontree_val=nontree_val,
+        )
+        self.assertTrue(np.all(np.isin(true_pred_arr, [tree_val, nontree_val])))
+        # TODO: how to handle when proving tree/nontree values different than those in
+        # the response images?
+
+    def test_compute_eval_metrics(self):
+        # test computing evaluation metrics
+        metrics = ["accuracy_score", "precision_score"]
+        metrics_kwargs = [{}, {"zero_division": 0}]
+        metric_values = evaluate.compute_eval_metrics(
+            metrics=metrics,
+            metrics_kwargs=metrics_kwargs,
+            clf=self.clf,
+            img_filepaths=self.img_filepaths,
+            response_img_dir=self.response_img_dir,
+            refine_method=False,
+        )
+        # if providing multiple metrics, the output is a list of scalars of the same
+        # length as the number of metrics
+        self.assertIsInstance(metric_values, list)
+        self.assertEqual(len(metric_values), len(metrics))
+        for value in metric_values:
+            self.assertTrue(np.isscalar(value))
+
+        # test computing a single evaluation metric
+        single_metric = evaluate.compute_eval_metrics(
+            metrics=["accuracy_score"],
+            clf=self.clf,
+            img_filepaths=self.img_filepaths,
+            response_img_dir=self.response_img_dir,
+            refine_method=False,
+        )
+        self.assertTrue(np.isscalar(single_metric))
+
+    def test_eval_refine_params(self):
+        # test evaluation over multiple refinement parameters
+        refine_params_list = [{"refine_beta": 1000}, {"refine_beta": 10000}]
+        metrics = ["accuracy_score"]
+        results = evaluate.eval_refine_params(
+            refine_params_list=refine_params_list,
+            metrics=metrics,
+            clf=self.clf,
+            img_filepaths=self.img_filepaths,
+            response_img_dir=self.response_img_dir,
+        )
+        self.assertIsInstance(results, pd.DataFrame)
+        self.assertEqual(
+            list(results.columns), [str(kwargs) for kwargs in refine_params_list]
+        )
+        self.assertEqual(list(results.index), metrics)
+        self.assertTrue(((results >= 0) & (results <= 1)).all().all())
+
+
+class TestRefine(unittest.TestCase):
+    def setUp(self):
+        # TODO: dry with TestEvaluate.setUp or merge into a single class?
+        self.data_dir = "tests/data"
+        self.img_dir = path.join(self.data_dir, "img")
+        self.response_img_dir = path.join(self.data_dir, "response_img")
+        # select two images that are also in `self.response_img_dir`
+        n_imgs = 2
+        self.response_img_filepaths = glob.glob(
+            path.join(self.response_img_dir, "*.tif")
+        )[:n_imgs]
+        self.img_filepaths = [
+            path.join(self.img_dir, path.basename(img_filepath))
+            for img_filepath in self.response_img_filepaths
+        ]
+        # model
+        self.model_filepath = path.join(self.data_dir, "models", "clf.skops")
+        self.clf = io.load(self.model_filepath, trusted=settings.SKOPS_TRUSTED)
+
+    def test_maxflow_refine(self):
+        # test on an arbitrary array
+        p_tree_img = np.array([[0.1, 0.9], [0.8, 0.2]], dtype=np.float32)
+        tree_val = settings.TREE_VAL
+        nontree_val = settings.NONTREE_VAL
+        refined = refine.maxflow_refine(
+            p_tree_img, tree_val, nontree_val, refine_beta=1
+        )
+        # test that the image is of the same shape
+        self.assertEqual(refined.shape, p_tree_img.shape)
+        # test that the refined image contains only tree and nontree values
+        self.assertTrue(np.all(np.isin(refined, [tree_val, nontree_val])))
 
 
 class TestLidarToCanopy(unittest.TestCase):

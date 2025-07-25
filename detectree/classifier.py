@@ -4,7 +4,6 @@ from os import path
 
 import dask
 import huggingface_hub as hf_hub
-import maxflow as mf
 import numpy as np
 import rasterio as rio
 import skops
@@ -14,8 +13,6 @@ from skops import io
 from detectree import pixel_features, pixel_response, settings, utils
 
 __all__ = ["ClassifierTrainer", "Classifier"]
-
-MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer:
@@ -264,9 +261,9 @@ class Classifier:
         skops_trusted=None,
         tree_val=None,
         nontree_val=None,
-        refine=None,
-        refine_beta=None,
-        refine_int_rescale=None,
+        refine_method=None,
+        refine_kwargs=None,
+        return_proba=None,
         **pixel_features_builder_kwargs,
     ):
         """
@@ -301,19 +298,20 @@ class Classifier:
             The values that designate tree and non-tree pixels respectively in the
             response images. If no values are provided, the values set in
             `settings.TREE_VAL` and `settings.NON_TREE_VAL` are respectively used.
-        refine : bool, optional
-            Whether the pixel-level classification should be refined by optimizing the
-            consistence between neighboring pixels. If no value is provided, the value
-            set in `settings.CLF_REFINE` is used.
-        refine_beta : int, optional
-            Parameter of the refinement procedure that controls the smoothness of the
-            labelling. Larger values lead to smoother shapes.  If no value is provided,
-            the value set in `settings.CLF_REFINE_BETA` is used.
-        refine_int_rescale : int, optional
-            Parameter of the refinement procedure that controls the precision of the
-            transformation of float to integer edge weights, required for the employed
-            graph cuts algorithm. Larger values lead to greater precision. If no value
-            is provided, the value set in `settings.CLF_REFINE_INT_RESCALE` is used.
+        refine_method : callable or bool, optional
+            Method to refine the pixel-level classification, e.g., to optimize the
+            consistence between neighboring pixels. If `False` is provided, no
+            refinement is performed. If `None` is provided and `return_proba` is `None`
+            or `False`, the value from `settings.CLF_REFINE` is used.
+        refine_method_kwargs : dict, optional
+            Keyword arguments that will be passed to the `refine_method`. If no value
+            is provided, the value set in `settings.CLF_REFINE_KWARGS` is used. Ignored
+            if no refinement is performed (i.e., `refine_method` is `False` or
+            `refine_method` is `None` and `return_proba` is `True`).
+        return_proba : bool, optional
+            If `True`, the classifier will return the probabilities of each pixel
+            belonging to the tree class. If `False`, the classifier will return the
+            predicted class labels. Ignored if a valid `refine_method` is provided.
         pixel_features_builder_kwargs : dict, optional
             Keyword arguments that will be passed to `detectree.PixelFeaturesBuilder`,
             which customize how the pixel features are built.
@@ -357,20 +355,51 @@ class Classifier:
             tree_val = settings.TREE_VAL
         if nontree_val is None:
             nontree_val = settings.NONTREE_VAL
-        if refine is None:
-            refine = settings.CLF_REFINE
-        if refine_beta is None:
-            refine_beta = settings.CLF_REFINE_BETA
-        if refine_int_rescale is None:
-            refine_int_rescale = settings.CLF_REFINE_INT_RESCALE
+        if refine_method is None and not return_proba:
+            refine_method = settings.CLF_REFINE_METHOD
+        if refine_method:
+            if refine_kwargs is None:
+                refine_kwargs = settings.CLF_REFINE_KWARGS
+            self.refine_method = refine_method
+            self.refine_kwargs = refine_kwargs
+            self._predict_X = self._predict_X_refine
+            self.tree_val = tree_val
+            self.nontree_val = nontree_val
+            self.dst_nodata = nontree_val
+        else:
+            if return_proba is None:
+                # we will only get here if `refine_method` is `False`
+                return_proba = settings.CLF_RETURN_PROBA
+            if return_proba:
+                # there is no refine method, return proba
+                self._predict_X = self._predict_X_proba
+                # TODO: how to manage this better?
+                self.dst_nodata = -1
+            else:
+                # there is no refine method, return labels
+                self._predict_X = self._predict_X_labels
+                self.dst_nodata = nontree_val
 
         self.tree_val = tree_val
         self.nontree_val = nontree_val
-        self.refine = refine
-        self.refine_beta = refine_beta
-        self.refine_int_rescale = refine_int_rescale
 
         self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
+
+    def _predict_X_refine(self, X, clf, img_shape):
+        # TODO: properly manage the order classes in `clf`, i.e., are we sure that
+        # "tree" is always the second class? If so, we could probably fully omit
+        # `tree_val` and `nontree_val` and get them from `clf.classes_`
+        # p_nontree_img, p_tree_img = np.hsplit(clf.pred_proba(X), 2)
+        p_tree_img = clf.predict_proba(X)[:, 1].reshape(img_shape)
+        return self.refine_method(
+            p_tree_img, self.tree_val, self.nontree_val, **self.refine_kwargs
+        ).astype(np.uint8)
+
+    def _predict_X_proba(self, X, clf, img_shape):
+        return clf.predict_proba(X)[:, 1].reshape(img_shape)
+
+    def _predict_X_labels(self, X, clf, img_shape):
+        return clf.predict(X).reshape(img_shape).astype(np.uint8)
 
     def _predict_img(self, img_filepath, clf, *, output_filepath=None):
         # ACHTUNG: Note that we do not use keyword-only arguments in this method because
@@ -382,37 +411,7 @@ class Classifier:
             **self.pixel_features_builder_kwargs
         ).build_features_from_filepath(img_filepath)
 
-        if not self.refine:
-            y_pred = clf.predict(X).reshape(img_shape)
-        else:
-            p_nontree, p_tree = np.hsplit(clf.predict_proba(X), 2)
-            g = mf.Graph[int]()
-            node_ids = g.add_grid_nodes(img_shape)
-            P_nontree = p_nontree.reshape(img_shape)
-            P_tree = p_tree.reshape(img_shape)
-
-            # The classifier probabilities are floats between 0 and 1, and the graph
-            # cuts algorithm requires an integer representation. Therefore, we multiply
-            # the probabilities by an arbitrary large number and then transform the
-            # result to integers. For instance, we could use a `refine_int_rescale` of
-            # `100` so that the probabilities are rescaled into integers between 0 and
-            # 100 like percentages). The larger `refine_int_rescale`, the greater the
-            # precision.
-            # ACHTUNG: the data term when the pixel is a tree is `log(1 - P_tree)`,
-            # i.e., `log(P_nontree)`, so the two lines below are correct
-            D_tree = (self.refine_int_rescale * np.log(P_nontree)).astype(int)
-            D_nontree = (self.refine_int_rescale * np.log(P_tree)).astype(int)
-            # TODO: option to choose Moore/Von Neumann neighborhood?
-            g.add_grid_edges(
-                node_ids, self.refine_beta, structure=MOORE_NEIGHBORHOOD_ARR
-            )
-            g.add_grid_tedges(node_ids, D_tree, D_nontree)
-            g.maxflow()
-            # y_pred = g.get_grid_segments(node_ids)
-            # transform boolean `g.get_grid_segments(node_ids)` to an array of
-            # `self.tree_val` and `self.nontree_val`
-            y_pred = np.full(img_shape, self.nontree_val)
-            y_pred[g.get_grid_segments(node_ids)] = self.tree_val
+        y_pred = self._predict_X(X, clf, img_shape)
 
         # TODO: make the profile of output rasters more customizable (e.g., via the
         # `settings` module)
@@ -426,12 +425,12 @@ class Classifier:
                 width=y_pred.shape[1],
                 height=y_pred.shape[0],
                 count=1,
-                dtype=np.uint8,
-                nodata=self.nontree_val,
+                dtype=y_pred.dtype,
+                nodata=self.dst_nodata,
                 crs=src.crs,
                 transform=src.transform,
             ) as dst:
-                dst.write(y_pred.astype(np.uint8), 1)
+                dst.write(y_pred, 1)
 
         src.close()
         return y_pred
