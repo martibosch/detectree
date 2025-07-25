@@ -422,7 +422,7 @@ class Classifier:
             with rio.open(
                 output_filepath,
                 "w",
-                driver="GTiff",
+                # driver="GTiff",
                 width=y_pred.shape[1],
                 height=y_pred.shape[0],
                 count=1,
