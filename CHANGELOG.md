@@ -1,5 +1,22 @@
 # Change log
 
+## [v0.8.0] - 2025-07-25
+
+### :sparkles: New Features
+
+- [`0c1a0d9`](https://github.com/martibosch/detectree/commit/0c1a0d912f7f137101ee400610b6b92fe9c5eebf) - changed `TREE_VAL` to 1 for direct sklearn metrics compat *(commit by [@martibosch](https://github.com/martibosch))*
+- [`bd72cf8`](https://github.com/martibosch/detectree/commit/bd72cf814286dc78f80df4b097a8a3171797a81e) - accept img_dir/img_filepaths in Classifier.predict_imgs *(commit by [@martibosch](https://github.com/martibosch))*
+- [`9ba3a2f`](https://github.com/martibosch/detectree/commit/9ba3a2f6381e958ddbce2fc059d2ec49597b414f) - do NOT force geotiff driver in output *(commit by [@martibosch](https://github.com/martibosch))*
+
+### :bug: Bug Fixes
+
+- [`0594040`](https://github.com/martibosch/detectree/commit/059404079f016ceef0bab267e3dd9ef168255afb) - flake8 fixes *(commit by [@martibosch](https://github.com/martibosch))*
+
+### :recycle: Refactors
+
+- [`578722a`](https://github.com/martibosch/detectree/commit/578722a4be706e3a604a7a8f4afcaa01fb589480) - unify TREE_VAL/NONTREE_VAL settings and merge docstrings *(commit by [@martibosch](https://github.com/martibosch))*
+- [`713f864`](https://github.com/martibosch/detectree/commit/713f864259dde59244374d67cc3acffc54d18f42) - DRY get_img_filepaths in utils *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.7.0] - 2025-07-24
 
 ### :sparkles: New Features
@@ -101,3 +118,4 @@
 [v0.5.0]: https://github.com/martibosch/detectree/compare/v0.4.2...v0.5.0
 [v0.6.0]: https://github.com/martibosch/detectree/compare/v0.5.1...v0.6.0
 [v0.7.0]: https://github.com/martibosch/detectree/compare/v0.6.0...v0.7.0
+[v0.8.0]: https://github.com/martibosch/detectree/compare/v0.7.0...v0.8.0
