@@ -4,18 +4,15 @@ from os import path
 
 import dask
 import huggingface_hub as hf_hub
-import maxflow as mf
 import numpy as np
 import rasterio as rio
 import skops
 from dask import diagnostics
 from skops import io
 
-from detectree import pixel_features, pixel_response, settings, utils
+from detectree import evaluate, pixel_features, pixel_response, settings, utils
 
 __all__ = ["ClassifierTrainer", "Classifier"]
-
-MOORE_NEIGHBORHOOD_ARR = np.array([[0, 0, 0], [0, 0, 1], [1, 1, 1]])
 
 
 class ClassifierTrainer:
@@ -264,9 +261,9 @@ class Classifier:
         skops_trusted=None,
         tree_val=None,
         nontree_val=None,
-        refine=None,
-        refine_beta=None,
-        refine_int_rescale=None,
+        refine_method=None,
+        refine_kwargs=None,
+        return_proba=None,
         **pixel_features_builder_kwargs,
     ):
         """
@@ -301,19 +298,20 @@ class Classifier:
             The values that designate tree and non-tree pixels respectively in the
             response images. If no values are provided, the values set in
             `settings.TREE_VAL` and `settings.NON_TREE_VAL` are respectively used.
-        refine : bool, optional
-            Whether the pixel-level classification should be refined by optimizing the
-            consistence between neighboring pixels. If no value is provided, the value
-            set in `settings.CLF_REFINE` is used.
-        refine_beta : int, optional
-            Parameter of the refinement procedure that controls the smoothness of the
-            labelling. Larger values lead to smoother shapes.  If no value is provided,
-            the value set in `settings.CLF_REFINE_BETA` is used.
-        refine_int_rescale : int, optional
-            Parameter of the refinement procedure that controls the precision of the
-            transformation of float to integer edge weights, required for the employed
-            graph cuts algorithm. Larger values lead to greater precision. If no value
-            is provided, the value set in `settings.CLF_REFINE_INT_RESCALE` is used.
+        refine_method : callable or bool, optional
+            Method to refine the pixel-level classification, e.g., to optimize the
+            consistence between neighboring pixels. If `False` is provided, no
+            refinement is performed. If `None` is provided and `return_proba` is `None`
+            or `False`, the value from `settings.CLF_REFINE` is used.
+        refine_method_kwargs : dict, optional
+            Keyword arguments that will be passed to the `refine_method`. If no value
+            is provided, the value set in `settings.CLF_REFINE_KWARGS` is used. Ignored
+            if no refinement is performed (i.e., `refine_method` is `False` or
+            `refine_method` is `None` and `return_proba` is `True`).
+        return_proba : bool, optional
+            If `True`, the classifier will return the probabilities of each pixel
+            belonging to the tree class. If `False`, the classifier will return the
+            predicted class labels. Ignored if a valid `refine_method` is provided.
         pixel_features_builder_kwargs : dict, optional
             Keyword arguments that will be passed to `detectree.PixelFeaturesBuilder`,
             which customize how the pixel features are built.
@@ -357,20 +355,51 @@ class Classifier:
             tree_val = settings.TREE_VAL
         if nontree_val is None:
             nontree_val = settings.NONTREE_VAL
-        if refine is None:
-            refine = settings.CLF_REFINE
-        if refine_beta is None:
-            refine_beta = settings.CLF_REFINE_BETA
-        if refine_int_rescale is None:
-            refine_int_rescale = settings.CLF_REFINE_INT_RESCALE
+        if refine_method is None and not return_proba:
+            refine_method = settings.CLF_REFINE_METHOD
+        if refine_method:
+            if refine_kwargs is None:
+                refine_kwargs = settings.CLF_REFINE_KWARGS
+            self.refine_method = refine_method
+            self.refine_kwargs = refine_kwargs
+            self._predict_X = self._predict_X_refine
+            self.tree_val = tree_val
+            self.nontree_val = nontree_val
+            self.dst_nodata = nontree_val
+        else:
+            if return_proba is None:
+                # we will only get here if `refine_method` is `False`
+                return_proba = settings.CLF_RETURN_PROBA
+            if return_proba:
+                # there is no refine method, return proba
+                self._predict_X = self._predict_X_proba
+                # TODO: how to manage this better?
+                self.dst_nodata = -1
+            else:
+                # there is no refine method, return labels
+                self._predict_X = self._predict_X_labels
+                self.dst_nodata = nontree_val
 
         self.tree_val = tree_val
         self.nontree_val = nontree_val
-        self.refine = refine
-        self.refine_beta = refine_beta
-        self.refine_int_rescale = refine_int_rescale
 
         self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
+
+    def _predict_X_refine(self, X, clf, img_shape):
+        # TODO: properly manage the order classes in `clf`, i.e., are we sure that
+        # "tree" is always the second class? If so, we could probably fully omit
+        # `tree_val` and `nontree_val` and get them from `clf.classes_`
+        # p_nontree_img, p_tree_img = np.hsplit(clf.pred_proba(X), 2)
+        p_tree_img = clf.predict_proba(X)[:, 1].reshape(img_shape)
+        return self.refine_method(
+            p_tree_img, self.tree_val, self.nontree_val, **self.refine_kwargs
+        ).astype(np.uint8)
+
+    def _predict_X_proba(self, X, clf, img_shape):
+        return clf.predict_proba(X)[:, 1].reshape(img_shape)
+
+    def _predict_X_labels(self, X, clf, img_shape):
+        return clf.predict(X).reshape(img_shape).astype(np.uint8)
 
     def _predict_img(self, img_filepath, clf, *, output_filepath=None):
         # ACHTUNG: Note that we do not use keyword-only arguments in this method because
@@ -382,37 +411,7 @@ class Classifier:
             **self.pixel_features_builder_kwargs
         ).build_features_from_filepath(img_filepath)
 
-        if not self.refine:
-            y_pred = clf.predict(X).reshape(img_shape)
-        else:
-            p_nontree, p_tree = np.hsplit(clf.predict_proba(X), 2)
-            g = mf.Graph[int]()
-            node_ids = g.add_grid_nodes(img_shape)
-            P_nontree = p_nontree.reshape(img_shape)
-            P_tree = p_tree.reshape(img_shape)
-
-            # The classifier probabilities are floats between 0 and 1, and the graph
-            # cuts algorithm requires an integer representation. Therefore, we multiply
-            # the probabilities by an arbitrary large number and then transform the
-            # result to integers. For instance, we could use a `refine_int_rescale` of
-            # `100` so that the probabilities are rescaled into integers between 0 and
-            # 100 like percentages). The larger `refine_int_rescale`, the greater the
-            # precision.
-            # ACHTUNG: the data term when the pixel is a tree is `log(1 - P_tree)`,
-            # i.e., `log(P_nontree)`, so the two lines below are correct
-            D_tree = (self.refine_int_rescale * np.log(P_nontree)).astype(int)
-            D_nontree = (self.refine_int_rescale * np.log(P_tree)).astype(int)
-            # TODO: option to choose Moore/Von Neumann neighborhood?
-            g.add_grid_edges(
-                node_ids, self.refine_beta, structure=MOORE_NEIGHBORHOOD_ARR
-            )
-            g.add_grid_tedges(node_ids, D_tree, D_nontree)
-            g.maxflow()
-            # y_pred = g.get_grid_segments(node_ids)
-            # transform boolean `g.get_grid_segments(node_ids)` to an array of
-            # `self.tree_val` and `self.nontree_val`
-            y_pred = np.full(img_shape, self.nontree_val)
-            y_pred[g.get_grid_segments(node_ids)] = self.tree_val
+        y_pred = self._predict_X(X, clf, img_shape)
 
         # TODO: make the profile of output rasters more customizable (e.g., via the
         # `settings` module)
@@ -426,12 +425,12 @@ class Classifier:
                 width=y_pred.shape[1],
                 height=y_pred.shape[0],
                 count=1,
-                dtype=np.uint8,
-                nodata=self.nontree_val,
+                dtype=y_pred.dtype,
+                nodata=self.dst_nodata,
                 crs=src.crs,
                 transform=src.transform,
             ) as dst:
-                dst.write(y_pred.astype(np.uint8), 1)
+                dst.write(y_pred, 1)
 
         src.close()
         return y_pred
@@ -520,7 +519,7 @@ class Classifier:
         split_df : pandas DataFrame, optional
             Data frame with the train/test split.
         img_dir : str representing path to a directory, optional
-            Path to the directory where the images from `val_df` are located. Required
+            Path to the directory where the images from `split_df` are located. Required
             if `split_df` is provided. Ignored if `img_filepaths` is provided.
         img_filepaths : list-like, optional
             List of paths to the tiles that will be used for validation. Ignored if
@@ -579,3 +578,177 @@ class Classifier:
                 )
 
         return pred_imgs
+
+    def compute_eval_metrics(
+        self,
+        metrics=None,
+        metrics_kwargs=None,
+        refine_method=None,
+        refine_kwargs=None,
+        split_df=None,
+        img_dir=None,
+        response_img_dir=None,
+        img_filepaths=None,
+        response_img_filepaths=None,
+        img_filename_pattern=None,
+    ):
+        """
+        Compute evaluation metrics for validation images.
+
+        Parameters
+        ----------
+        metrics : str, func or list of str or func
+            The metrics to compute, must be either a string with a function of the
+            `sklearn.metrics`, a function that takes a `y_true` and `y_pred` positional
+            arguments with the true and predicted labels respectively or a list-like of
+            any of the two options. If no value is provided, the values set in
+            `settings.EVAL_METRICS` are used.
+        metrics_kwargs : dict or list of dict
+            Additional keyword arguments to pass to each of the metric functions.
+        refine_method : callable or bool, optional
+            Method to refine the pixel-level classification. If `False` is provided, no
+            refinement is performed. If any non-None value is provided, it overrides the
+            `refine_method` argument provided at instantiation time. If `None` is
+            provided, the value from `self.refine_method` is used if set, otherwise no
+            refinement is performed.
+        refine_kwargs : dict, optional
+            Keyword arguments that will be passed to `refine_method`. If any non-None
+            value is provided, it overrides the `refine_kwargs` argument provided at
+            instantiation time. If `None` is provided, the value from
+            `self.refine_kwargs` is used if set. Ignored if no refinement is performed.
+        split_df : pandas DataFrame, optional
+            Data frame with the validation images.
+        img_dir : str representing path to a directory, optional
+            Path to the directory where the images from `split_df` are located. Required
+            if `split_df` is provided. Ignored if `img_filepaths` is provided.
+        response_img_dir : str representing path to a directory, optional
+            Path to the directory where the response tiles are located. Ignored if
+            providing `response_img_filepaths`. Only images with a matching response (by
+            basename) are evaluated.
+        img_filepaths : list-like, optional
+            List of paths to the tiles that will be used for validation. Ignored if
+            `split_df` is provided.
+        response_img_filepaths : list-like, optional
+            List of paths to the binary response tiles that will be used for evaluation.
+            Ignored if `split_df` is provided. Only images with a matching response (by
+            basename) are evaluated.
+        img_filename_pattern : str representing a file-name pattern, optional
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
+
+        Returns
+        -------
+        metric_dict : numeric, dict
+            Values of the metrics computed for the validation images. If only one metric
+            is provided, a single value is returned. If multiple metrics are provided, a
+            dict with a key for each metric is returned. The metric values can be of
+            different types depending on the metric function used, e.g.,
+            `precision_score` returns a single float value, `precision_recall_curve`
+            returns a tuple of arrays, and `confusion_matrix` returns a two-dimensional
+            array.
+        """
+        if refine_method is None:
+            refine_method = getattr(self, "refine_method", None)
+        if refine_kwargs is None:
+            refine_kwargs = getattr(self, "refine_kwargs", None)
+        return evaluate.compute_eval_metrics(
+            metrics=metrics,
+            metrics_kwargs=metrics_kwargs,
+            clf=getattr(self, "clf", None),
+            clf_dict=getattr(self, "clf_dict", None),
+            refine_method=refine_method,
+            refine_kwargs=refine_kwargs,
+            split_df=split_df,
+            img_dir=img_dir,
+            response_img_dir=response_img_dir,
+            img_filepaths=img_filepaths,
+            response_img_filepaths=response_img_filepaths,
+            img_filename_pattern=img_filename_pattern,
+        )
+
+    def eval_refine_params(
+        self,
+        refine_method=None,
+        refine_params_list=None,
+        metrics=None,
+        metrics_kwargs=None,
+        tree_val=None,
+        nontree_val=None,
+        split_df=None,
+        img_dir=None,
+        img_filepaths=None,
+        img_filename_pattern=None,
+        response_img_dir=None,
+    ):
+        """
+        Evaluate a refinement procedure for different parameters.
+
+        Parameters
+        ----------
+        refine_method : callable, optional
+            Refinement method that takes a probability image as the first positional
+            argument followed by tree and non-tree values, e.g.,
+            `refine_method(p_tree_img, tree_val, nontree_val, **kwargs)`. If no value is
+            provided, the value from `self.refine_method` is used if set, otherwise the
+            value from `settings.CLF_REFINE_METHOD` is used.
+        refine_params_list : list of dict, optional
+
+            Parameters to evaluate for the refinement method, as a list of keyword
+            arguments. The metrics will be computed for each item of this list. If no
+            value is provided, the value from `settings.EVAL_REFINE_PARAMS` is used.
+        metrics : str, func or list of str or func
+            The metrics to compute, must be either a string with a function of the
+            `sklearn.metrics`, a function that takes a `y_true` and `y_pred`
+            positional arguments with the true and predicted labels respectively
+            or a list-like of any of the two options. If no value is provided,
+            the values set in `settings.EVAL_METRICS` are used.
+        metrics_kwargs : dict or list of dict
+            Additional keyword arguments to pass to each of the metric functions.
+        tree_val, nontree_val : int, optional
+            The values that designate tree and non-tree pixels respectively in
+            the response images. If no values are provided, the values from this
+            instance are used.
+        split_df : pandas DataFrame, optional
+            Data frame with the validation images.
+        img_dir : str representing path to a directory, optional
+            Path to the directory where the images from `split_df` are located.
+            Required if `split_df` is provided. Ignored if `img_filepaths` is
+            provided.
+        img_filepaths : list-like, optional
+            List of paths to the tiles that will be used for validation. Ignored if
+            `split_df` is provided.
+        img_filename_pattern : str representing a file-name pattern, optional
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
+        response_img_dir : str representing path to a directory, optional
+            Path to the directory where the response tiles are located.
+
+        Returns
+        -------
+        results : pandas DataFrame
+            A DataFrame with the computed values for each metric (row) and each
+            refinement keyword argument set (column, stringified).
+        """
+        if refine_method is None:
+            refine_method = getattr(self, "refine_method", None)
+        if tree_val is None:
+            tree_val = self.tree_val
+        if nontree_val is None:
+            nontree_val = self.nontree_val
+        return evaluate.eval_refine_params(
+            refine_method=refine_method,
+            refine_params_list=refine_params_list,
+            metrics=metrics,
+            metrics_kwargs=metrics_kwargs,
+            clf=getattr(self, "clf", None),
+            clf_dict=getattr(self, "clf_dict", None),
+            tree_val=tree_val,
+            nontree_val=nontree_val,
+            split_df=split_df,
+            img_dir=img_dir,
+            img_filepaths=img_filepaths,
+            img_filename_pattern=img_filename_pattern,
+            response_img_dir=response_img_dir,
+        )

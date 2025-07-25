@@ -5,6 +5,8 @@ import logging as lg
 import lightgbm as lgb
 import numpy as np
 
+from detectree import refine
+
 # train/test split
 GIST_GABOR_FREQUENCIES = (0.1, 0.25, 0.4)
 GIST_GABOR_NUM_ORIENTATIONS = (4, 8, 8)
@@ -22,9 +24,9 @@ CLF_CLASS = lgb.LGBMClassifier
 CLF_KWARGS = {"n_estimators": 200}
 TREE_VAL = 1
 NONTREE_VAL = 0
-CLF_REFINE = True
-CLF_REFINE_BETA = 50
-CLF_REFINE_INT_RESCALE = 10000
+CLF_REFINE_METHOD = refine.maxflow_refine
+CLF_REFINE_KWARGS = {"refine_int_rescale": 10000, "refine_beta": 50}
+CLF_RETURN_PROBA = False
 SKOPS_TRUSTED = [
     "collections.defaultdict",
     "collections.OrderedDict",
@@ -33,6 +35,16 @@ SKOPS_TRUSTED = [
 ]
 HF_HUB_REPO_ID = "martibosch/detectree"
 HF_HUB_CLF_FILENAME = "clf.skops"
+
+# evaluation
+EVAL_METRICS = ["accuracy_score", "precision_score", "recall_score", "f1_score"]
+EVAL_REFINE_PARAMS = [
+    {"refine_beta": 50},
+    {"refine_beta": 1000},
+    {"refine_beta": 2500},
+    {"refine_beta": 10000},
+    {"refine_beta": 25000},
+]
 
 # LIDAR
 LIDAR_TREE_THRESHOLD = 15

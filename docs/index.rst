@@ -9,6 +9,7 @@ DetecTree is a Pythonic library to classify tree/non-tree pixels from aerial ima
 
    train_test_split
    pixel_classification
+   evaluation
    advanced_topics
 
    utils
