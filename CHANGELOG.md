@@ -1,5 +1,11 @@
 # Change log
 
+## [v0.8.1] - 2025-07-27
+
+### :bug: Bug Fixes
+
+- [`33c8b55`](https://github.com/martibosch/detectree/commit/33c8b555c8c670a1e7a0ab9d47aca76294d83c76) - min python to 3.10 in pyproject.toml *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.8.0] - 2025-07-25
 
 ### :sparkles: New Features
@@ -119,3 +125,4 @@
 [v0.6.0]: https://github.com/martibosch/detectree/compare/v0.5.1...v0.6.0
 [v0.7.0]: https://github.com/martibosch/detectree/compare/v0.6.0...v0.7.0
 [v0.8.0]: https://github.com/martibosch/detectree/compare/v0.7.0...v0.8.0
+[v0.8.1]: https://github.com/martibosch/detectree/compare/v0.8.0...v0.8.1
