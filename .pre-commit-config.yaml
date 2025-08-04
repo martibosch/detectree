@@ -11,12 +11,12 @@ repos:
       - id: check-yaml
 
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v4.1.0
+    rev: v4.8.3
     hooks:
       - id: commitizen
 
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.21 # Use the ref you want to point at
+    rev: 0.7.22 # Use the ref you want to point at
     hooks:
       - id: mdformat
         # Optionally add plugins
@@ -31,13 +31,13 @@ repos:
         args: ["--in-place"]
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1
+    rev: v1.37.1
     hooks:
       - id: yamllint
         args: ["-d relaxed"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.31.0
+    rev: 0.33.2
     hooks:
       - id: check-github-workflows
 
@@ -47,19 +47,19 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         additional_dependencies:
           - tomli
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.2
+    rev: v0.12.7
     hooks:
       - id: ruff
         args: [ --fix ]
