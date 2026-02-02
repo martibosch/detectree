@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.9.4,<0.10.0"]
+build-backend = "uv_build"
 
 [project]
 name = "detectree"
@@ -42,7 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["coverage[toml]", "pytest", "pytest-cov", "ruff"]
-dev = ["build", "commitizen", "pre-commit", "pip", "toml", "tox", "twine"]
+dev = ["build", "commitizen", "pre-commit", "toml", "uv"]
 doc = ["pydata-sphinx-theme", "sphinx", "sphinx-click", "sphinx-mdinclude", "sphinxcontrib-bibtex"]
 
 [project.scripts]
@@ -52,7 +52,7 @@ detectree = "detectree.cli.main:cli"
 Repository = "https://github.com/martibosch/detectree"
 
 [tool.codespell]
-skip = "CHANGELOG.md,paper/paper.bib"
+skip = "CHANGELOG.md,pixi.lock,paper/paper.bib"
 
 [tool.commitizen]
 major_version_zero = true
@@ -78,6 +78,32 @@ omit = ["tests/*", "docs/conf.py"]
 [tool.coverage.run]
 source = ["detectree"]
 
+[tool.pixi.dependencies]
+gdal = ">=3"
+python = ">=3.10,<3.14"
+
+[tool.pixi.environments]
+default = {features = ["default"], solve-group = "default"}
+dev = {features = ["dev"], solve-group = "default"}
+doc = {features = ["doc"], solve-group = "default"}
+test = {features = ["test"], solve-group = "default"}
+
+[tool.pixi.feature.dev.tasks]
+build = "uv build"
+
+[tool.pixi.feature.doc.tasks]
+build-doc = "sphinx-build docs docs/_build"
+
+[tool.pixi.feature.test.tasks]
+test = "pytest -s --cov=detectree --cov-report=xml tests"
+
+[tool.pixi.pypi-dependencies]
+detectree = {path = ".", editable = true}
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
+
 [tool.ruff]
 line-length = 88
 
@@ -95,63 +121,12 @@ known-first-party = ["detectree"]
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.setuptools.packages.find]
-include = ["detectree", "detectree.*"]
+[tool.uv.build-backend]
+module-name = "detectree"
+module-root = ""
 
-[tool.tox]
-env_list = [
-  "3.10",
-  "3.11",
-  "3.12",
-  "3.13",
-  "lint"
-]
-requires = [
-  "tox>=4.19"
-]
-
-[tool.tox.env.lint]
-commands = [
-  ["python", "-m", "build"],
-  ["sphinx-build", "docs", "docs/_build"],
-  ["twine", "check", "dist/*"]
-]
-extras = [
-  "dev",
-  "doc",
-  "test"
-]
-whitelist_externals = [
-  "build",
-  "sphinx-build",
-  "twine"
-]
-
-[tool.tox.env_run_base]
-commands = [
-  ["pytest", "-s", "--cov=detectree", "--cov-report=xml", "tests", "{posargs}"]
-]
-conda_deps = [
-  "lightgbm"
-]
-extras = [
-  "test"
-]
-whitelist_externals = [
-  "pytest"
-]
-
-[tool.tox.gh.python]
-"3.10" = [
-  "3.10"
-]
-"3.11" = [
-  "3.11"
-]
-"3.12" = [
-  "3.12"
-]
-"3.13" = [
-  "3.13",
-  "lint"
-]
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true

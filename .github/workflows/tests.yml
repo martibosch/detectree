@@ -13,6 +13,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
+        environment: [test]
         include:
           - os: macos-latest
             python-version: "3.13"
@@ -20,30 +21,24 @@ jobs:
             python-version: "3.13"
 
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: mamba-org/setup-micromamba@v2
+      - uses: prefix-dev/setup-pixi@v0.9.2
         with:
-          environment-name: test-env
-          create-args: >-
-            lightgbm
-            python=${{ matrix.python-version }}
-            tox
-            tox-gh
+          pixi-version: v0.58.0
+          environments: ${{ matrix.environment }}
+          frozen: true
 
-      - name: test with tox
-        run: tox
-        env:
-          TOX_GH_MAJOR_MINOR: ${{ matrix.python-version }}
-          CONDA_EXE: mamba
+      - name: run tests
+        run: pixi run test
 
       - name: upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5.5.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: martibosch/detectree
 
       - name: list files
         run: ls -l .
