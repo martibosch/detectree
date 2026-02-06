@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+import tempfile
 import unittest
 from importlib import metadata
 from os import path
@@ -741,6 +742,17 @@ class TestEvaluate(unittest.TestCase):
             with rio.open(response_img_filepath) as src:
                 num_pixels += src.shape[0] * src.shape[1]
         self.assertEqual(true_pred_arr.shape, (2, num_pixels))
+        # test using precomputed predictions
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            c = dtr.Classifier(clf=self.clf, refine_method=False)
+            pred_img_filepaths = c.predict_imgs(
+                tmp_dir, img_filepaths=self.img_filepaths
+            )
+            true_pred_arr = evaluate.get_true_pred_arr(
+                pred_img_filepaths=pred_img_filepaths,
+                response_img_filepaths=self.response_img_filepaths,
+            )
+        self.assertEqual(true_pred_arr.shape, (2, num_pixels))
         # test values when providing tree/nontree values
         tree_val = settings.TREE_VAL
         nontree_val = settings.NONTREE_VAL
@@ -784,6 +796,20 @@ class TestEvaluate(unittest.TestCase):
             refine_method=False,
         )
         self.assertTrue(np.isscalar(single_metric))
+        # test computing metrics from precomputed predictions
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            c = dtr.Classifier(clf=self.clf, refine_method=False)
+            pred_img_filepaths = c.predict_imgs(
+                tmp_dir, img_filepaths=self.img_filepaths
+            )
+            metric_values = evaluate.compute_eval_metrics(
+                metrics=metrics,
+                metrics_kwargs=metrics_kwargs,
+                pred_img_filepaths=pred_img_filepaths,
+                response_img_filepaths=self.response_img_filepaths,
+            )
+        self.assertIsInstance(metric_values, list)
+        self.assertEqual(len(metric_values), len(metrics))
 
     def test_eval_refine_params(self):
         # test evaluation over multiple refinement parameters

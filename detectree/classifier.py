@@ -519,7 +519,7 @@ class Classifier:
         split_df : pandas DataFrame, optional
             Data frame with the train/test split.
         img_dir : str representing path to a directory, optional
-            Path to the directory where the images from `val_df` are located. Required
+            Path to the directory where the images from `split_df` are located. Required
             if `split_df` is provided. Ignored if `img_filepaths` is provided.
         img_filepaths : list-like, optional
             List of paths to the tiles that will be used for validation. Ignored if
