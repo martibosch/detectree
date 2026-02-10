@@ -12,7 +12,198 @@ from skops import io
 
 from detectree import evaluate, pixel_features, pixel_response, settings, utils
 
-__all__ = ["ClassifierTrainer", "Classifier"]
+__all__ = ["PixelDatasetTransformer", "ClassifierTrainer", "Classifier"]
+
+
+class PixelDatasetTransformer:
+    """Build pixel features and responses for training."""
+
+    def __init__(
+        self,
+        *,
+        sigmas=None,
+        num_orientations=None,
+        neighborhood=None,
+        min_neighborhood_range=None,
+        num_neighborhoods=None,
+        tree_val=None,
+        nontree_val=None,
+        classifier_class=None,
+        **classifier_kwargs,
+    ):
+        """
+        Initialize the classifier.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for details.
+
+        Parameters
+        ----------
+        sigmas : list-like, optional
+            The list of scale parameters (sigmas) to build the Gaussian filter bank that
+            will be used to compute the pixel-level features. The provided argument will
+            be passed to the initialization method of the `PixelFeaturesBuilder` class.
+            If no value is provided, the value set in `settings.GAUSS_SIGMAS` will be
+            taken.
+        num_orientations : int, optional
+            The number of equally-distributed orientations to build the Gaussian filter
+            bank that will be used to compute the pixel-level features. The provided
+            argument will be passed to the initialization method of the
+            `PixelFeaturesBuilder` class. If no value is provided, the value set in
+            `settings.GAUSS_NUM_ORIENTATIONS` is used.
+        neighborhood : array-like, optional
+            The base neighborhood structure that will be used to compute the entropy
+            features. Theprovided argument will be passed to the initialization method
+            of the `PixelFeaturesBuilder` class. If no value is provided, a square with
+            a side size of `2 * min_neighborhood_range + 1` is used.
+        min_neighborhood_range : int, optional
+            The range (i.e., the square radius) of the smallest neighborhood window that
+            will be used to compute the entropy features. The provided argument will be
+            passed to the initialization method of the `PixelFeaturesBuilder` class. If
+            no value is provided, the value set in
+            `settings.ENTROPY_MIN_NEIGHBORHOOD_RANGE` is used.
+        num_neighborhoods : int, optional
+            The number of neighborhood windows (whose size follows a geometric
+            progression starting at `min_neighborhood_range`) that will be used to
+            compute the entropy features. The provided argument will be passed to the
+            initialization method of the `PixelFeaturesBuilder` class. If no value is
+            provided, the value set in `settings.ENTROPY_NUM_NEIGHBORHOODS` is used.
+        tree_val, nontree_val : int, optional
+            The values that designate tree and non-tree pixels respectively in the
+            response images. The provided arguments will be passed to the initialization
+            method of the `PixelResponseBuilder` class. If no values are provided, the
+            values set in `settings.TREE_VAL` and `settings.NON_TREE_VAL` are
+            respectively used.
+        classifier_class : class, optional
+            The class of the classifier to be trained. It can be any scikit-learn
+            compatible estimator that implements the `fit`, `predict` and
+            `predict_proba` methods and that can be saved to and loaded from memory
+            using skops. If no value is provided, the value set in `settings.CLF_CLASS`
+            is used.
+        classifier_kwargs : key-value pairings, optional
+            Keyword arguments that will be passed to the initialization of
+            `classifier_class`. If no value is provided, the value set in
+            `settings.CLF_KWARGS` is used.
+        """
+        self.pixel_features_builder_kwargs = dict(
+            sigmas=sigmas,
+            num_orientations=num_orientations,
+            neighborhood=neighborhood,
+            min_neighborhood_range=min_neighborhood_range,
+            num_neighborhoods=num_neighborhoods,
+        )
+        self.pixel_response_builder_kwargs = dict(
+            tree_val=tree_val, nontree_val=nontree_val
+        )
+        if classifier_class is None:
+            classifier_class = settings.CLF_CLASS
+        self.classifier_class = classifier_class
+        if not classifier_kwargs:
+            classifier_kwargs = settings.CLF_KWARGS
+        self.classifier_kwargs = classifier_kwargs
+        self.pixel_features_builder = pixel_features.PixelFeaturesBuilder(
+            **self.pixel_features_builder_kwargs
+        )
+        self.pixel_response_builder = pixel_response.PixelResponseBuilder(
+            **self.pixel_response_builder_kwargs
+        )
+
+    def fit(self, X=None, y=None, **kwargs):  # noqa: ARG002
+        """Fit method for sklearn compatibility."""
+        return self
+
+    def transform(
+        self,
+        *,
+        split_df=None,
+        img_dir=None,
+        response_img_dir=None,
+        img_filepaths=None,
+        response_img_filepaths=None,
+        img_filename_pattern=None,
+    ):
+        """
+        Train a classifier.
+
+        See the `background <https://bit.ly/2KlCICO>`_ example notebook for more
+        details.
+
+        Parameters
+        ----------
+        split_df : pandas DataFrame, optional
+            Data frame with the train/test split.
+        img_dir : str representing path to a directory, optional
+            Path to the directory where the images from `split_df` or whose filename
+            matches `img_filename_pattern` are located. Required if `split_df` is
+            provided. Ignored if `img_filepaths` is provided.
+        response_img_dir : str representing path to a directory, optional
+            Path to the directory where the response tiles are located. Required if
+            providing `split_df`. Otherwise `response_img_dir` might either be ignored
+            if providing `response_img_filepaths`, or be used as the directory where the
+            images whose filename matches `img_filename_pattern` are to be located.
+        img_filepaths : list-like, optional
+            List of paths to the input tiles whose features will be used to train the
+            classifier. Ignored if `split_df` is provided.
+        response_img_filepaths : list-like, optional
+            List of paths to the binary response tiles that will be used to train the
+            classifier. Ignored if `split_df` is provided.
+        img_filename_pattern : str representing a file-name pattern, optional
+            Filename pattern to be matched in order to obtain the list of images. If no
+            value is provided, the value set in `settings.IMG_FILENAME_PATTERN` is used.
+            Ignored if `split_df` or `img_filepaths` is provided.
+
+        Returns
+        -------
+        X : numpy ndarray
+            Array with the pixel features.
+        y : numpy ndarray
+            Array with the pixel responses.
+        """
+        if split_df is None and response_img_filepaths is None:
+            # this is the only case that needs argument tweaking: otherwise, if we pass
+            # `img_filepaths`/`img_dir` to `build_features` and `response_img_dir` to
+            # `build_response`, the latter would build a response with all the image
+            # files in `response_img_dir`. Instead, we need to build the response only
+            # for the files specified in `img_filepaths`/`img_dir`
+            if img_filepaths is None:
+                if img_dir is None:
+                    raise ValueError(
+                        "Either `split_df`, `img_filepaths` or `img_dir` must be"
+                        " provided"
+                    )
+                img_filepaths = utils.get_img_filepaths(
+                    img_dir, img_filename_pattern=img_filename_pattern
+                )
+
+            if response_img_dir is None:
+                raise ValueError(
+                    "Either `split_df`, `response_img_filepaths` or "
+                    "`response_img_dir` must be provided"
+                )
+            response_img_filepaths = [
+                path.join(response_img_dir, path.basename(img_filepath))
+                for img_filepath in img_filepaths
+            ]
+
+        X = self.pixel_features_builder.build_features(
+            split_df=split_df,
+            img_filepaths=img_filepaths,
+            img_dir=img_dir,
+            img_filename_pattern=img_filename_pattern,
+        )
+
+        y = self.pixel_response_builder.build_response(
+            split_df=split_df,
+            response_img_dir=response_img_dir,
+            response_img_filepaths=response_img_filepaths,
+            img_filename_pattern=img_filename_pattern,
+        )
+
+        return X, y
+
+    def fit_transform(self, *args, **kwargs):
+        """Fit and transform method for sklearn compatibility."""
+        self.fit(*args, **kwargs)
+        return self.transform(*args, **kwargs)
 
 
 class ClassifierTrainer:
@@ -100,6 +291,10 @@ class ClassifierTrainer:
         if not classifier_kwargs:
             classifier_kwargs = settings.CLF_KWARGS
         self.classifier_kwargs = classifier_kwargs
+        self.pixel_training_transformer = PixelDatasetTransformer(
+            **self.pixel_features_builder_kwargs,
+            **self.pixel_response_builder_kwargs,
+        )
 
     def train_classifier(
         self,
@@ -152,47 +347,36 @@ class ClassifierTrainer:
         clf : scikit-learn-like classifier
             The trained classifier.
         """
-        if split_df is None and response_img_filepaths is None:
-            # this is the only case that needs argument tweaking: otherwise, if we pass
-            # `img_filepaths`/`img_dir` to `build_features` and `response_img_dir` to
-            # `build_response`, the latter would build a response with all the image
-            # files in `response_img_dir`. Instead, we need to build the response only
-            # for the files specified in `img_filepaths`/`img_dir`
-            if img_filepaths is None:
-                if img_dir is None:
-                    raise ValueError(
-                        "Either `split_df`, `img_filepaths` or `img_dir` must be"
-                        " provided"
-                    )
-                img_filepaths = utils.get_img_filepaths(
-                    img_dir, img_filename_pattern=img_filename_pattern
+        if split_df is not None and method is None:
+            if "img_cluster" in split_df:
+                method = "cluster-II"
+            else:
+                method = "cluster-I"
+
+        if split_df is not None and method == "cluster-I" and "img_cluster" in split_df:
+            split_df = split_df.drop(columns=["img_cluster"])
+        elif split_df is not None and method == "cluster-II":
+            if img_cluster is None:
+                raise ValueError(
+                    "If `method` is 'cluster-II', `img_cluster` must be provided"
                 )
+            if img_dir is None:
+                raise ValueError(
+                    "If `split_df` is provided, `img_dir` must also be provided"
+                )
+            img_filename_ser = utils.get_img_filename_ser(split_df, img_cluster, True)
+            img_filepaths = img_filename_ser.apply(
+                lambda img_filename: path.join(img_dir, img_filename)
+            )
+            split_df = None
 
-            response_img_filepaths = [
-                path.join(response_img_dir, path.basename(img_filepath))
-                for img_filepath in img_filepaths
-            ]
-
-        X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kwargs
-        ).build_features(
+        X, y = self.pixel_training_transformer.fit_transform(
             split_df=split_df,
-            img_filepaths=img_filepaths,
             img_dir=img_dir,
-            img_filename_pattern=img_filename_pattern,
-            method=method,
-            img_cluster=img_cluster,
-        )
-
-        y = pixel_response.PixelResponseBuilder(
-            **self.pixel_response_builder_kwargs
-        ).build_response(
-            split_df=split_df,
             response_img_dir=response_img_dir,
+            img_filepaths=img_filepaths,
             response_img_filepaths=response_img_filepaths,
             img_filename_pattern=img_filename_pattern,
-            method=method,
-            img_cluster=img_cluster,
         )
 
         clf = self.classifier_class(**self.classifier_kwargs)
@@ -384,6 +568,14 @@ class Classifier:
         self.nontree_val = nontree_val
 
         self.pixel_features_builder_kwargs = pixel_features_builder_kwargs
+        self.pixel_training_transformer = PixelDatasetTransformer(
+            tree_val=tree_val,
+            nontree_val=nontree_val,
+            **self.pixel_features_builder_kwargs,
+        )
+        self.pixel_features_builder = (
+            self.pixel_training_transformer.pixel_features_builder
+        )
 
     def _predict_X_refine(self, X, clf, img_shape):
         # TODO: properly manage the order classes in `clf`, i.e., are we sure that
@@ -407,9 +599,7 @@ class Classifier:
         src = rio.open(img_filepath)
         img_shape = src.shape
 
-        X = pixel_features.PixelFeaturesBuilder(
-            **self.pixel_features_builder_kwargs
-        ).build_features_from_filepath(img_filepath)
+        X = self.pixel_features_builder.build_features_from_filepath(img_filepath)
 
         y_pred = self._predict_X(X, clf, img_shape)
 

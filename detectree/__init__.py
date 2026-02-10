@@ -1,6 +1,6 @@
 """detectree init."""
 
-from detectree.classifier import Classifier, ClassifierTrainer
+from detectree.classifier import Classifier, ClassifierTrainer, PixelDatasetTransformer
 from detectree.evaluate import (
     compute_eval_metrics,
     eval_refine_params,
