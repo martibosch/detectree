@@ -655,10 +655,10 @@ class TestTrainClassifier(unittest.TestCase):
                 self.assertIsInstance(pred_imgs, list)
                 self._test_imgs_exist_and_rm(pred_imgs)
 
-        # test that `Classifier` with `refine=False` also returns an ndarray
+        # test that `Classifier` with `refine_method=False` also returns an ndarray
         for c in [
-            dtr.Classifier(refine=False),
-            dtr.Classifier(clf=self.clf, refine=False),
+            dtr.Classifier(refine_method=False),
+            dtr.Classifier(clf=self.clf, refine_method=False),
         ]:
             # test that `classify_img` returns a ndarray
             self.assertIsInstance(c.predict_img(img_filepath), np.ndarray)
@@ -700,8 +700,8 @@ class TestTrainClassifier(unittest.TestCase):
 
         # test the `refine` argument
         for c in [
-            dtr.Classifier(clf_dict=self.clf_dict, refine=_refine)
-            for _refine in [True, False]
+            dtr.Classifier(clf_dict=self.clf_dict, refine_method=refine_method)
+            for refine_method in [refine.maxflow_refine, False]
         ]:
             # test that `classify_img` returns a ndarray
             self.assertIsInstance(
@@ -1116,35 +1116,33 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     def test_train_classifier(self):
-        result = self.runner.invoke(
-            main.cli,
-            [
-                "train-classifier",
-                "--split-filepath",
-                path.join(self.data_dir, "split_cluster-I.csv"),
-                "--img-dir",
-                self.img_dir,
-                "--response-img-dir",
-                self.response_img_dir,
-                "--output-filepath",
-                path.join(self.tmp_dir, "clf.skops"),
-            ],
-        )
-        self.assertEqual(result.exit_code, 0)
+        base_args = [
+            "train-classifier",
+            "--split-filepath",
+            path.join(self.data_dir, "split_cluster-I.csv"),
+            "--img-dir",
+            self.img_dir,
+            "--response-img-dir",
+            self.response_img_dir,
+            "--output-filepath",
+            path.join(self.tmp_dir, "clf.skops"),
+        ]
+        for extra_args in [[], ["--classifier-kwargs", "{'n_estimators': 1}"]]:
+            result = self.runner.invoke(main.cli, base_args + extra_args)
+            self.assertEqual(result.exit_code, 0)
 
     def test_train_classifiers(self):
-        result = self.runner.invoke(
-            main.cli,
-            [
-                "train-classifiers",
-                self.split_ii_filepath,
-                self.img_dir,
-                self.response_img_dir,
-                "--output-dir",
-                self.tmp_dir,
-            ],
-        )
-        self.assertEqual(result.exit_code, 0)
+        base_args = [
+            "train-classifiers",
+            self.split_ii_filepath,
+            self.img_dir,
+            self.response_img_dir,
+            "--output-dir",
+            self.tmp_dir,
+        ]
+        for extra_args in [[], ["--classifier-kwargs", "{'n_estimators': 1}"]]:
+            result = self.runner.invoke(main.cli, base_args + extra_args)
+            self.assertEqual(result.exit_code, 0)
 
     def test_predict_img(self):
         base_args = [
@@ -1153,7 +1151,18 @@ class TestCLI(unittest.TestCase):
             "--output-filepath",
             path.join(self.tmp_dir, "foo.tif"),
         ]
-        for extra_args in [[], ["--clf-filepath", self.model_filepath]]:
+        for extra_args in [
+            [],
+            ["--clf-filepath", self.model_filepath],
+            [
+                "--clf-filepath",
+                self.model_filepath,
+                "--hf-hub-download-kwargs",
+                "{'local_files_only': True}",
+                "--pixel-features-builder-kwargs",
+                "{'sigmas': [1, 2, 3]}",
+            ],
+        ]:
             result = self.runner.invoke(main.cli, base_args + extra_args)
             self.assertEqual(result.exit_code, 0)
 
@@ -1166,13 +1175,23 @@ class TestCLI(unittest.TestCase):
                 _args + img_dir_args
                 for _args in [
                     ["--clf-filepath", self.model_filepath],
+                    [
+                        "--clf-filepath",
+                        self.model_filepath,
+                        "--hf-hub-download-kwargs",
+                        "{'local_files_only': True}",
+                        "--pixel-features-builder-kwargs",
+                        "{'sigmas': [1, 2, 3]}",
+                    ],
                     ["--hf-hub-repo-id", settings.HF_HUB_REPO_ID],
                     ["--hf-hub-clf-filename", settings.HF_HUB_CLF_FILENAME],
                     ["--tree-val", settings.TREE_VAL],
                     ["--nontree-val", settings.NONTREE_VAL],
                     ["--refine"],
-                    ["--refine-beta", settings.CLF_REFINE_BETA],
-                    ["--refine-int-rescale", settings.CLF_REFINE_INT_RESCALE],
+                    [
+                        "--refine-kwargs",
+                        str(settings.CLF_REFINE_KWARGS),
+                    ],
                 ]
             ]
             + [["--clf-dir", self.models_dir] + split_args]

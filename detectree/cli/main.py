@@ -60,11 +60,7 @@ class _OptionEatAll(click.Option):
 def _dict_from_kwargs(kwargs):
     # Multiple key:value pair arguments in click, see https://bit.ly/32BaES3
     if kwargs is not None:
-        _kwargs = {}
-        for kwarg in eval(kwargs):
-            k, v = kwarg.split(":")
-            _kwargs[k] = v
-        kwargs = _kwargs
+        kwargs = eval(kwargs)
     else:
         kwargs = {}
 
@@ -82,6 +78,11 @@ def _init_classifier_trainer(
 ):
     # pixel_features_builder_kws = _dict_from_kws(pixel_features_builder_kws)
     # pixel_response_builder_kws = _dict_from_kws(pixel_response_builder_kws)
+    # note that since unlike the predict CLI functions that pass kwargs to multiple
+    # methods, the classifier CLI functions only have the classifier kwargs so we could
+    # use the "forwarding unknown options" via the click context class instead of
+    # passing a string with an encoded dict as we do for the predict functions and here
+    # see https://github.com/fastapi/typer/issues/163
     classifier_kwargs = _dict_from_kwargs(classifier_kwargs)
 
     return dtr.ClassifierTrainer(
@@ -196,7 +197,7 @@ def train_test_split(
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--classifier-kwargs", cls=_OptionEatAll)
+@click.option("--classifier-kwargs", type=str)
 @click.option("--output-filepath", type=click.Path())
 def train_classifier(
     ctx,
@@ -263,7 +264,7 @@ def train_classifier(
 @click.option("--num-neighborhoods", type=int)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
-@click.option("--classifier-kwargs", cls=_OptionEatAll)
+@click.option("--classifier-kwargs", type=str)
 @click.option("--output-dir", type=click.Path(exists=True))
 def train_classifiers(
     ctx,
@@ -316,14 +317,13 @@ def train_classifiers(
 @click.option("--clf-filepath", type=click.Path(exists=True))
 @click.option("--hf-hub-repo-id", type=str)
 @click.option("--hf-hub-clf-filename", type=str)
-@click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
+@click.option("--hf-hub-download-kwargs", type=str)
 # @click.option("--skops-trusted", cls=_OptionEatAll)
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine/--no-refine", default=True)
-@click.option("--refine-beta", type=int)
-@click.option("--refine-int-rescale", type=int)
-@click.option("--pixel-features-builder-kwargs", cls=_OptionEatAll)
+@click.option("--refine-kwargs", type=str)
+@click.option("--pixel-features-builder-kwargs", type=str)
 @click.option("--output-filepath", type=click.Path())
 def predict_img(
     ctx,
@@ -336,8 +336,7 @@ def predict_img(
     tree_val,
     nontree_val,
     refine,
-    refine_beta,
-    refine_int_rescale,
+    refine_kwargs,
     pixel_features_builder_kwargs,
     output_filepath,
 ):
@@ -361,6 +360,14 @@ def predict_img(
 
     hf_hub_download_kwargs = _dict_from_kwargs(hf_hub_download_kwargs)
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
+    refine_kwargs = _dict_from_kwargs(refine_kwargs)
+    if not refine_kwargs:
+        refine_kwargs = None
+    if refine:
+        refine_method = None
+    else:
+        refine_method = False
+        refine_kwargs = None
     c = dtr.Classifier(
         clf=clf,
         hf_hub_repo_id=hf_hub_repo_id,
@@ -369,9 +376,8 @@ def predict_img(
         # skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        refine=refine,
-        refine_beta=refine_beta,
-        refine_int_rescale=refine_int_rescale,
+        refine_method=refine_method,
+        refine_kwargs=refine_kwargs,
         **pixel_features_builder_kwargs,
     )
 
@@ -393,18 +399,17 @@ def predict_img(
 @click.option("--clf-dir", type=click.Path(exists=True))
 @click.option("--hf-hub-repo-id", type=str)
 @click.option("--hf-hub-clf-filename", type=str)
-@click.option("--hf-hub-download_kwargs", cls=_OptionEatAll)
+@click.option("--hf-hub-download-kwargs", type=str)
 # @click.option("--skops-trusted", cls=_OptionEatAll)
 @click.option("--split-filepath", type=click.Path(exists=True))
 @click.option("--tree-val", type=int)
 @click.option("--nontree-val", type=int)
 @click.option("--refine/--no-refine", default=True)
-@click.option("--refine-beta", type=int)
-@click.option("--refine-int-rescale", type=int)
+@click.option("--refine-kwargs", type=str)
 @click.option("--img-dir", type=click.Path(exists=True))
 # @click.option("--img-filepaths", type=_OptionEatAll)
 @click.option("--img-filename-pattern", type=str)
-@click.option("--pixel_features_builder-kwargs", cls=_OptionEatAll)
+@click.option("--pixel-features-builder-kwargs", type=str)
 def predict_imgs(
     ctx,
     output_dir,
@@ -417,8 +422,7 @@ def predict_imgs(
     tree_val,
     nontree_val,
     refine,
-    refine_beta,
-    refine_int_rescale,
+    refine_kwargs,
     split_filepath,
     img_dir,
     # img_filepaths,
@@ -466,6 +470,14 @@ def predict_imgs(
 
     hf_hub_download_kwargs = _dict_from_kwargs(hf_hub_download_kwargs)
     pixel_features_builder_kwargs = _dict_from_kwargs(pixel_features_builder_kwargs)
+    refine_kwargs = _dict_from_kwargs(refine_kwargs)
+    if not refine_kwargs:
+        refine_kwargs = None
+    if refine:
+        refine_method = None
+    else:
+        refine_method = False
+        refine_kwargs = None
     c = dtr.Classifier(
         clf=clf,
         clf_dict=clf_dict,
@@ -475,9 +487,8 @@ def predict_imgs(
         # skops_trusted=skops_trusted,
         tree_val=tree_val,
         nontree_val=nontree_val,
-        refine=refine,
-        refine_beta=refine_beta,
-        refine_int_rescale=refine_int_rescale,
+        refine_method=refine_method,
+        refine_kwargs=refine_kwargs,
         **pixel_features_builder_kwargs,
     )
 
