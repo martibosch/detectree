@@ -136,6 +136,34 @@ class TestTrainTestSplit(unittest.TestCase):
             ts.train_test_split(**tts_kwargs).equals(ts.train_test_split(**tts_kwargs))
         )
 
+        # test top-level random_state argument
+        self.assertTrue(
+            ts.train_test_split(random_state=random_state).equals(
+                ts.train_test_split(random_state=random_state)
+            )
+        )
+        self.assertTrue(
+            ts.train_test_split(random_state=random_state).equals(
+                ts.train_test_split(**tts_kwargs)
+            )
+        )
+
+        # test NumPy-compatible random-state values
+        self.assertTrue(
+            ts.train_test_split(
+                random_state=np.random.default_rng(random_state)
+            ).equals(
+                ts.train_test_split(random_state=np.random.default_rng(random_state))
+            )
+        )
+        self.assertTrue(
+            ts.train_test_split(
+                random_state=np.random.RandomState(random_state)
+            ).equals(
+                ts.train_test_split(random_state=np.random.RandomState(random_state))
+            )
+        )
+
 
 class TestImageDescriptor(unittest.TestCase):
     def setUp(self):
@@ -1103,6 +1131,7 @@ class TestCLI(unittest.TestCase):
         self.assertIn(metadata.version("detectree"), result.output)
 
     def test_train_test_split(self):
+        output_filepath = path.join(self.tmp_dir, "split.csv")
         result = self.runner.invoke(
             main.cli,
             [
@@ -1110,10 +1139,32 @@ class TestCLI(unittest.TestCase):
                 "--img-dir",
                 self.img_dir,
                 "--output-filepath",
-                path.join(self.tmp_dir, "split.csv"),
+                output_filepath,
             ],
         )
         self.assertEqual(result.exit_code, 0)
+
+        # with a fixed random-state, train/test split should be deterministic
+        output_filepath_0 = path.join(self.tmp_dir, "split-0.csv")
+        output_filepath_1 = path.join(self.tmp_dir, "split-1.csv")
+        for _output_filepath in [output_filepath_0, output_filepath_1]:
+            result = self.runner.invoke(
+                main.cli,
+                [
+                    "train-test-split",
+                    "--img-dir",
+                    self.img_dir,
+                    "--random-state",
+                    "42",
+                    "--output-filepath",
+                    _output_filepath,
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+
+        self.assertTrue(
+            pd.read_csv(output_filepath_0).equals(pd.read_csv(output_filepath_1))
+        )
 
     def test_train_classifier(self):
         base_args = [

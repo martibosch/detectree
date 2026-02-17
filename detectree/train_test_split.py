@@ -14,6 +14,24 @@ from detectree import filters, image_descriptor, settings
 __all__ = ["TrainingSelector"]
 
 
+def _to_sklearn_random_state(random_state):
+    """Return a random_state value accepted by scikit-learn estimators."""
+    if random_state is None:
+        return None
+    if isinstance(random_state, (int, np.integer, np.random.RandomState)):
+        return random_state
+
+    try:
+        rng = np.random.default_rng(random_state)
+    except TypeError as exc:
+        raise TypeError(
+            "`random_state` must be None, an int, numpy.random.RandomState, or "
+            "a value accepted by numpy.random.default_rng"
+        ) from exc
+
+    return int(rng.integers(np.iinfo(np.int32).max))
+
+
 class TrainingSelector:
     """Select the images/tiles to be used to train the classifier(s)."""
 
@@ -156,6 +174,7 @@ class TrainingSelector:
         num_img_clusters=4,
         train_prop=0.01,
         return_evr=False,
+        random_state=None,
         pca_kwargs=None,
         kmeans_kwargs=None,
     ):
@@ -180,12 +199,20 @@ class TrainingSelector:
         return_evr : bool, optional (default False)
             Whether the explained variance ratio of the principal component
             analysis should be returned
+        random_state : random state, optional
+            Random state to use in both the PCA and *k*-means steps when
+            `pca_kwargs`/`kmeans_kwargs` do not explicitly include `random_state`.
+            Supports values accepted by scikit-learn (`None`, `int`,
+            `numpy.random.RandomState`) and NumPy seeds accepted by
+            `numpy.random.default_rng`.
         pca_kwargs : dict, optional
             Keyword arguments to be passed to the `sklearn.decomposition.PCA` class
-            constructor (except for `n_components`).
+            constructor (except for `n_components`). If it includes `random_state`, it
+            takes precedence over the `random_state` argument.
         kmeans_kwargs : dict, optional
             Keyword arguments to be passed to the `sklearn.cluster.KMeans` class
-            constructor (except for `n_clusters`).
+            constructor (except for `n_clusters`). If it includes `random_state`, it
+            takes precedence over the `random_state` argument.
 
         Returns
         -------
@@ -195,12 +222,14 @@ class TrainingSelector:
             Expected variance ratio of the principal component analysis.
         """
         X = self.descr_feature_matrix
+        _random_state = _to_sklearn_random_state(random_state)
         if pca_kwargs is None:
             _pca_kwargs = {}
         else:
             _pca_kwargs = pca_kwargs.copy()
             # if `n_components` is provided in `pca_kwargs`, it will be ignored
             _ = _pca_kwargs.pop("n_components", None)
+        _pca_kwargs.setdefault("random_state", _random_state)
         pca = decomposition.PCA(n_components=n_components, **_pca_kwargs).fit(X)
 
         X_pca = pca.transform(X)
@@ -219,6 +248,7 @@ class TrainingSelector:
             _kmeans_kwargs = kmeans_kwargs.copy()
             # if `n_clusters` is provided in `kmeans_kwargs`, it will be ignored
             _ = _kmeans_kwargs.pop("n_clusters", None)
+        _kmeans_kwargs.setdefault("random_state", _random_state)
         if method == "cluster-I":
             km = cluster.KMeans(
                 n_clusters=int(np.ceil(train_prop * len(df))), **_kmeans_kwargs

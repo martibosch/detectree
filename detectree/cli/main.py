@@ -128,6 +128,7 @@ def cli(ctx):
 @click.option("--num-components", type=int)
 @click.option("--num-img-clusters", type=int)
 @click.option("--train-prop", type=float)
+@click.option("--random-state", type=int)
 @click.option("--output-filepath", type=click.Path())
 def train_test_split(
     ctx,
@@ -142,6 +143,7 @@ def train_test_split(
     num_components,
     num_img_clusters,
     train_prop,
+    random_state,
     output_filepath,
 ):
     """Split the set of images into training and testing sets."""
@@ -166,11 +168,13 @@ def train_test_split(
     if method is not None:
         tts_kwargs["method"] = method
     if num_components is not None:
-        tts_kwargs["num_components"] = num_components
+        tts_kwargs["n_components"] = num_components
     if num_img_clusters is not None:
         tts_kwargs["num_img_clusters"] = num_img_clusters
     if train_prop is not None:
         tts_kwargs["train_prop"] = train_prop
+    if random_state is not None:
+        tts_kwargs["random_state"] = random_state
     df, evr = ts.train_test_split(return_evr=True, **tts_kwargs)
     logger.info("Variance ratio explained by PCA: %f", evr)
 
