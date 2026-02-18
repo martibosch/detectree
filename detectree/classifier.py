@@ -1,5 +1,6 @@
 """Binary tree/non-tree classifier(s)."""
 
+import warnings
 from os import path
 
 import dask
@@ -13,6 +14,15 @@ from skops import io
 from detectree import evaluate, pixel_features, pixel_response, settings, utils
 
 __all__ = ["PixelDatasetTransformer", "ClassifierTrainer", "Classifier"]
+
+# suppress LGBM warning due to https://github.com/microsoft/LightGBM/issues/6798
+warnings.filterwarnings(
+    "ignore",
+    message="X does not have valid feature names, but LGBMClassifier was fitted with "
+    "feature names",
+    category=UserWarning,
+    module="sklearn.utils.validation",
+)
 
 
 class PixelDatasetTransformer:
