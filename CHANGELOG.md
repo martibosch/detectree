@@ -1,5 +1,22 @@
 # Change log
 
+## [v0.9.0] - 2026-02-18
+
+### :boom: BREAKING CHANGES
+
+- due to [`f44847b`](https://github.com/martibosch/detectree/commit/f44847bf59a4a34d85b290187195f9dbe3e42fd1) - predict all split_df images (training too) in predict_imgs *(commit by [@martibosch](https://github.com/martibosch))*:
+
+  predict all split_df images (training too) in predict_imgs
+
+### :sparkles: New Features
+
+- [`36cbeac`](https://github.com/martibosch/detectree/commit/36cbeacb906fdfdb893efb2984cccaea02dc0cae) - separate refine module, eval module with eval refine params *(commit by [@martibosch](https://github.com/martibosch))*
+- [`f9230b6`](https://github.com/martibosch/detectree/commit/f9230b695ef38fcd912e589f36bbd1caf0ab7bf4) - CLI keyword arguments using str-encoded dicts *(commit by [@martibosch](https://github.com/martibosch))*
+- [`a2cec04`](https://github.com/martibosch/detectree/commit/a2cec04f63678ad511d1b9ecf9df0d5107f48437) - separate PixelDatasetTransformer class *(commit by [@martibosch](https://github.com/martibosch))*
+- [`71dcff3`](https://github.com/martibosch/detectree/commit/71dcff3d89efab78e27d75d5432965d0f2793d96) - random seed *(commit by [@martibosch](https://github.com/martibosch))*
+- [`ce10eb9`](https://github.com/martibosch/detectree/commit/ce10eb94f8e9ffc4bbe7558904bc745c1aa57a8c) - suppress lgbm feature name warning *(commit by [@martibosch](https://github.com/martibosch))*
+- [`f44847b`](https://github.com/martibosch/detectree/commit/f44847bf59a4a34d85b290187195f9dbe3e42fd1) - predict all split_df images (training too) in predict_imgs *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.8.1] - 2025-07-27
 
 ### :bug: Bug Fixes
@@ -126,3 +143,4 @@
 [v0.7.0]: https://github.com/martibosch/detectree/compare/v0.6.0...v0.7.0
 [v0.8.0]: https://github.com/martibosch/detectree/compare/v0.7.0...v0.8.0
 [v0.8.1]: https://github.com/martibosch/detectree/compare/v0.8.0...v0.8.1
+[v0.9.0]: https://github.com/martibosch/detectree/compare/v0.8.1...v0.9.0
