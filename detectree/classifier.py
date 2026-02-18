@@ -761,7 +761,9 @@ class Classifier:
             # `self.clf_dict` is not `None`
             # predicting with multiple classifiers
             pred_imgs = []
-            for img_cluster, _ in split_df.groupby("img_cluster"):
+            for img_cluster, img_filename_ser in split_df.groupby("img_cluster")[
+                "img_filename"
+            ]:
                 try:
                     clf = self.clf_dict[img_cluster]
                 except KeyError as exc:
@@ -770,7 +772,7 @@ class Classifier:
                         " `self.clf_dict`."
                     ) from exc
                 pred_imgs += self._predict_imgs(
-                    utils.get_img_filename_ser(split_df, img_cluster, False).apply(
+                    img_filename_ser.apply(
                         lambda img_filename: path.join(img_dir, img_filename)
                     ),
                     clf,
