@@ -1,5 +1,11 @@
 # Change log
 
+## [v0.9.1] - 2026-02-19
+
+### :bug: Bug Fixes
+
+- [`51e4c19`](https://github.com/martibosch/detectree/commit/51e4c19155245777a36a93d14d63851b819c1b14) - update license refs in pyproject.toml *(commit by [@martibosch](https://github.com/martibosch))*
+
 ## [v0.9.0] - 2026-02-18
 
 ### :boom: BREAKING CHANGES
@@ -144,3 +150,4 @@
 [v0.8.0]: https://github.com/martibosch/detectree/compare/v0.7.0...v0.8.0
 [v0.8.1]: https://github.com/martibosch/detectree/compare/v0.8.0...v0.8.1
 [v0.9.0]: https://github.com/martibosch/detectree/compare/v0.8.1...v0.9.0
+[v0.9.1]: https://github.com/martibosch/detectree/compare/v0.9.0...v0.9.1
