@@ -11,6 +11,8 @@ import pandas as pd
 import rasterio as rio
 from click import testing
 from scipy import ndimage as ndi
+from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeClassifier
 from skops import io
 
 import detectree as dtr
@@ -846,6 +848,75 @@ class TestTrainClassifier(unittest.TestCase):
         )
         self.assertEqual(list(results.index), metrics)
         self.assertTrue(((results >= 0) & (results <= 1)).all().all())
+
+
+class TestSklearnPipeline(unittest.TestCase):
+    def setUp(self):
+        self.data_dir = "tests/data"
+        self.img_dir = path.join(self.data_dir, "img")
+        self.response_img_dir = path.join(self.data_dir, "response_img")
+        self.response_img_filepaths = glob.glob(
+            path.join(self.response_img_dir, "*.tif")
+        )[:2]
+        self.img_filepaths = [
+            path.join(self.img_dir, path.basename(response_img_filepath))
+            for response_img_filepath in self.response_img_filepaths
+        ]
+
+    def test_pixel_features_transformer(self):
+        transformer = dtr.PixelFeaturesTransformer()
+        batch = transformer.fit_transform(self.img_filepaths[:1])
+        self.assertIsInstance(batch, dtr.PixelFeaturesBatch)
+        with rio.open(self.img_filepaths[0]) as src:
+            num_pixels = src.shape[0] * src.shape[1]
+        self.assertEqual(batch.features.shape[0], num_pixels)
+        self.assertEqual(len(batch.img_shapes), 1)
+        self.assertEqual(len(batch.pixel_slices), 1)
+
+    def test_sklearn_pipeline_without_refine(self):
+        pipeline = Pipeline(
+            [
+                ("features", dtr.PixelFeaturesTransformer()),
+                (
+                    "classifier",
+                    dtr.RefinedClassifierEstimator(
+                        estimator=DecisionTreeClassifier(max_depth=8, random_state=0),
+                        refine_method=None,
+                    ),
+                ),
+            ]
+        )
+        pipeline.fit(self.img_filepaths, self.response_img_filepaths)
+        y_pred = pipeline.predict(self.img_filepaths[:1])
+        y_true = pixel_response.PixelResponseBuilder().build_response(
+            response_img_filepaths=self.response_img_filepaths[:1]
+        )
+        self.assertEqual(y_pred.shape, y_true.shape)
+        self.assertTrue(np.isin(y_pred, [0, 1]).all())
+
+    def test_sklearn_pipeline_with_refine(self):
+        pipeline = Pipeline(
+            [
+                ("features", dtr.PixelFeaturesTransformer()),
+                (
+                    "classifier",
+                    dtr.RefinedClassifierEstimator(
+                        estimator=DecisionTreeClassifier(max_depth=8, random_state=0),
+                        refine_method=refine.maxflow_refine,
+                        refine_kwargs={"refine_beta": 1000},
+                    ),
+                ),
+            ]
+        )
+        pipeline.fit(self.img_filepaths, self.response_img_filepaths)
+        y_pred = pipeline.predict(self.img_filepaths[:1])
+        y_true = pixel_response.PixelResponseBuilder().build_response(
+            response_img_filepaths=self.response_img_filepaths[:1]
+        )
+        self.assertEqual(y_pred.shape, y_true.shape)
+        self.assertTrue(
+            np.isin(y_pred, [settings.TREE_VAL, settings.NONTREE_VAL]).all()
+        )
 
 
 class TestEvaluate(unittest.TestCase):

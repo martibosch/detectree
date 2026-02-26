@@ -1,7 +1,8 @@
 """Binary tree/non-tree classifier(s)."""
 
 import warnings
-from os import path
+from dataclasses import dataclass
+from os import PathLike, path
 
 import dask
 import huggingface_hub as hf_hub
@@ -9,11 +10,19 @@ import numpy as np
 import rasterio as rio
 import skops
 from dask import diagnostics
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, clone
 from skops import io
 
 from detectree import evaluate, pixel_features, pixel_response, settings, utils
 
-__all__ = ["PixelDatasetTransformer", "ClassifierTrainer", "Classifier"]
+__all__ = [
+    "PixelFeaturesBatch",
+    "PixelFeaturesTransformer",
+    "RefinedClassifierEstimator",
+    "PixelDatasetTransformer",
+    "ClassifierTrainer",
+    "Classifier",
+]
 
 # suppress LGBM warning due to https://github.com/microsoft/LightGBM/issues/6798
 warnings.filterwarnings(
@@ -23,6 +32,205 @@ warnings.filterwarnings(
     category=UserWarning,
     module="sklearn.utils.validation",
 )
+
+
+@dataclass
+class PixelFeaturesBatch:
+    """Container with pixel features and image metadata."""
+
+    features: np.ndarray
+    img_filepaths: list[str]
+    img_shapes: list[tuple[int, int]]
+    pixel_slices: list[slice]
+
+
+class PixelFeaturesTransformer(BaseEstimator, TransformerMixin):
+    """Sklearn-compatible transformer that builds pixel features from images."""
+
+    def __init__(
+        self,
+        *,
+        img_dir=None,
+        img_filename_pattern=None,
+        sigmas=None,
+        num_orientations=None,
+        neighborhood=None,
+        min_neighborhood_range=None,
+        num_neighborhoods=None,
+    ):
+        self.img_dir = img_dir
+        self.img_filename_pattern = img_filename_pattern
+        self.sigmas = sigmas
+        self.num_orientations = num_orientations
+        self.neighborhood = neighborhood
+        self.min_neighborhood_range = min_neighborhood_range
+        self.num_neighborhoods = num_neighborhoods
+        self.pixel_features_builder = pixel_features.PixelFeaturesBuilder(
+            sigmas=sigmas,
+            num_orientations=num_orientations,
+            neighborhood=neighborhood,
+            min_neighborhood_range=min_neighborhood_range,
+            num_neighborhoods=num_neighborhoods,
+        )
+
+    def fit(self, X, y=None):  # noqa: ARG002
+        """Fit does nothing and returns self."""
+        return self
+
+    def transform(self, X):
+        """Build pixel features and return a batch container."""
+        img_filepaths = self._resolve_img_filepaths(X)
+        values = [
+            dask.delayed(self.pixel_features_builder.build_features_from_filepath)(
+                img_filepath
+            )
+            for img_filepath in img_filepaths
+        ]
+
+        with diagnostics.ProgressBar():
+            features_per_img = dask.compute(*values)
+
+        img_shapes = []
+        pixel_slices = []
+        start = 0
+        for img_filepath, features in zip(img_filepaths, features_per_img):
+            with rio.open(img_filepath) as src:
+                img_shape = src.shape
+            img_shapes.append(img_shape)
+            end = start + features.shape[0]
+            pixel_slices.append(slice(start, end))
+            start = end
+
+        return PixelFeaturesBatch(
+            features=np.vstack(features_per_img),
+            img_filepaths=img_filepaths,
+            img_shapes=img_shapes,
+            pixel_slices=pixel_slices,
+        )
+
+    def _resolve_img_filepaths(self, X):
+        if X is None:
+            if self.img_dir is None:
+                raise ValueError("Either `X` or `img_dir` must be provided.")
+            return utils.get_img_filepaths(
+                self.img_dir, img_filename_pattern=self.img_filename_pattern
+            )
+
+        if isinstance(X, (str, PathLike)):
+            return [str(X)]
+
+        img_filepaths = [str(filepath) for filepath in X]
+        if self.img_dir is not None:
+            img_filepaths = [
+                filepath if path.isabs(filepath) else path.join(self.img_dir, filepath)
+                for filepath in img_filepaths
+            ]
+        return img_filepaths
+
+
+class RefinedClassifierEstimator(BaseEstimator, ClassifierMixin):
+    """Sklearn-compatible estimator with optional post-prediction refinement."""
+
+    def __init__(
+        self,
+        *,
+        estimator=None,
+        tree_val=None,
+        nontree_val=None,
+        refine_method=None,
+        refine_kwargs=None,
+    ):
+        self.estimator = estimator
+        self.tree_val = tree_val
+        self.nontree_val = nontree_val
+        self.refine_method = refine_method
+        self.refine_kwargs = refine_kwargs
+
+    def fit(self, X, y):
+        """Fit the wrapped estimator."""
+        X_features = self._get_features(X)
+        y_arr = self._get_response_arr(y)
+        estimator = self._init_estimator()
+        estimator.fit(X_features, y_arr)
+        self.estimator_ = estimator
+        self.classes_ = estimator.classes_
+        self.n_features_in_ = estimator.n_features_in_
+        return self
+
+    def predict_proba(self, X):
+        """Predict class probabilities with the wrapped estimator."""
+        X_features = self._get_features(X)
+        return self.estimator_.predict_proba(X_features)
+
+    def predict(self, X):
+        """Predict labels, optionally applying a refinement method image by image."""
+        if self.refine_method is None:
+            return self.estimator_.predict(self._get_features(X))
+
+        if not isinstance(X, PixelFeaturesBatch):
+            raise ValueError(
+                "Refinement requires image metadata. Provide a `PixelFeaturesBatch` "
+                "produced by `PixelFeaturesTransformer`."
+            )
+
+        y_pred = np.full(X.features.shape[0], self.nontree_val_)
+        p_tree = self.estimator_.predict_proba(X.features)[:, 1]
+        for img_shape, pixel_slice in zip(X.img_shapes, X.pixel_slices):
+            p_tree_img = p_tree[pixel_slice].reshape(img_shape)
+            y_pred[pixel_slice] = self.refine_method(
+                p_tree_img,
+                self.tree_val_,
+                self.nontree_val_,
+                **self.refine_kwargs_,
+            ).flatten()
+        return y_pred
+
+    def _init_estimator(self):
+        if self.tree_val is None:
+            self.tree_val_ = settings.TREE_VAL
+        else:
+            self.tree_val_ = self.tree_val
+        if self.nontree_val is None:
+            self.nontree_val_ = settings.NONTREE_VAL
+        else:
+            self.nontree_val_ = self.nontree_val
+        if self.refine_kwargs is None:
+            self.refine_kwargs_ = settings.CLF_REFINE_KWARGS
+        else:
+            self.refine_kwargs_ = self.refine_kwargs
+
+        if self.estimator is None:
+            return settings.CLF_CLASS(**settings.CLF_KWARGS)
+        return clone(self.estimator)
+
+    @staticmethod
+    def _get_features(X):
+        if isinstance(X, PixelFeaturesBatch):
+            return X.features
+        return np.asarray(X)
+
+    def _get_response_arr(self, y):
+        if y is None:
+            raise ValueError("`y` must be provided.")
+
+        if self.tree_val is None:
+            tree_val = settings.TREE_VAL
+        else:
+            tree_val = self.tree_val
+        if self.nontree_val is None:
+            nontree_val = settings.NONTREE_VAL
+        else:
+            nontree_val = self.nontree_val
+
+        if isinstance(y, (str, PathLike)):
+            y = [y]
+        y_arr = np.asarray(y)
+        if y_arr.dtype.kind in {"U", "S", "O"}:
+            y_flat = pixel_response.PixelResponseBuilder(
+                tree_val=tree_val, nontree_val=nontree_val
+            ).build_response(response_img_filepaths=[str(item) for item in y_arr])
+            return y_flat
+        return y_arr.flatten()
 
 
 class PixelDatasetTransformer:
