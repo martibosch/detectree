@@ -8,7 +8,7 @@ version = "0.9.1"
 description = "Tree detection from aerial imagery in Python."
 readme = "README.md"
 authors = [
-  {name = "Martí Bosch", email = "marti.bosch@epfl.ch"}
+  { name = "Martí Bosch", email = "marti.bosch@epfl.ch" }
 ]
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
@@ -84,10 +84,10 @@ gdal = ">=3"
 python = ">=3.10,<3.14"
 
 [tool.pixi.environments]
-default = {features = ["default"], solve-group = "default"}
-dev = {features = ["dev"], solve-group = "default"}
-doc = {features = ["doc"], solve-group = "default"}
-test = {features = ["test"], solve-group = "default"}
+default = { features = ["default"], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+doc = { features = ["doc"], solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
 
 [tool.pixi.feature.dev.tasks]
 build = "uv build"
@@ -99,7 +99,7 @@ build-doc = "sphinx-build docs docs/_build"
 test = "pytest -s --cov=detectree --cov-report=xml tests"
 
 [tool.pixi.pypi-dependencies]
-detectree = {path = ".", editable = true}
+detectree = { path = ".", editable = true }
 
 [tool.pixi.workspace]
 channels = ["conda-forge"]
